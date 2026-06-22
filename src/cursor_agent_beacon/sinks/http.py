@@ -1,4 +1,4 @@
-"""HTTP status sink for the future Arduino bridge service."""
+"""HTTP status sink for the local bridge service."""
 
 from __future__ import annotations
 

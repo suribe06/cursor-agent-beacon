@@ -7,7 +7,11 @@ import json
 import sys
 from pathlib import Path
 
-from cursor_agent_beacon.handler import handle_hook_event, parse_hook_input, run_hook_handler
+from cursor_agent_beacon.handler import (
+    handle_hook_event,
+    parse_hook_input,
+    run_hook_handler,
+)
 from cursor_agent_beacon.mapper import map_hook_event
 
 
@@ -30,6 +34,12 @@ def main() -> int:
     map_parser.add_argument("event_file", type=Path)
     map_parser.set_defaults(func=_map_event)
 
+    bridge_parser = subparsers.add_parser(
+        "bridge",
+        help="Run the local HTTP + serial bridge service (Phase 2)",
+    )
+    bridge_parser.set_defaults(func=_run_bridge)
+
     args = parser.parse_args()
     return int(args.func(args))
 
@@ -50,6 +60,17 @@ def _map_event(args: argparse.Namespace) -> int:
 
     print(json.dumps(status.to_dict(), indent=2))
     print(json.dumps(response, indent=2))
+    return 0
+
+
+def _run_bridge(_args: argparse.Namespace) -> int:
+    from cursor_agent_beacon.bridge.config import BridgeConfig
+    from cursor_agent_beacon.bridge.server import run_bridge_server
+    from cursor_agent_beacon.bridge.service import BridgeService
+
+    config = BridgeConfig.from_env()
+    service = BridgeService(config)
+    run_bridge_server(service, config.host, config.port)
     return 0
 
 

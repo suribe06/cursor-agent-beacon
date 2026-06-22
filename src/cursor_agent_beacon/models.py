@@ -39,6 +39,19 @@ class AgentStatus:
         payload["state"] = self.state.value
         return payload
 
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> AgentStatus:
+        default_ts = datetime.now(timezone.utc).isoformat()
+        return cls(
+            state=AgentState(str(payload["state"])),
+            message=str(payload.get("message", "")),
+            hook_event_name=str(payload.get("hook_event_name", "bridge")),
+            conversation_id=payload.get("conversation_id"),
+            generation_id=payload.get("generation_id"),
+            timestamp=str(payload.get("timestamp", default_ts)),
+            metadata=dict(payload.get("metadata") or {}),
+        )
+
     def serial_line(self) -> str:
         """Format used by the future Arduino bridge: STATUS|state|message."""
         safe_message = self.message.replace("|", "/")[:64]
