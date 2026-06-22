@@ -48,7 +48,5 @@ class BeaconConfig:
             http_url=http_url,
             http_timeout_seconds=timeout,
             theme_id=os.environ.get("CURSOR_AGENT_BEACON_THEME", "standard"),
-            themes_dir=Path(
-                os.environ.get("CURSOR_AGENT_BEACON_THEMES_DIR", "themes")
-            ),
+            themes_dir=Path(os.environ.get("CURSOR_AGENT_BEACON_THEMES_DIR", "themes")),
         )
