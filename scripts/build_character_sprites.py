@@ -8,27 +8,28 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 GRID = 24
-BG_HEX = "#1a1a2e"
+BG_HEX = "#071020"
 
+# Blue desk-setup palette: navy background, cobalt body, sky/cyan accents.
 PALETTE: dict[str, str | None] = {
     ".": None,
-    "#": "#1e2746",
-    "H": "#3d4a6a",
-    "F": "#7b8cde",
-    "B": "#3d5a80",
-    "b": "#4cc9f0",
-    "L": "#293241",
-    "A": "#5c7cfa",
-    "a": "#3d5080",
-    "E": "#ffffff",
-    "e": "#5c6bc0",
-    "M": "#ff6b6b",
-    "m": "#3d4a7a",
-    "G": "#51cf66",
-    "Y": "#ffd43b",
-    "Z": "#adb5bd",
-    "S": "#4cc9f0",
-    "T": "#22d3ee",
+    "#": "#0c1929",
+    "H": "#152238",
+    "F": "#2563eb",
+    "B": "#1d4ed8",
+    "b": "#38bdf8",
+    "L": "#0a1628",
+    "A": "#60a5fa",
+    "a": "#1e40af",
+    "E": "#dbeafe",
+    "e": "#475569",
+    "M": "#7c3aed",
+    "m": "#1e3a8a",
+    "G": "#22d3ee",
+    "Y": "#7dd3fc",
+    "Z": "#94a3b8",
+    "S": "#0ea5e9",
+    "T": "#06b6d4",
 }
 
 
@@ -93,28 +94,29 @@ def add_zzz(grid: list[str], frame: int) -> None:
         ["..ZZ.", ".ZZZ.", "..ZZ"],
         ["..ZZZ", "..ZZZ"],
     ]
-    stamp(grid, 4 + (frame % 2), 0, arts[frame % 4])
+    stamp(grid, 8 + (frame % 2), 1, arts[frame % 4])
 
 
 def add_thought_dots(grid: list[str], frame: int) -> None:
+    """Light blue thought dots above the head."""
     arts = [
         ["Y.Y.Y", ".Y.Y."],
         [".Y.Y.", "Y.Y.Y"],
         ["..Y.Y", ".Y.Y."],
         ["Y.Y..", ".Y.Y."],
     ]
-    stamp(grid, 5 + (frame % 2), 0, arts[frame % 4])
+    stamp(grid, 9 + (frame % 2), 1, arts[frame % 4])
 
 
 def add_tool_link(grid: list[str], frame: int) -> None:
-    """Cyan tool-link spark (distinct from yellow thinking dots)."""
+    """Cyan tool-link spark (distinct from thinking dots)."""
     arts = [
         ["..T..", ".T.T.", "..T.."],
         [".T.T.", "..T..", ".Tb."],
         ["T.T.T", "..Tb.", "T.T.T"],
         [".TbT.", "T.T.T", ".Tb."],
     ]
-    stamp(grid, 8, 0, arts[frame % 4])
+    stamp(grid, 9, 1, arts[frame % 4])
 
 
 def add_speed(grid: list[str], frame: int) -> None:
@@ -128,8 +130,8 @@ def add_speed(grid: list[str], frame: int) -> None:
 
 def add_confetti(grid: list[str], frame: int) -> None:
     if frame in {1, 2}:
-        stamp(grid, 5, 0, ["Y", "Y"])
-        stamp(grid, 17, 1, ["Y", "G"])
+        stamp(grid, 8, 1, ["Y", "Y"])
+        stamp(grid, 16, 2, ["Y", "G"])
 
 
 def add_antenna_pulse(grid: list[str], frame: int, y: int) -> None:
@@ -139,16 +141,62 @@ def add_antenna_pulse(grid: list[str], frame: int, y: int) -> None:
         stamp(grid, 11, y - 1, [".bbb."])
 
 
-def shift_x(grid: list[str], dx: int) -> list[str]:
+def shift_grid(grid: list[str], dx: int, dy: int = 0) -> list[str]:
     out = blank()
     for y, row in enumerate(grid):
         for x, ch in enumerate(row):
-            nx = x + dx
-            if 0 <= nx < GRID and ch != ".":
-                line = list(out[y])
+            if ch == ".":
+                continue
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < GRID and 0 <= ny < GRID:
+                line = list(out[ny])
                 line[nx] = ch
-                out[y] = "".join(line)
+                out[ny] = "".join(line)
     return out
+
+
+def shift_x(grid: list[str], dx: int) -> list[str]:
+    return shift_grid(grid, dx, 0)
+
+
+def _union_bbox(grids: list[list[str]]) -> tuple[int, int, int, int] | None:
+    min_x = min_y = GRID
+    max_x = max_y = -1
+    for grid in grids:
+        for y, row in enumerate(grid):
+            for x, ch in enumerate(row):
+                if ch == ".":
+                    continue
+                min_x = min(min_x, x)
+                max_x = max(max_x, x)
+                min_y = min(min_y, y)
+                max_y = max(max_y, y)
+    if max_x < 0:
+        return None
+    return min_x, min_y, max_x, max_y
+
+
+def center_animation(
+    grids: list[list[str]],
+    *,
+    optical_bias_y: int = 1,
+) -> list[list[str]]:
+    """Center all frames using the animation union bbox (avoids frame jitter)."""
+    bbox = _union_bbox(grids)
+    if bbox is None:
+        return grids
+
+    min_x, min_y, max_x, max_y = bbox
+    cx = (min_x + max_x) / 2
+    cy = (min_y + max_y) / 2
+    target = (GRID - 1) / 2
+    dx = round(target - cx)
+    dy = round(target - cy) + optical_bias_y
+    dx = max(-min_x, min(dx, GRID - 1 - max_x))
+    dy = max(-min_y, min(dy, GRID - 1 - max_y))
+    if dx == 0 and dy == 0:
+        return grids
+    return [shift_grid(grid, dx, dy) for grid in grids]
 
 
 def frames_to_strings(frames: list[list[str]]) -> list[str]:
@@ -241,10 +289,10 @@ def build_faces() -> dict:
     meta = {
         "sleeping": ("Sleeping", "Idle — slow breath + Zzz"),
         "waiting": ("Waiting", "Awake — antenna pulse + glance"),
-        "thinking": ("Thinking", "Yellow thought dots"),
+        "thinking": ("Thinking", "Sky-blue thought dots"),
         "running_shell": ("Running shell", "Walk cycle + speed lines"),
         "running_mcp": ("MCP tool", "Cyan tool link + chest pulse"),
-        "success": ("Success", "Soft green smile pulse"),
+        "success": ("Success", "Soft cyan smile pulse"),
         "error": ("Error", "Shake then hold"),
         "stop": ("Session done", "Wave + confetti"),
     }
@@ -261,6 +309,7 @@ def build_faces() -> dict:
         ("stop", stop),
     ]:
         label, caption = meta[key]
+        grid_frames = center_animation(grid_frames)
         built[key] = {
             "label": label,
             "caption": caption,

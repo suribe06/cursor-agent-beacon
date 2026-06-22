@@ -18,10 +18,10 @@ Full-body pixel robot with **4 animated frames per state**. Toggle **Show export
 |---|---|---|
 | `sleeping` | `idle` | Slow breath + Zzz |
 | `waiting` | `waiting` | Awake blink + antenna |
-| `thinking` | `thinking` | Yellow thought dots |
+| `thinking` | `thinking` | Sky-blue thought dots |
 | `running_shell` | `running_shell` | Walk + speed lines |
 | `running_mcp` | `running_mcp` | Cyan tool link |
-| `success` | `success` | Soft green smile |
+| `success` | `success` | Soft cyan smile |
 | `error` | `error` | Shake then hold |
 | `stop` | `stop` | Wave + confetti |
 

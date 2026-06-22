@@ -46,10 +46,10 @@ xdg-open preview/display-simulator.html
 |---|---|---|
 | `idle` | `sleeping.gif` | Slow breath + floating Zzz |
 | `waiting` | `waiting.gif` | Awake blink, antenna pulse, glance |
-| `thinking` | `thinking.gif` | Yellow thought dots |
+| `thinking` | `thinking.gif` | Sky-blue thought dots |
 | `running_shell` | `running_shell.gif` | Walk cycle + speed lines |
 | `running_mcp` | `running_mcp.gif` | Cyan tool link (distinct from thinking) |
-| `success` | `success.gif` | Soft green smile pulse |
+| `success` | `success.gif` | Soft cyan smile pulse |
 | `error` | `error.gif` | Shake, then hold |
 | `stop` | `stop.gif` | Wave + confetti |
 
