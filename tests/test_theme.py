@@ -3,8 +3,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from cursor_agent_beacon.theme import load_theme
 
 
