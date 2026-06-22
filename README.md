@@ -2,6 +2,8 @@
 
 Deterministic monitoring of Cursor agent activity using native [Cursor Hooks](https://cursor.com/docs/hooks).
 
+**Repository:** https://github.com/suribe06/cursor-agent-beacon
+
 Cursor fires hook events automatically during the agent lifecycle. Cursor Agent Beacon listens to those events, maps them to a small set of high-level states, and publishes status updates through pluggable sinks.
 
 This is the software foundation for a physical status panel (ESP32 + color TFT). **v0.1** ships Python hooks plus **bundled standard GIF themes**.

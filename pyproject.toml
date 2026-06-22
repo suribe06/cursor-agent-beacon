@@ -33,9 +33,10 @@ dev = ["pytest>=8.0", "pytest-cov>=5.0", "Pillow>=10.0"]
 cursor-agent-beacon = "cursor_agent_beacon.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/your-org/cursor-agent-beacon"
-Documentation = "https://github.com/your-org/cursor-agent-beacon#readme"
-Issues = "https://github.com/your-org/cursor-agent-beacon/issues"
+Homepage = "https://github.com/suribe06/cursor-agent-beacon"
+Documentation = "https://github.com/suribe06/cursor-agent-beacon#readme"
+Issues = "https://github.com/suribe06/cursor-agent-beacon/issues"
+Repository = "https://github.com/suribe06/cursor-agent-beacon"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cursor_agent_beacon"]
