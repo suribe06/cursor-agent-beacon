@@ -1,6 +1,8 @@
-# Panel Físico de Estado del Agente + Botón de Input (Arduino + Cursor Hooks + MCP)
+# Panel Físico de Estado del Agente (Arduino + Cursor Hooks)
 
 > Original design document (Spanish). Phase 1 (Python hooks) is implemented in this repository.
+>
+> **Alcance actual:** solo display del estado del agente (Cursor → hardware). El botón físico y el path MCP (`get_pending_events`) fueron removidos del roadmap; ver [`roadmap.md`](roadmap.md).
 
 ## 1. Objetivo del proyecto
 

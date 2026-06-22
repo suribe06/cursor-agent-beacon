@@ -94,6 +94,45 @@ See [`themes/custom/README.md`](../themes/custom/README.md).
 export CURSOR_AGENT_BEACON_THEME=your-theme-name
 ```
 
+## Local bridge (Phase 2)
+
+The bridge is the single owner of the USB serial port. Hook handlers POST status over HTTP; the bridge resolves the theme GIF and writes serial commands for the ESP32 firmware.
+
+**Terminal 1 — start the bridge:**
+
+```bash
+pip install -e ".[bridge]"   # only needed when using a real serial port
+cursor-agent-beacon bridge
+```
+
+**Terminal 2 — forward hook events to the bridge:**
+
+```bash
+export CURSOR_AGENT_BEACON_HTTP_URL=http://127.0.0.1:8765/status
+python3 scripts/simulate_hook.py examples/sample-events/after_agent_thought.json
+```
+
+Without `CURSOR_AGENT_BEACON_SERIAL_PORT`, serial output is logged to stderr:
+
+```text
+[cursor-agent-beacon-bridge] serial: THEME|standard
+[cursor-agent-beacon-bridge] serial: STATUS|thinking|...
+```
+
+**With hardware connected:**
+
+```bash
+export CURSOR_AGENT_BEACON_SERIAL_PORT=/dev/ttyUSB0
+export CURSOR_AGENT_BEACON_SERIAL_BAUD=115200
+cursor-agent-beacon bridge
+```
+
+Check bridge health:
+
+```bash
+curl -s http://127.0.0.1:8765/health | jq
+```
+
 ## Configuration
 
 | Variable | Default | Description |
@@ -101,11 +140,15 @@ export CURSOR_AGENT_BEACON_THEME=your-theme-name
 | `CURSOR_AGENT_BEACON_STATUS_FILE` | `.cursor-agent-beacon/status.json` | Latest status path |
 | `CURSOR_AGENT_BEACON_THEME` | `standard` | Theme id |
 | `CURSOR_AGENT_BEACON_THEMES_DIR` | `themes` | Theme packs root |
-| `CURSOR_AGENT_BEACON_HTTP_URL` | unset | Bridge endpoint (Phase 2) |
+| `CURSOR_AGENT_BEACON_HTTP_URL` | unset | Bridge endpoint (`http://127.0.0.1:8765/status`) |
+| `CURSOR_AGENT_BEACON_BRIDGE_HOST` | `127.0.0.1` | Bridge bind address |
+| `CURSOR_AGENT_BEACON_BRIDGE_PORT` | `8765` | Bridge HTTP port |
+| `CURSOR_AGENT_BEACON_SERIAL_PORT` | unset | ESP32 serial device |
+| `CURSOR_AGENT_BEACON_SERIAL_BAUD` | `115200` | Serial baud rate |
 
 ## Next steps
 
 - [Hooks Reference](hooks.md)
 - [Display themes](display-themes.md)
 - [Architecture](architecture.md)
-- [Roadmap](roadmap.md) — bridge, ESP32, MCP
+- [Roadmap](roadmap.md) — ESP32 firmware

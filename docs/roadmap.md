@@ -16,30 +16,22 @@
 - [x] Theme loader (`cursor_agent_beacon.theme`)
 - [x] Browser preview (`preview/display-simulator.html`)
 
-## Phase 2 — Local bridge service
+## Phase 2 — Local bridge service ✅
 
-- [ ] Long-running Python service
-- [ ] `POST /status` endpoint for hook handler
-- [ ] Resolve GIF from theme pack per agent state
-- [ ] Serial writer thread for ESP32 commands
-- [ ] Single owner of the USB serial port
+- [x] Long-running Python service
+- [x] `POST /status` endpoint for hook handler
+- [x] Resolve GIF from theme pack per agent state
+- [x] Serial writer thread for ESP32 commands
+- [x] Single owner of the USB serial port
 
 ## Phase 3 — ESP32 display firmware
 
 - [ ] ESP32 + ST7789/GC9A01 240×240 color TFT
 - [ ] GIF playback from SPIFFS/SD using `themes/standard/manifest.json`
 - [ ] Parse `STATUS|state|message` serial lines
-- [ ] Debounced button on D2 with `INPUT_PULLUP`
-- [ ] Emit `EVENT|button_pressed` on serial
 - [ ] Optional caption line under character
 
 Assets ready: [`themes/standard/ASSETS.md`](../themes/standard/ASSETS.md)
-
-## Phase 4 — MCP input path
-
-- [ ] FastMCP server exposing `get_pending_events`
-- [ ] Background serial reader for button events
-- [ ] Project rule prompting the agent to poll pending events
 
 ## Design notes
 

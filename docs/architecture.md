@@ -6,17 +6,41 @@ Cursor Agent Beacon turns native Cursor hook events into normalized agent status
 
 Cursor hooks fire deterministically during the agent lifecycle. They do not depend on the model choosing to report status. That makes them ideal for physical panels, dashboards, logging, and automation.
 
-## Current scope (v0.1)
+## Current scope (v0.2)
 
 | Layer | Status |
 |---|---|
 | Python hook handler | ✅ Shipped |
-| Status sinks (log, file, HTTP stub) | ✅ Shipped |
+| Status sinks (log, file, HTTP) | ✅ Shipped |
 | Standard GIF theme (240×240) | ✅ Bundled in repo |
 | Custom theme packs | ✅ Layout + loader |
-| Local bridge service | 🔜 Phase 2 |
+| Local bridge service | ✅ Shipped |
 | ESP32 firmware | 🔜 Phase 3 |
-| MCP button input | 🔜 Phase 4 |
+
+## Data flow (with bridge)
+
+```text
+Hooks → HTTP POST → bridge service → serial → ESP32 → GIF + caption
+                      │
+                      └── resolves GIF from theme pack per state
+```
+
+Bridge endpoints:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/status` | Accept normalized status from hook HTTP sink |
+| `GET` | `/health` | Service health + latest status |
+| `GET` | `/status` | Latest normalized status JSON |
+
+Run locally:
+
+```bash
+cursor-agent-beacon bridge
+export CURSOR_AGENT_BEACON_HTTP_URL=http://127.0.0.1:8765/status
+```
+
+Without `CURSOR_AGENT_BEACON_SERIAL_PORT`, the bridge logs serial lines to stderr (dry-run). With a port set, install `pip install -e ".[bridge]"` for pyserial support.
 
 ## Data flow (today)
 
@@ -41,8 +65,6 @@ cursor_agent_beacon.handler
 
 ```text
 Hooks → HTTP POST → bridge service → serial → ESP32 → GIF + caption
-                                                      ↑
-Button ── serial EVENT ── MCP get_pending_events ────┘
 ```
 
 ## Normalized status
@@ -88,6 +110,10 @@ Hooks must never block Cursor. The handler:
 | `CURSOR_AGENT_BEACON_STATUS_FILE` | `.cursor-agent-beacon/status.json` | Status snapshot path |
 | `CURSOR_AGENT_BEACON_HTTP_URL` | unset | POST status to local bridge |
 | `CURSOR_AGENT_BEACON_HTTP_TIMEOUT` | `1.0` | HTTP timeout in seconds |
+| `CURSOR_AGENT_BEACON_BRIDGE_HOST` | `127.0.0.1` | Bridge bind address |
+| `CURSOR_AGENT_BEACON_BRIDGE_PORT` | `8765` | Bridge HTTP port |
+| `CURSOR_AGENT_BEACON_SERIAL_PORT` | unset | ESP32 serial device |
+| `CURSOR_AGENT_BEACON_SERIAL_BAUD` | `115200` | Serial baud rate |
 | `CURSOR_AGENT_BEACON_THEME` | `standard` | Active theme id |
 | `CURSOR_AGENT_BEACON_THEMES_DIR` | `themes` | Theme packs root |
 

@@ -1,12 +1,16 @@
 # Cursor Agent Beacon
 
+[![CI](https://github.com/suribe06/cursor-agent-beacon/actions/workflows/ci.yml/badge.svg)](https://github.com/suribe06/cursor-agent-beacon/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+
 Deterministic monitoring of Cursor agent activity using native [Cursor Hooks](https://cursor.com/docs/hooks).
 
 **Repository:** https://github.com/suribe06/cursor-agent-beacon
 
 Cursor fires hook events automatically during the agent lifecycle. Cursor Agent Beacon listens to those events, maps them to a small set of high-level states, and publishes status updates through pluggable sinks.
 
-This is the software foundation for a physical status panel (ESP32 + color TFT). **v0.1** ships Python hooks plus **bundled standard GIF themes**.
+This is the software foundation for a physical status panel (ESP32 + color TFT). **v0.2** ships Python hooks, **bundled standard GIF themes**, and a **local bridge service**.
 
 ## Features
 
@@ -17,7 +21,8 @@ This is the software foundation for a physical status panel (ESP32 + color TFT).
 - Fail-open behavior — hooks never block Cursor
 - JSON log sink (stderr) for the Hooks output channel
 - File sink with latest status snapshot
-- HTTP sink stub for a future local bridge service
+- HTTP sink for the local bridge service
+- **Bridge service** (`cursor-agent-beacon bridge`): `POST /status` → theme GIF resolution → serial commands
 
 ## Quick start
 
@@ -32,6 +37,13 @@ xdg-open preview/display-simulator.html
 # Regenerate standard GIFs after editing sprites
 pip install Pillow
 python3 scripts/export_standard_gifs.py
+
+# Run the local bridge (dry-run serial logs to stderr)
+cursor-agent-beacon bridge
+
+# Forward hook status to the bridge
+export CURSOR_AGENT_BEACON_HTTP_URL=http://127.0.0.1:8765/status
+python3 scripts/simulate_hook.py examples/sample-events/after_agent_thought.json
 ```
 
 Open this repository in Cursor to activate the bundled `.cursor/hooks.json`.
@@ -57,7 +69,11 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 | `CURSOR_AGENT_BEACON_LOG` | `true` | Emit JSON lines to stderr |
 | `CURSOR_AGENT_BEACON_FILE` | `true` | Write latest status file |
 | `CURSOR_AGENT_BEACON_STATUS_FILE` | `.cursor-agent-beacon/status.json` | Status file path |
-| `CURSOR_AGENT_BEACON_HTTP_URL` | unset | Optional bridge endpoint |
+| `CURSOR_AGENT_BEACON_HTTP_URL` | unset | Bridge `POST /status` endpoint |
+| `CURSOR_AGENT_BEACON_BRIDGE_HOST` | `127.0.0.1` | Bridge bind address |
+| `CURSOR_AGENT_BEACON_BRIDGE_PORT` | `8765` | Bridge HTTP port |
+| `CURSOR_AGENT_BEACON_SERIAL_PORT` | unset | ESP32 serial device (dry-run if unset) |
+| `CURSOR_AGENT_BEACON_SERIAL_BAUD` | `115200` | Serial baud rate |
 | `CURSOR_AGENT_BEACON_THEME` | `standard` | Theme id (`standard` or `custom/<name>`) |
 | `CURSOR_AGENT_BEACON_THEMES_DIR` | `themes` | Root folder for theme packs |
 
@@ -65,12 +81,11 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 
 | Component | Status |
 | --- | --- |
-| Python hook handler | ✅ v0.1 |
+| Python hook handler | ✅ v0.2 |
 | Standard GIF theme | ✅ bundled |
 | Custom GIF themes | ✅ `themes/custom/` |
-| Arduino firmware | 🔜 planned |
-| MCP button input | 🔜 planned |
-| Local bridge service | 🔜 planned |
+| Local bridge service | ✅ v0.2 |
+| ESP32 firmware | 🔜 planned |
 
 See [`docs/roadmap.md`](docs/roadmap.md).
 
@@ -79,19 +94,26 @@ See [`docs/roadmap.md`](docs/roadmap.md).
 - [Getting Started](docs/getting-started.md)
 - [Hooks Reference](docs/hooks.md)
 - [Architecture](docs/architecture.md)
+- [Roadmap](docs/roadmap.md)
+- [Changelog](CHANGELOG.md)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
+
+Report security issues privately — see [SECURITY.md](SECURITY.md).
 
 ## Development
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,bridge]"
 pytest
+ruff check src tests
+python -m build
+cursor-agent-beacon bridge
 PYTHONPATH=src python3 -m cursor_agent_beacon.cli map examples/sample-events/stop_completed.json
 ```
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-## Contributing
-
-Contributions welcome. This project is intentionally small and focused: deterministic status from Cursor hooks first, hardware integration later.
