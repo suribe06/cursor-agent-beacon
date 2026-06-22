@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/suribe06/cursor-agent-beacon/discussions
+    about: Questions, ideas, and show-and-tell
+  - name: Documentation
+    url: https://github.com/suribe06/cursor-agent-beacon#readme
+    about: Read the docs before opening an issue
