@@ -1,0 +1,57 @@
+{
+  "id": "standard",
+  "name": "Beacon Bot",
+  "description": "Default pixel robot GIFs bundled with the repository",
+  "license": "MIT",
+  "author": "cursor-agent-beacon",
+  "display": {
+    "width": 240,
+    "height": 240,
+    "format": "gif",
+    "background": "#1a1a2e"
+  },
+  "display_mode": "gif",
+  "pixel_faces": "pixel-faces.json",
+  "states": {
+    "idle": {
+      "animation": "assets/sleeping.gif",
+      "loop": true,
+      "caption": "Sleeping"
+    },
+    "waiting": {
+      "animation": "assets/waiting.gif",
+      "loop": true,
+      "caption": "Waiting"
+    },
+    "thinking": {
+      "animation": "assets/thinking.gif",
+      "loop": true,
+      "caption": "Thinking"
+    },
+    "running_shell": {
+      "animation": "assets/running_shell.gif",
+      "loop": true,
+      "caption": "Running Shell"
+    },
+    "running_mcp": {
+      "animation": "assets/running_mcp.gif",
+      "loop": true,
+      "caption": "Running Mcp"
+    },
+    "success": {
+      "animation": "assets/success.gif",
+      "loop": true,
+      "caption": "Success"
+    },
+    "error": {
+      "animation": "assets/error.gif",
+      "loop": true,
+      "caption": "Error"
+    },
+    "stop": {
+      "animation": "assets/stop.gif",
+      "loop": false,
+      "caption": "Stop"
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "id": "example",
+  "name": "My Custom Theme",
+  "description": "Copy this folder to themes/custom/<your-name>/ and replace GIF paths",
+  "display": {
+    "width": 240,
+    "height": 240,
+    "format": "gif",
+    "background": "#1a1a2e"
+  },
+  "display_mode": "gif",
+  "states": {
+    "idle": {
+      "animation": "assets/idle.gif",
+      "loop": true,
+      "caption": "Standby"
+    },
+    "waiting": {
+      "animation": "assets/waiting.gif",
+      "loop": true,
+      "caption": "Awaiting input"
+    },
+    "thinking": {
+      "animation": "assets/thinking.gif",
+      "loop": true,
+      "caption": "Thinking"
+    },
+    "running_shell": {
+      "animation": "assets/running_shell.gif",
+      "loop": true,
+      "caption": "Running command"
+    },
+    "running_mcp": {
+      "animation": "assets/running_mcp.gif",
+      "loop": true,
+      "caption": "Using tool"
+    },
+    "success": {
+      "animation": "assets/success.gif",
+      "loop": true,
+      "caption": "Ready"
+    },
+    "error": {
+      "animation": "assets/error.gif",
+      "loop": true,
+      "caption": "Error"
+    },
+    "stop": {
+      "animation": "assets/stop.gif",
+      "loop": false,
+      "caption": "Session done"
+    }
+  }
+}

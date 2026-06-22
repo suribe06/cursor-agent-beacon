@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "afterAgentThought": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "beforeShellExecution": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "afterShellExecution": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "beforeMCPExecution": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "afterMCPExecution": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "afterAgentResponse": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "stop": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "subagentStart": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "subagentStop": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ]
+  }
+}

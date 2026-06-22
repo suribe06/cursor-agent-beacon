@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cursor Agent Beacon — Display Simulator</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --panel: #171923;
+      --border: #2a2f45;
+      --text: #e6e9f0;
+      --muted: #8b93a7;
+      --accent: #4cc9f0;
+      --display-bg: #1a1a2e;
+      --bezel: #252b42;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(920px, 100%);
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 280px 1fr;
+    }
+
+    @media (max-width: 760px) {
+      .app { grid-template-columns: 1fr; }
+    }
+
+    h1 { margin: 0 0 8px; font-size: 1.25rem; font-weight: 600; }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .states { display: grid; gap: 8px; }
+
+    button.state-btn {
+      text-align: left;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 120ms, background 120ms;
+    }
+
+    button.state-btn:hover {
+      border-color: var(--accent);
+      background: rgba(76, 201, 240, 0.08);
+    }
+
+    button.state-btn.active {
+      border-color: var(--accent);
+      background: rgba(76, 201, 240, 0.14);
+    }
+
+    button.state-btn .label { font-weight: 600; display: block; }
+    button.state-btn .desc { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .controls button, .controls label {
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .controls label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .display-wrap { display: grid; place-items: center; gap: 16px; }
+
+    .bezel {
+      background: var(--bezel);
+      border-radius: 24px;
+      padding: 16px;
+      border: 2px solid var(--border);
+    }
+
+    .bezel.round { border-radius: 999px; padding: 18px; }
+
+    canvas#screen, img#gif-screen {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border-radius: 12px;
+      background: var(--display-bg);
+      width: 240px;
+      height: 240px;
+    }
+
+    .bezel.round canvas#screen,
+    .bezel.round img#gif-screen { border-radius: 50%; }
+
+    .meta { text-align: center; }
+    .meta .state-name { font-size: 1.1rem; font-weight: 600; color: var(--accent); }
+    .meta .caption { color: var(--muted); margin-top: 4px; }
+
+    .legend {
+      margin-top: 16px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .legend strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="panel">
+      <h1>Display Simulator</h1>
+      <p class="subtitle">
+        Full-body pixel robot with animated face, arms, legs, and effects.
+        Every state has a 4-frame loop.
+      </p>
+      <div class="states" id="state-buttons"></div>
+      <div class="controls">
+        <button id="prev-btn" type="button">Prev</button>
+        <button id="next-btn" type="button">Next</button>
+        <button id="auto-btn" type="button">Auto cycle: OFF</button>
+        <label><input id="round-toggle" type="checkbox" checked /> Round display</label>
+        <label><input id="gif-toggle" type="checkbox" checked /> Show exported GIF</label>
+      </div>
+      <div class="legend">
+        <strong>Tip:</strong> Edit sprites in <code>scripts/build_character_sprites.py</code>, then run
+        <code>python3 scripts/export_standard_gifs.py</code>
+      </div>
+    </section>
+
+    <section class="panel display-wrap">
+      <div class="bezel round" id="bezel">
+        <canvas id="screen" width="240" height="240"></canvas>
+        <img id="gif-screen" alt="Exported theme GIF" hidden />
+      </div>
+      <div class="meta">
+        <div class="state-name" id="state-name">Sleeping</div>
+        <div class="caption" id="state-caption">Cursor idle</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="beacon-sprites.js"></script>
+  <script>
+    const STATE_ORDER = [
+      "sleeping",
+      "waiting",
+      "thinking",
+      "running_shell",
+      "running_mcp",
+      "success",
+      "error",
+      "stop",
+    ];
+
+    const { palette: PALETTE_RAW, grid_size: GRID, faces: FACES } = window.BEACON_SPRITES;
+    const PALETTE = Object.fromEntries(
+      Object.entries(PALETTE_RAW).map(([k, v]) => [k, v === "transparent" ? null : v])
+    );
+
+    const canvas = document.getElementById("screen");
+    const gifScreen = document.getElementById("gif-screen");
+    const ctx = canvas.getContext("2d");
+    const SCALE = canvas.width / GRID;
+    const GIF_BASE = "../themes/standard/assets/";
+
+    let currentState = "sleeping";
+    let frameIndex = 0;
+    let autoCycle = false;
+    let autoTimer = null;
+    let showGif = true;
+
+    function parseFrame(text) {
+      return text.split("\n");
+    }
+
+    function drawCharacter(grid) {
+      ctx.fillStyle = "#1a1a2e";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let y = 0; y < GRID; y++) {
+        const row = grid[y] || "";
+        for (let x = 0; x < GRID; x++) {
+          const ch = row[x] || ".";
+          const color = PALETTE[ch];
+          if (!color) continue;
+          ctx.fillStyle = color;
+          ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+        }
+      }
+    }
+
+    function render() {
+      const face = FACES[currentState];
+
+      if (showGif) {
+        canvas.hidden = true;
+        gifScreen.hidden = false;
+        gifScreen.src = `${GIF_BASE}${currentState}.gif?${Date.now()}`;
+      } else {
+        gifScreen.hidden = true;
+        canvas.hidden = false;
+        const frames = face.frames.map(parseFrame);
+        const grid = frames[frameIndex % frames.length];
+        drawCharacter(grid);
+      }
+
+      document.getElementById("state-name").textContent = face.label;
+      document.getElementById("state-caption").textContent = face.caption;
+
+      document.querySelectorAll(".state-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.state === currentState);
+      });
+    }
+
+    function setState(state) {
+      currentState = state;
+      frameIndex = 0;
+      render();
+    }
+
+    function nextState() {
+      const idx = STATE_ORDER.indexOf(currentState);
+      setState(STATE_ORDER[(idx + 1) % STATE_ORDER.length]);
+    }
+
+    function prevState() {
+      const idx = STATE_ORDER.indexOf(currentState);
+      setState(STATE_ORDER[(idx - 1 + STATE_ORDER.length) % STATE_ORDER.length]);
+    }
+
+    function tickAnimation() {
+      if (showGif) return;
+      const face = FACES[currentState];
+      frameIndex = (frameIndex + 1) % face.frames.length;
+      render();
+    }
+
+    const buttons = document.getElementById("state-buttons");
+    STATE_ORDER.forEach((state) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "state-btn";
+      btn.dataset.state = state;
+      btn.innerHTML = `<span class="label">${FACES[state].label}</span><span class="desc">${FACES[state].caption}</span>`;
+      btn.addEventListener("click", () => setState(state));
+      buttons.appendChild(btn);
+    });
+
+    document.getElementById("next-btn").addEventListener("click", nextState);
+    document.getElementById("prev-btn").addEventListener("click", prevState);
+
+    document.getElementById("auto-btn").addEventListener("click", (e) => {
+      autoCycle = !autoCycle;
+      e.target.textContent = `Auto cycle: ${autoCycle ? "ON" : "OFF"}`;
+      if (autoCycle) {
+        autoTimer = setInterval(nextState, 2800);
+      } else if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+      }
+    });
+
+    document.getElementById("round-toggle").addEventListener("change", (e) => {
+      document.getElementById("bezel").classList.toggle("round", e.target.checked);
+    });
+
+    document.getElementById("gif-toggle").addEventListener("change", (e) => {
+      showGif = e.target.checked;
+      frameIndex = 0;
+      render();
+    });
+
+    setInterval(tickAnimation, 380);
+    render();
+  </script>
+</body>
+</html>
