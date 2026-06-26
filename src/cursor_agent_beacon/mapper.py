@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from cursor_agent_beacon.models import AgentState, AgentStatus, HookEvent
@@ -54,20 +55,32 @@ def _shell_failed(payload: dict[str, Any]) -> bool:
     return any(marker in first_line for marker in _SHELL_FAILURE_MARKERS)
 
 
+def _project_name(event: HookEvent) -> str:
+    if event.workspace_roots:
+        return Path(event.workspace_roots[0]).name or "workspace"
+    cwd = str(event.raw.get("cwd") or "").strip()
+    if cwd:
+        return Path(cwd).name or "workspace"
+    return "workspace"
+
+
 def map_hook_event(event: HookEvent) -> AgentStatus | None:
     """Return a normalized status for supported hooks, or None to skip."""
     name = event.hook_event_name
     payload = event.raw
+    project = _project_name(event)
     base_kwargs = {
         "hook_event_name": name,
         "conversation_id": event.conversation_id,
         "generation_id": event.generation_id,
+        "project": project,
     }
 
     if name == "sessionStart":
         return AgentStatus(
             state=AgentState.IDLE,
             message="Session started",
+            label=project,
             metadata={"source": "sessionStart"},
             **base_kwargs,
         )
@@ -87,6 +100,7 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
         return AgentStatus(
             state=AgentState.WAITING,
             message=preview,
+            label=preview,
             metadata={"prompt_length": len(prompt)},
             **base_kwargs,
         )
@@ -116,8 +130,8 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
         command = str(payload.get("command") or "")
         failed = _shell_failed(payload)
         return AgentStatus(
-            state=AgentState.ERROR if failed else AgentState.SUCCESS,
-            message=_shell_summary(command),
+            state=AgentState.ERROR if failed else AgentState.THINKING,
+            message=_shell_summary(command) if failed else "Thinking...",
             metadata={
                 "command": command,
                 "duration_ms": payload.get("duration"),
@@ -138,17 +152,17 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
     if name == "afterMCPExecution":
         tool = _mcp_tool_name(payload)
         return AgentStatus(
-            state=AgentState.SUCCESS,
-            message=f"Tool done: {tool}",
-            metadata={"tool_name": payload.get("tool_name")},
+            state=AgentState.THINKING,
+            message="Thinking...",
+            metadata={"tool_name": payload.get("tool_name"), "last_tool": tool},
             **base_kwargs,
         )
 
     if name == "afterAgentResponse":
         text = str(payload.get("text") or "")
-        preview = _truncate(text) if text else "Ready"
+        preview = _truncate(text) if text else "Thinking..."
         return AgentStatus(
-            state=AgentState.SUCCESS,
+            state=AgentState.THINKING,
             message=preview,
             metadata={"response_length": len(text)},
             **base_kwargs,
@@ -182,8 +196,9 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
             state = AgentState.ERROR
             message = f"Failed: {tool_name}"
         else:
-            state = AgentState.SUCCESS
-            message = f"Done: {tool_name}"
+            # ponytail: turn not done until `stop`; agent thinks again after each tool
+            state = AgentState.THINKING
+            message = "Thinking..."
         return AgentStatus(
             state=state,
             message=_truncate(message),
@@ -202,8 +217,8 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
 
     if name == "subagentStop":
         return AgentStatus(
-            state=AgentState.SUCCESS,
-            message="Subagent finished",
+            state=AgentState.THINKING,
+            message="Thinking...",
             metadata={"status": payload.get("status")},
             **base_kwargs,
         )

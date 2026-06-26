@@ -42,6 +42,20 @@ def test_after_shell_execution_detects_failure():
     assert status.state == AgentState.ERROR
 
 
+def test_after_shell_success_returns_to_thinking():
+    status = map_hook_event(
+        _event("afterShellExecution", command="echo ok", output="hello\n")
+    )
+    assert status is not None
+    assert status.state == AgentState.THINKING
+
+
+def test_post_tool_use_returns_to_thinking():
+    status = map_hook_event(_event("postToolUse", tool_name="Read"))
+    assert status is not None
+    assert status.state == AgentState.THINKING
+
+
 def test_stop_completed_maps_to_success():
     status = map_hook_event(_event("stop", status="completed", loop_count=0))
     assert status is not None

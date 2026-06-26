@@ -26,8 +26,10 @@ def test_run_hook_handler_writes_status_file(tmp_path: Path):
 
     assert exit_code == 0
     saved = json.loads(status_file.read_text(encoding="utf-8"))
-    assert saved["state"] == "success"
+    assert saved["state"] == "thinking"
     assert saved["message"] == "All done."
+    assert (tmp_path / "registry.json").exists()
+    assert (tmp_path / "sessions" / "conv-1.json").exists()
 
 
 def test_run_hook_handler_fails_open_on_invalid_json():
