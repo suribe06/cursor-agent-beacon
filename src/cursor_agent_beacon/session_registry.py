@@ -26,6 +26,9 @@ _STATE_PRIORITY = {
     AgentState.IDLE: 6,
 }
 _SAFE_ID = re.compile(r"[^A-Za-z0-9_.-]+")
+_STALE_SESSION_HOURS = 24
+_PRUNE_INACTIVE_DAYS = 7
+_STALE_STATES = {AgentState.SUCCESS, AgentState.IDLE}
 
 
 def safe_conversation_id(conversation_id: str | None) -> str | None:
@@ -49,6 +52,48 @@ def _parse_ts(value: str | None) -> float:
         return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
     except ValueError:
         return 0.0
+
+
+def _now_ts() -> float:
+    return datetime.now(timezone.utc).timestamp()
+
+
+def _is_stale_session(session: dict[str, Any], now_ts: float) -> bool:
+    if not session.get("active", True):
+        return False
+    if is_busy_state(str(session.get("state", ""))):
+        return False
+    try:
+        state = AgentState(str(session.get("state", AgentState.IDLE.value)))
+    except ValueError:
+        return False
+    if state not in _STALE_STATES:
+        return False
+    age = now_ts - _parse_ts(str(session.get("updated_at") or ""))
+    return age > _STALE_SESSION_HOURS * 3600
+
+
+def _should_prune_session(session: dict[str, Any], now_ts: float) -> bool:
+    if session.get("active", True):
+        return False
+    age = now_ts - _parse_ts(str(session.get("updated_at") or ""))
+    return age > _PRUNE_INACTIVE_DAYS * 86400
+
+
+def apply_session_housekeeping(
+    sessions: dict[str, dict[str, Any]],
+    *,
+    now_ts: float | None = None,
+) -> None:
+    """Expire idle sessions and drop long-inactive registry entries."""
+    ts = _now_ts() if now_ts is None else now_ts
+    for session_id in list(sessions):
+        session = sessions[session_id]
+        if _should_prune_session(session, ts):
+            sessions.pop(session_id, None)
+            continue
+        if _is_stale_session(session, ts):
+            session["active"] = False
 
 
 def pick_auto_focus(sessions: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -91,10 +136,12 @@ class SessionRegistry:
         if conversation_id:
             entry = self._merge_session_entry(sessions.get(conversation_id), status)
             sessions[conversation_id] = entry
-            self._write_json(self._sessions_dir / f"{conversation_id}.json", entry)
 
         if status.hook_event_name == "sessionEnd" and conversation_id:
             sessions[conversation_id]["active"] = False
+
+        apply_session_housekeeping(sessions)
+        self._sync_session_files(sessions)
 
         registry_sessions = sorted(
             sessions.values(),
@@ -130,7 +177,14 @@ class SessionRegistry:
         entry["hook_event_name"] = status.hook_event_name
         entry["generation_id"] = status.generation_id
         entry["updated_at"] = status.timestamp
-        entry["active"] = entry.get("active", True)
+
+        if status.hook_event_name == "sessionEnd":
+            entry["active"] = False
+        else:
+            entry["active"] = True
+
+        if status.workspace_root:
+            entry["workspace_root"] = status.workspace_root
 
         if status.project:
             entry["project"] = status.project
@@ -141,11 +195,6 @@ class SessionRegistry:
             entry["label"] = status.label
         elif not entry.get("label"):
             entry["label"] = entry.get("project", "Agent chat")
-
-        if status.hook_event_name == "sessionStart":
-            entry["active"] = True
-        if status.hook_event_name == "sessionEnd":
-            entry["active"] = False
 
         entry["metadata"] = status.metadata
         return entry
@@ -177,6 +226,17 @@ class SessionRegistry:
         payload["focused_conversation_id"] = focused.get("id") if focused else None
         payload["focus_mode"] = "auto"
         return payload
+
+    def _sync_session_files(self, sessions: dict[str, dict[str, Any]]) -> None:
+        known = {f"{conv_id}.json" for conv_id in sessions}
+        for conv_id, entry in sessions.items():
+            self._write_json(self._sessions_dir / f"{conv_id}.json", entry)
+        try:
+            for path in self._sessions_dir.glob("*.json"):
+                if path.name not in known:
+                    path.unlink(missing_ok=True)
+        except Exception:
+            return
 
     def _load_registry(self) -> dict[str, Any]:
         try:

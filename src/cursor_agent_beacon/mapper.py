@@ -55,12 +55,17 @@ def _shell_failed(payload: dict[str, Any]) -> bool:
     return any(marker in first_line for marker in _SHELL_FAILURE_MARKERS)
 
 
-def _project_name(event: HookEvent) -> str:
+def _workspace_root(event: HookEvent) -> str | None:
     if event.workspace_roots:
-        return Path(event.workspace_roots[0]).name or "workspace"
+        return event.workspace_roots[0]
     cwd = str(event.raw.get("cwd") or "").strip()
-    if cwd:
-        return Path(cwd).name or "workspace"
+    return cwd or None
+
+
+def _project_name(event: HookEvent) -> str:
+    root = _workspace_root(event)
+    if root:
+        return Path(root).name or "workspace"
     return "workspace"
 
 
@@ -74,6 +79,7 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
         "conversation_id": event.conversation_id,
         "generation_id": event.generation_id,
         "project": project,
+        "workspace_root": _workspace_root(event),
     }
 
     if name == "sessionStart":

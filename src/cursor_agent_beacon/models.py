@@ -31,6 +31,7 @@ class AgentStatus:
     conversation_id: str | None = None
     generation_id: str | None = None
     project: str | None = None
+    workspace_root: str | None = None
     label: str | None = None
     timestamp: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
@@ -52,6 +53,7 @@ class AgentStatus:
             conversation_id=payload.get("conversation_id"),
             generation_id=payload.get("generation_id"),
             project=payload.get("project"),
+            workspace_root=payload.get("workspace_root"),
             label=payload.get("label"),
             timestamp=str(payload.get("timestamp", default_ts)),
             metadata=dict(payload.get("metadata") or {}),
