@@ -8,6 +8,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 GRID = 24
+# VIEWE UEDX48480021-MD80E panel: 480×480 (24 px grid × 20 scale)
+EXPORT_SCALE = 20
+DISPLAY_SIZE = GRID * EXPORT_SCALE
 BG_HEX = "#071020"
 
 # Blue desk-setup palette: navy background, cobalt body, sky/cyan accents.

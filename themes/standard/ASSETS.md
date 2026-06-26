@@ -55,7 +55,7 @@ xdg-open preview/display-simulator.html
 
 ## Custom themes (replace with your own GIFs)
 
-For personal packs (e.g. a different character), use [`../custom/`](../custom/). Drop 240×240 GIFs and a `manifest.json` — see [`../custom/example/`](../custom/example/).
+For personal packs (e.g. a different character), use [`../custom/`](../custom/). Drop **480×480** GIFs and a `manifest.json` — see [`../custom/example/`](../custom/example/).
 
 ```bash
 export CURSOR_AGENT_BEACON_THEME=your-theme-name
@@ -65,7 +65,7 @@ Custom theme folders are gitignored so copyrighted assets stay local.
 
 ## Display target
 
-- **240×240 color TFT** (ST7789 or GC9A01 round)
+- **480×480 color TFT** (VIEWE UEDX48480021-MD80E, ST7701S)
 - Visual only — no audio
 - Optional caption line under the character (planned in firmware)
 
@@ -81,4 +81,4 @@ If you want to build a **custom** theme from external art instead of editing our
 
 Do **not** commit copyrighted characters (e.g. official game assets) to a public repository.
 
-Convert external sprites to 240×240 GIFs with [ezgif.com](https://ezgif.com/resize) and place them in `themes/custom/<name>/assets/`.
+Convert external sprites to 480×480 GIFs with [ezgif.com](https://ezgif.com/resize) and place them in `themes/custom/<name>/assets/`.

@@ -51,7 +51,7 @@ See [`example/manifest.json`](example/manifest.json). Each agent state maps to o
 | `error` | failure |
 | `stop` | session finished |
 
-GIF specs for ESP32: **240×240**, loop enabled, keep file size small (<500 KB each).
+GIF specs for VIEWE panel: **480×480**, loop enabled, keep file size reasonable.
 
 ## Copyright
 

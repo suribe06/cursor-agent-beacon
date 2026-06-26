@@ -122,8 +122,9 @@
       image-rendering: crisp-edges;
       border-radius: 12px;
       background: var(--display-bg);
-      width: 240px;
-      height: 240px;
+      width: 480px;
+      height: 480px;
+      max-width: min(480px, 100%);
     }
 
     .bezel.round canvas#screen,
@@ -167,7 +168,7 @@
 
     <section class="panel display-wrap">
       <div class="bezel round" id="bezel">
-        <canvas id="screen" width="240" height="240"></canvas>
+        <canvas id="screen" width="480" height="480"></canvas>
         <img id="gif-screen" alt="Exported theme GIF" hidden />
       </div>
       <div class="meta">

@@ -18,6 +18,8 @@ except ImportError:
 
 from build_character_sprites import (
     BG_HEX,
+    DISPLAY_SIZE,
+    EXPORT_SCALE,
     GRID,
     PALETTE,
     build_faces,
@@ -59,7 +61,7 @@ def grid_to_image(grid: list[str], scale: int) -> Image.Image:
 
 def export_gif(frames: list[str], dest: Path, sprite_key: str) -> None:
     grids = [parse_grid(frame) for frame in frames]
-    images = [grid_to_image(grid, scale=10) for grid in grids]
+    images = [grid_to_image(grid, scale=EXPORT_SCALE) for grid in grids]
     durations = frame_durations(sprite_key, len(images))
     images[0].save(
         dest,
@@ -89,10 +91,11 @@ def write_manifest(assets_dir: Path) -> Path:
         "license": "MIT",
         "author": "cursor-agent-beacon",
         "display": {
-            "width": 240,
-            "height": 240,
+            "width": DISPLAY_SIZE,
+            "height": DISPLAY_SIZE,
             "format": "gif",
             "background": BG_HEX,
+            "target": "viewe-480",
         },
         "display_mode": "gif",
         "pixel_faces": "pixel-faces.json",

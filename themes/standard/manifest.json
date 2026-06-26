@@ -5,10 +5,11 @@
   "license": "MIT",
   "author": "cursor-agent-beacon",
   "display": {
-    "width": 240,
-    "height": 240,
+    "width": 480,
+    "height": 480,
     "format": "gif",
-    "background": "#071020"
+    "background": "#071020",
+    "target": "viewe-480"
   },
   "display_mode": "gif",
   "pixel_faces": "pixel-faces.json",

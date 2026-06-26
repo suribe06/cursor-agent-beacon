@@ -1,6 +1,6 @@
 # Display preview
 
-Interactive simulator for the 240×240 agent display.
+Interactive simulator for the 480×480 agent display (VIEWE panel).
 
 ## Open the simulator
 
@@ -38,5 +38,5 @@ Updates GIFs, `pixel-faces.json`, `manifest.json`, and `preview/beacon-sprites.j
 
 - Click any state on the left panel
 - **Auto cycle** — rotates through all states
-- **Round display** — round bezel (GC9A01 style)
+- **Round display** — round bezel (VIEWE Φ80 mm style)
 - **Show exported GIF** — switch between canvas preview and bundled GIF files

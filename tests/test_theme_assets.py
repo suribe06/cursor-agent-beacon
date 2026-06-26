@@ -44,6 +44,6 @@ def test_standard_theme_covers_core_agent_states():
 def test_theme_manifest_display_metadata(theme_id: str):
     theme = load_theme(theme_id, THEMES_ROOT)
     display = theme.manifest.get("display") or {}
-    assert display.get("width") == 240
-    assert display.get("height") == 240
+    assert display.get("width") == 480
+    assert display.get("height") == 480
     assert display.get("format") == "gif"
