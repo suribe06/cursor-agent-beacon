@@ -126,7 +126,14 @@ def test_hook_reactivates_stale_session(tmp_path: Path):
         )
     )
     apply_session_housekeeping(
-        {"conv-a": {"id": "conv-a", "state": "success", "updated_at": "2026-06-25T10:00:00+00:00", "active": True}},
+        {
+            "conv-a": {
+                "id": "conv-a",
+                "state": "success",
+                "updated_at": "2026-06-25T10:00:00+00:00",
+                "active": True,
+            }
+        },
         now_ts=1782496800.0,
     )
 
