@@ -13,6 +13,8 @@ from cursor_agent_beacon.handler import (
     run_hook_handler,
 )
 from cursor_agent_beacon.mapper import map_hook_event
+from cursor_agent_beacon.models import AgentStatus
+from cursor_agent_beacon.sinks.base import StatusSink
 
 
 def main() -> int:
@@ -75,7 +77,7 @@ def _run_bridge(_args: argparse.Namespace) -> int:
 
 
 class _NullSink:
-    def publish(self, _status) -> None:
+    def publish(self, status: AgentStatus) -> None:
         return
 
 

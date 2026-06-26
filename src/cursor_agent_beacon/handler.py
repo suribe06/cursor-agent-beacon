@@ -38,34 +38,34 @@ def run_hook_handler(
     config: BeaconConfig | None = None,
 ) -> int:
     """Entry point used by the Cursor hook script."""
-    stdin = stdin or sys.stdin
-    stdout = stdout or sys.stdout
-    stderr = stderr or sys.stderr
+    stdin_io: TextIO = stdin if stdin is not None else sys.stdin
+    stdout_io: TextIO = stdout if stdout is not None else sys.stdout
+    stderr_io: TextIO = stderr if stderr is not None else sys.stderr
 
     try:
-        raw_input = stdin.read()
+        raw_input = stdin_io.read()
         event = parse_hook_input(raw_input)
         active_sink = sink or build_sinks(config)
         response = handle_hook_event(event, sink=active_sink)
-        stdout.write(dump_hook_response(response))
-        stdout.write("\n")
-        stdout.flush()
+        stdout_io.write(dump_hook_response(response))
+        stdout_io.write("\n")
+        stdout_io.flush()
         return 0
     except json.JSONDecodeError as exc:
         print(
             f"[cursor-agent-beacon] invalid hook JSON: {exc}",
-            file=stderr,
+            file=stderr_io,
             flush=True,
         )
-        stdout.write('{"continue": true}\n')
-        stdout.flush()
+        stdout_io.write('{"continue": true}\n')
+        stdout_io.flush()
         return 0
     except Exception as exc:  # noqa: BLE001 - hooks must fail open
         print(
             f"[cursor-agent-beacon] handler error: {exc}",
-            file=stderr,
+            file=stderr_io,
             flush=True,
         )
-        stdout.write('{"continue": true}\n')
-        stdout.flush()
+        stdout_io.write('{"continue": true}\n')
+        stdout_io.flush()
         return 0

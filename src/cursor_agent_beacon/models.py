@@ -4,15 +4,9 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from enum import Enum
 from typing import Any
 
-try:
-    from enum import StrEnum
-except ImportError:  # Python < 3.11
-
-    class StrEnum(str, Enum):
-        """Backport of enum.StrEnum for Python 3.10."""
+from cursor_agent_beacon.compat import StrEnum
 
 
 class AgentState(StrEnum):
@@ -36,6 +30,8 @@ class AgentStatus:
     hook_event_name: str
     conversation_id: str | None = None
     generation_id: str | None = None
+    project: str | None = None
+    label: str | None = None
     timestamp: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
@@ -55,12 +51,14 @@ class AgentStatus:
             hook_event_name=str(payload.get("hook_event_name", "bridge")),
             conversation_id=payload.get("conversation_id"),
             generation_id=payload.get("generation_id"),
+            project=payload.get("project"),
+            label=payload.get("label"),
             timestamp=str(payload.get("timestamp", default_ts)),
             metadata=dict(payload.get("metadata") or {}),
         )
 
     def serial_line(self) -> str:
-        """Format used by the future Arduino bridge: STATUS|state|message."""
+        """Format used by the VIEWE bridge: STATUS|state|message."""
         safe_message = self.message.replace("|", "/")[:64]
         return f"STATUS|{self.state.value}|{safe_message}"
 
