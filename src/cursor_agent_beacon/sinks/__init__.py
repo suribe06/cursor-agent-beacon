@@ -33,7 +33,14 @@ def build_sinks(config: BeaconConfig | None = None) -> StatusSink:
     if config.enable_file_sink:
         sinks.append(FileStatusSink(config.status_file))
     if config.http_url:
-        sinks.append(HttpStatusSink(config.http_url, config.http_timeout_seconds))
+        focused_file = config.status_file if config.enable_file_sink else None
+        sinks.append(
+            HttpStatusSink(
+                config.http_url,
+                config.http_timeout_seconds,
+                focused_status_file=focused_file,
+            )
+        )
 
     if not sinks:
         sinks.append(LogStatusSink())
