@@ -1,6 +1,6 @@
 # Display themes
 
-Each theme is a folder with `manifest.json` + `assets/*.gif` (240×240 recommended).
+Each theme is a folder with `manifest.json` + `assets/*.gif` (**480×480** for VIEWE UEDX48480021-MD80E).
 
 ## Standard theme (default, in repo)
 

@@ -12,15 +12,15 @@ Cursor hooks fire deterministically during the agent lifecycle. They do not depe
 |---|---|
 | Python hook handler | ✅ Shipped |
 | Status sinks (log, file, HTTP) | ✅ Shipped |
-| Standard GIF theme (240×240) | ✅ Bundled in repo |
+| Standard GIF theme (480×480, VIEWE) | ✅ Bundled in repo |
 | Custom theme packs | ✅ Layout + loader |
 | Local bridge service | ✅ Shipped |
-| ESP32 firmware | 🔜 Phase 3 |
+| VIEWE firmware (LVGL) | 🔜 Phase 3 |
 
 ## Data flow (with bridge)
 
 ```text
-Hooks → HTTP POST → bridge service → serial → ESP32 → GIF + caption
+Hooks → HTTP POST → bridge service → serial → VIEWE panel → LVGL animation
                       │
                       └── resolves GIF from theme pack per state
 ```
@@ -64,7 +64,7 @@ cursor_agent_beacon.handler
 ## Data flow (target)
 
 ```text
-Hooks → HTTP POST → bridge service → serial → ESP32 → GIF + caption
+Hooks → HTTP POST → bridge service → serial → VIEWE panel → LVGL animation
 ```
 
 ## Normalized status
@@ -112,7 +112,7 @@ Hooks must never block Cursor. The handler:
 | `CURSOR_AGENT_BEACON_HTTP_TIMEOUT` | `1.0` | HTTP timeout in seconds |
 | `CURSOR_AGENT_BEACON_BRIDGE_HOST` | `127.0.0.1` | Bridge bind address |
 | `CURSOR_AGENT_BEACON_BRIDGE_PORT` | `8765` | Bridge HTTP port |
-| `CURSOR_AGENT_BEACON_SERIAL_PORT` | unset | ESP32 serial device |
+| `CURSOR_AGENT_BEACON_SERIAL_PORT` | unset | VIEWE USB serial device |
 | `CURSOR_AGENT_BEACON_SERIAL_BAUD` | `115200` | Serial baud rate |
 | `CURSOR_AGENT_BEACON_THEME` | `standard` | Active theme id |
 | `CURSOR_AGENT_BEACON_THEMES_DIR` | `themes` | Theme packs root |

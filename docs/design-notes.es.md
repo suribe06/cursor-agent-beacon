@@ -1,8 +1,6 @@
 # Panel Físico de Estado del Agente (Arduino + Cursor Hooks)
 
-> Original design document (Spanish). Phase 1 (Python hooks) is implemented in this repository.
->
-> **Alcance actual:** solo display del estado del agente (Cursor → hardware). El botón físico y el path MCP (`get_pending_events`) fueron removidos del roadmap; ver [`roadmap.md`](roadmap.md).
+> **Hardware actualizado:** el panel objetivo es el **VIEWE UEDX48480021-MD80E** (480×480, LVGL). Ver [`hardware-viewe.md`](hardware-viewe.md). Este documento conserva el diseño histórico Arduino + OLED.
 
 ## 1. Objetivo del proyecto
 

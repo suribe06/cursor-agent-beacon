@@ -16,7 +16,7 @@ This is the software foundation for a physical status panel (ESP32 + color TFT).
 
 - Single hook handler for agent lifecycle events
 - Normalized status model (`idle`, `thinking`, `running_shell`, `running_mcp`, `success`, `error`, ...)
-- **Standard theme**: 8 animated pixel-robot GIFs (240×240) in `themes/standard/assets/`
+- **Standard theme**: 8 animated pixel-robot GIFs (480×480) in `themes/standard/assets/`
 - **Custom themes**: drop your own GIFs in `themes/custom/<name>/`
 - Fail-open behavior — hooks never block Cursor
 - JSON log sink (stderr) for the Hooks output channel
@@ -85,7 +85,7 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 | Standard GIF theme | ✅ bundled |
 | Custom GIF themes | ✅ `themes/custom/` |
 | Local bridge service | ✅ v0.2 |
-| ESP32 firmware | 🔜 planned |
+| VIEWE display firmware | 🔜 planned |
 
 See [`docs/roadmap.md`](docs/roadmap.md).
 
@@ -94,6 +94,7 @@ See [`docs/roadmap.md`](docs/roadmap.md).
 - [Getting Started](docs/getting-started.md)
 - [Hooks Reference](docs/hooks.md)
 - [Architecture](docs/architecture.md)
+- [Hardware — VIEWE](docs/hardware-viewe.md)
 - [Roadmap](docs/roadmap.md)
 - [Changelog](CHANGELOG.md)
 

@@ -58,7 +58,7 @@ Mapping logic lives in `src/cursor_agent_beacon/mapper.py`.
 
 Add sinks in `src/cursor_agent_beacon/sinks/` and register them in `build_sinks()`.
 
-For the future Arduino bridge, set:
+For the VIEWE bridge, set:
 
 ```bash
 export CURSOR_AGENT_BEACON_HTTP_URL=http://127.0.0.1:8765/status

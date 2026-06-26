@@ -119,13 +119,18 @@ Without `CURSOR_AGENT_BEACON_SERIAL_PORT`, serial output is logged to stderr:
 [cursor-agent-beacon-bridge] serial: STATUS|thinking|...
 ```
 
-**With hardware connected:**
+**With VIEWE board connected (Linux USB-CDC):**
 
 ```bash
-export CURSOR_AGENT_BEACON_SERIAL_PORT=/dev/ttyUSB0
+cp config/hardware.env.example config/hardware.env
+# edit CURSOR_AGENT_BEACON_SERIAL_PORT (often /dev/ttyACM0)
+
+export CURSOR_AGENT_BEACON_SERIAL_PORT=/dev/ttyACM0
 export CURSOR_AGENT_BEACON_SERIAL_BAUD=115200
 cursor-agent-beacon bridge
 ```
+
+See [Hardware — VIEWE](hardware-viewe.md) for the full plug-and-play checklist.
 
 Check bridge health:
 
@@ -151,4 +156,5 @@ curl -s http://127.0.0.1:8765/health | jq
 - [Hooks Reference](hooks.md)
 - [Display themes](display-themes.md)
 - [Architecture](architecture.md)
-- [Roadmap](roadmap.md) — ESP32 firmware
+- [Hardware — VIEWE](hardware-viewe.md)
+- [Roadmap](roadmap.md) — VIEWE firmware

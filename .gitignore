@@ -42,6 +42,8 @@ themes/custom/*
 !themes/custom/README.md
 !themes/custom/example/
 !themes/custom/example/**
+firmware/viewe/data/**/*.png
+config/hardware.env
 *.log
 
 # OS

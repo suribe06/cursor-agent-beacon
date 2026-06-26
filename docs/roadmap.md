@@ -10,7 +10,7 @@
 ## Phase 1.5 — Standard display theme ✅
 
 - [x] Pixel robot sprite generator (`scripts/build_character_sprites.py`)
-- [x] Export 240×240 GIFs (`scripts/export_standard_gifs.py`)
+- [x] Export 480×480 GIFs (`scripts/export_standard_gifs.py`)
 - [x] `themes/standard/manifest.json` + bundled assets
 - [x] Custom theme layout (`themes/custom/`)
 - [x] Theme loader (`cursor_agent_beacon.theme`)
@@ -24,14 +24,27 @@
 - [x] Serial writer thread for ESP32 commands
 - [x] Single owner of the USB serial port
 
-## Phase 3 — ESP32 display firmware
+## Phase 3 — VIEWE display firmware (ESP32-S3 + LVGL)
 
-- [ ] ESP32 + ST7789/GC9A01 240×240 color TFT
-- [ ] GIF playback from SPIFFS/SD using `themes/standard/manifest.json`
-- [ ] Parse `STATUS|state|message` serial lines
+Target: **VIEWE UEDX48480021-MD80E** (480×480, ST7701S, knob + touch). See [`hardware-viewe.md`](hardware-viewe.md).
+
+### Prep without hardware ✅
+
+- [x] Shared serial protocol (`protocol.py` + `firmware/viewe/protocol.cpp`)
+- [x] Fake serial device (`scripts/fake_serial_device.py`)
+- [x] Firmware asset export (`scripts/export_firmware_assets.py`)
+- [x] Arduino sketch skeleton (`firmware/viewe/cursor_agent_beacon/`)
+
+### Needs the board
+
+- [ ] Verify VIEWESMART `examples/2.1inch` compiles and runs
+- [ ] Merge vendor LVGL + `ESP32_Display_Panel` init into beacon sketch
+- [ ] Parse `STATUS|state|message` and switch LVGL animation
+- [ ] Load PNG frames from `firmware/viewe/data/standard/`
 - [ ] Optional caption line under character
+- [ ] (Later) knob/button → `EVENT|...` serial lines
 
-Assets ready: [`themes/standard/ASSETS.md`](../themes/standard/ASSETS.md)
+Assets: [`themes/standard/ASSETS.md`](../themes/standard/ASSETS.md) · export with `scripts/export_firmware_assets.py`
 
 ## Design notes
 
