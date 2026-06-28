@@ -24,6 +24,19 @@
 - [x] Serial writer thread for ESP32 commands
 - [x] Single owner of the USB serial port
 
+## Phase 2.5 — GNOME desktop panel 🧪
+
+Target: Ubuntu / GNOME Shell 46+ top-bar indicator (pre-release v0.10).
+
+- [x] Multi-session registry on disk (`~/.local/share/cursor-agent-beacon/`)
+- [x] GNOME Shell extension (`gnome-extension/`)
+- [x] User-level hook installer (`scripts/install-user-hooks.sh`)
+- [x] Session pin menu + human-readable timestamps
+- [ ] Stable panel position across shell restarts
+- [ ] Turn timer (`startedAt`) in panel
+
+Install: `./scripts/install-desktop.sh` · Docs: [`gnome-panel.md`](gnome-panel.md)
+
 ## Phase 3 — VIEWE display firmware (ESP32-S3 + LVGL)
 
 Target: **VIEWE UEDX48480021-MD80E** (480×480, ST7701S, knob + touch). See [`hardware-viewe.md`](hardware-viewe.md).

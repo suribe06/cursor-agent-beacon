@@ -152,7 +152,7 @@ curl -s http://127.0.0.1:8765/health | jq
 
 | Variable | Default | Description |
 |---|---|---|
-| `CURSOR_AGENT_BEACON_STATUS_FILE` | `.cursor-agent-beacon/status.json` | Latest status path |
+| `CURSOR_AGENT_BEACON_STATUS_FILE` | `.cursor-agent-beacon/status.json` (project) or `~/.local/share/cursor-agent-beacon/status.json` (user install) | Latest status path |
 | `CURSOR_AGENT_BEACON_THEME` | `standard` | Theme id |
 | `CURSOR_AGENT_BEACON_THEMES_DIR` | `themes` | Theme packs root |
 | `CURSOR_AGENT_BEACON_HTTP_URL` | unset | Bridge endpoint (`http://127.0.0.1:8765/status`) |

@@ -13,18 +13,37 @@ Official Cursor docs: https://cursor.com/docs/hooks
 | `beforeSubmitPrompt` | `waiting` | First line of prompt |
 | `afterAgentThought` | `thinking` | Thinking... |
 | `beforeShellExecution` | `running_shell` | Shell command |
-| `afterShellExecution` | `success` / `error` | Shell command |
+| `afterShellExecution` | `thinking` / `error` | Shell done / failed |
 | `beforeMCPExecution` | `running_mcp` | Tool: server:tool |
-| `afterMCPExecution` | `success` | Tool done: ... |
-| `afterAgentResponse` | `success` | Response preview |
+| `afterMCPExecution` | `thinking` | Thinking... |
+| `afterAgentResponse` | `thinking` | Response preview |
 | `stop` | `success` / `error` / `idle` | Ready / error / aborted |
 | `preToolUse` | `waiting` | Using tool |
-| `postToolUse` | `success` | Done: tool |
+| `postToolUse` | `thinking` | Thinking... |
 | `postToolUseFailure` | `error` | Failed: tool |
 | `subagentStart` | `thinking` | Subagent: explore |
-| `subagentStop` | `success` | Subagent finished |
+| `subagentStop` | `thinking` | Thinking... |
 
 Unsupported hooks are ignored safely.
+
+## Multi-session status files
+
+When `CURSOR_AGENT_BEACON_STATUS_FILE` points at `~/.local/share/cursor-agent-beacon/status.json` (default after `./scripts/install-user-hooks.sh`), the file sink also writes:
+
+| Path | Purpose |
+| --- | --- |
+| `registry.json` | Index of active sessions + `focused_conversation_id` |
+| `sessions/<conversation_id>.json` | Per-chat state, label, project |
+| `status.json` | Auto-focused session snapshot (GNOME panel reads this + registry) |
+
+## Global vs project hooks
+
+| Setup | Hooks location | Status dir |
+| --- | --- | --- |
+| Open repo in Cursor | `.cursor/hooks.json` (project) | `.cursor-agent-beacon/` (project) |
+| `./scripts/install-user-hooks.sh` | `~/.cursor/hooks.json` (user) | `~/.local/share/cursor-agent-beacon/` |
+
+Use **user hooks** for the GNOME panel across all projects.
 
 ## Hook responses
 
@@ -44,7 +63,16 @@ See [`examples/sample-events/`](../examples/sample-events/).
 
 1. Open Cursor → Output → **Hooks**
 2. Trigger an agent action (shell command, MCP call, response)
-3. Check stderr JSON lines and `.cursor-agent-beacon/status.json`
+3. Check stderr JSON lines and status files:
+
+```bash
+# project hooks
+cat .cursor-agent-beacon/status.json
+
+# user hooks (GNOME panel)
+cat ~/.local/share/cursor-agent-beacon/status.json
+cat ~/.local/share/cursor-agent-beacon/registry.json
+```
 
 If hooks do not load:
 
