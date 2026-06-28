@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.cursor-status-panel"
+          path="/org/gnome/shell/extensions/cursor-status-panel/">
+    <key name="pinned-conversation-id" type="s">
+      <default>''</default>
+      <summary>Pinned Cursor agent conversation</summary>
+      <description>When set, the panel follows this conversation instead of the busiest one.</description>
+    </key>
+    <key name="panel-side" type="s">
+      <choices>
+        <choice value='left'/>
+        <choice value='right'/>
+      </choices>
+      <default>'right'</default>
+      <summary>Panel area for the status indicator</summary>
+      <description>left = near Activities; right = with system tray icons.</description>
+    </key>
+  </schema>
+</schemalist>

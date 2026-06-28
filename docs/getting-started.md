@@ -25,7 +25,17 @@ This repo includes project hooks:
 
 Open the folder in Cursor. Hooks reload when the config is saved.
 
-To use the beacon in another project, copy those two paths or install the package and point your hook command at the handler.
+To use the beacon in another project, run `./scripts/install-user-hooks.sh` or copy `.cursor/hooks.json` + hook handler.
+
+## Ubuntu GNOME panel
+
+Install hooks globally and the top-bar extension:
+
+```bash
+./scripts/install-desktop.sh
+```
+
+See [GNOME Status Panel](gnome-panel.md).
 
 ## Verify without Cursor (CLI)
 
