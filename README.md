@@ -84,7 +84,7 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 | --- | --- | --- |
 | `CURSOR_AGENT_BEACON_LOG` | `true` | Emit JSON lines to stderr |
 | `CURSOR_AGENT_BEACON_FILE` | `true` | Write latest status file |
-| `CURSOR_AGENT_BEACON_STATUS_FILE` | `.cursor-agent-beacon/status.json` | Status file path |
+| `CURSOR_AGENT_BEACON_STATUS_FILE` | `.cursor-agent-beacon/status.json` (project) or `~/.local/share/cursor-agent-beacon/status.json` (user install) | Status snapshot path |
 | `CURSOR_AGENT_BEACON_HTTP_URL` | unset | Bridge `POST /status` endpoint |
 | `CURSOR_AGENT_BEACON_BRIDGE_HOST` | `127.0.0.1` | Bridge bind address |
 | `CURSOR_AGENT_BEACON_BRIDGE_PORT` | `8765` | Bridge HTTP port |

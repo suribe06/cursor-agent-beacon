@@ -9,7 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- GitHub Actions CI (lint, test matrix, package build)
+- **GNOME status panel** (v0.10 pre-release): `gnome-extension/` + install scripts
+- **Multi-session file sink**: `registry.json`, `sessions/<id>.json`, auto-focused `status.json`
+- `scripts/install-desktop.sh`, `install-user-hooks.sh`, `install-gnome-panel.sh`
+- `docs/gnome-panel.md`
+- Session registry (`session_registry.py`) with per-conversation status and busy-session focus
+
+### Changed
+
+- Mapper: `postToolUse`, `afterShellExecution`, etc. return `thinking` until `stop` (not premature `success`)
+- `AgentStatus` includes `project` and `label` for panel display
+
+### Added (infra)
 - Release workflow on version tags
 - Dependabot for GitHub Actions and pip
 - Issue and pull request templates
