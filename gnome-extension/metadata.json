@@ -1,0 +1,9 @@
+{
+  "uuid": "cursor-status-panel@suribe06",
+  "name": "Cursor Status Panel",
+  "description": "Cursor agent status in the GNOME top bar (via cursor-agent-beacon)",
+  "shell-version": ["46"],
+  "settings-schema": "org.gnome.shell.extensions.cursor-status-panel",
+  "version": 1,
+  "url": "https://github.com/suribe06/cursor-agent-beacon"
+}

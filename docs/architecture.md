@@ -15,6 +15,7 @@ Cursor hooks fire deterministically during the agent lifecycle. They do not depe
 | Standard GIF theme (480×480, VIEWE) | ✅ Bundled in repo |
 | Custom theme packs | ✅ Layout + loader |
 | Local bridge service | ✅ Shipped |
+| Multi-session registry + GNOME panel | 🧪 v0.10 pre-release |
 | VIEWE firmware (LVGL) | 🔜 Phase 3 |
 
 ## Data flow (with bridge)
@@ -41,6 +42,17 @@ export CURSOR_AGENT_BEACON_HTTP_URL=http://127.0.0.1:8765/status
 ```
 
 Without `CURSOR_AGENT_BEACON_SERIAL_PORT`, the bridge logs serial lines to stderr (dry-run). With a port set, install `pip install -e ".[bridge]"` for pyserial support.
+
+## Data flow (GNOME desktop)
+
+```text
+Cursor hooks → session_registry → ~/.local/share/cursor-agent-beacon/
+                                      registry.json + sessions/*.json
+                                           ↓ poll
+                                    gnome-extension/ (top bar)
+```
+
+Install: `./scripts/install-desktop.sh`. See [GNOME Status Panel](gnome-panel.md).
 
 ## Data flow (today)
 

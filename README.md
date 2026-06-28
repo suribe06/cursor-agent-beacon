@@ -23,6 +23,8 @@ This is the software foundation for a physical status panel (ESP32 + color TFT).
 - File sink with latest status snapshot
 - HTTP sink for the local bridge service
 - **Bridge service** (`cursor-agent-beacon bridge`): `POST /status` → theme GIF resolution → serial commands
+- **GNOME status panel** (v0.10, pre-release): Ubuntu top-bar indicator — [`gnome-extension/`](gnome-extension/) + [`docs/gnome-panel.md`](docs/gnome-panel.md)
+- **Multi-session registry**: per-chat status under `~/.local/share/cursor-agent-beacon/`
 
 ## Quick start
 
@@ -48,7 +50,21 @@ python3 scripts/simulate_hook.py examples/sample-events/after_agent_thought.json
 
 Open this repository in Cursor to activate the bundled `.cursor/hooks.json`.
 
-Latest status snapshot:
+**Ubuntu desktop (hooks + GNOME panel):**
+
+```bash
+./scripts/install-desktop.sh
+# Alt+F2 → r to reload GNOME Shell
+```
+
+Global status (any Cursor project):
+
+```bash
+cat ~/.local/share/cursor-agent-beacon/status.json
+cat ~/.local/share/cursor-agent-beacon/registry.json
+```
+
+Project-local status (when using repo hooks without install-user-hooks):
 
 ```bash
 cat .cursor-agent-beacon/status.json
@@ -82,6 +98,8 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 | Component | Status |
 | --- | --- |
 | Python hook handler | ✅ v0.2 |
+| Multi-session file sink | ✅ v0.2 |
+| GNOME status panel | 🧪 v0.10 pre-release |
 | Standard GIF theme | ✅ bundled |
 | Custom GIF themes | ✅ `themes/custom/` |
 | Local bridge service | ✅ v0.2 |
@@ -93,6 +111,7 @@ See [`docs/roadmap.md`](docs/roadmap.md).
 
 - [Getting Started](docs/getting-started.md)
 - [Hooks Reference](docs/hooks.md)
+- [GNOME Status Panel](docs/gnome-panel.md)
 - [Architecture](docs/architecture.md)
 - [Hardware — VIEWE](docs/hardware-viewe.md)
 - [Roadmap](docs/roadmap.md)
