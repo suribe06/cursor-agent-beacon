@@ -1,6 +1,5 @@
 """Tests for environment configuration."""
 
-
 from cursor_agent_beacon.config import BeaconConfig, redact_enabled
 
 

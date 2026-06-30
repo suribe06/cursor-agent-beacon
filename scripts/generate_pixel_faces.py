@@ -19,7 +19,9 @@ def load_faces(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def grid_to_image(grid: list[str], palette: dict[str, str | None], scale: int) -> Image.Image:
+def grid_to_image(
+    grid: list[str], palette: dict[str, str | None], scale: int
+) -> Image.Image:
     height = len(grid)
     width = max(len(row) for row in grid)
     img = Image.new("RGBA", (width * scale, height * scale), (0, 0, 0, 0))
@@ -39,7 +41,9 @@ def grid_to_image(grid: list[str], palette: dict[str, str | None], scale: int) -
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate PNGs from pixel face definitions")
+    parser = argparse.ArgumentParser(
+        description="Generate PNGs from pixel face definitions"
+    )
     parser.add_argument(
         "--faces",
         type=Path,
@@ -72,7 +76,9 @@ def main() -> int:
             image.save(out_path)
             print(f"  {out_path}")
 
-    print(f"\nExported {sum(len(f.get('frames', [])) for f in data['faces'].values())} PNG frames.")
+    print(
+        f"\nExported {sum(len(f.get('frames', [])) for f in data['faces'].values())} PNG frames."
+    )
     return 0
 
 

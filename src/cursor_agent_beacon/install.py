@@ -93,9 +93,7 @@ def install_gnome_extension(
     if not src.is_dir():
         raise FileNotFoundError(f"GNOME extension not found: {src}")
 
-    dest_parent = dest_parent or (
-        Path.home() / ".local/share/gnome-shell/extensions"
-    )
+    dest_parent = dest_parent or (Path.home() / ".local/share/gnome-shell/extensions")
     dest = dest_parent / GNOME_UUID
     if dest.exists():
         shutil.rmtree(dest)

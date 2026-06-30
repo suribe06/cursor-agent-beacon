@@ -33,7 +33,9 @@ def find_file(input_dir: Path, hints: list[str]) -> Path | None:
         if not path.is_file():
             continue
         name = path.name.lower()
-        if path.suffix.lower() in {".gif", ".png"} and any(h.lower() in name for h in hints):
+        if path.suffix.lower() in {".gif", ".png"} and any(
+            h.lower() in name for h in hints
+        ):
             return path
     return None
 
@@ -92,14 +94,18 @@ def prepare_janitoad(input_dir: Path, output_dir: Path, size: int) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Prepare theme GIF assets")
-    parser.add_argument("--input", type=Path, required=True, help="Extracted asset folder")
+    parser.add_argument(
+        "--input", type=Path, required=True, help="Extracted asset folder"
+    )
     parser.add_argument(
         "--output",
         type=Path,
         default=Path("themes/standard"),
         help="Theme output directory",
     )
-    parser.add_argument("--size", type=int, default=240, help="Square GIF size in pixels")
+    parser.add_argument(
+        "--size", type=int, default=240, help="Square GIF size in pixels"
+    )
     parser.add_argument(
         "--pack",
         choices=["janitoad"],
@@ -112,7 +118,9 @@ def main() -> int:
         print(f"Input directory not found: {args.input}", file=sys.stderr)
         return 1
 
-    manifest_src = Path(__file__).resolve().parents[1] / "themes" / "standard" / "manifest.json"
+    manifest_src = (
+        Path(__file__).resolve().parents[1] / "themes" / "standard" / "manifest.json"
+    )
     if manifest_src.exists() and args.output.resolve() != manifest_src.parent.resolve():
         shutil.copy2(manifest_src, args.output / "manifest.json")
 
@@ -120,7 +128,10 @@ def main() -> int:
     missing = prepare_janitoad(args.input, args.output, args.size)
 
     if missing:
-        print("\nMissing animations (add manually or check folder names):", file=sys.stderr)
+        print(
+            "\nMissing animations (add manually or check folder names):",
+            file=sys.stderr,
+        )
         for name in missing:
             print(f"  - {name}", file=sys.stderr)
         return 1

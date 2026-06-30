@@ -1,6 +1,5 @@
 """Tests for packaged asset path resolution."""
 
-
 from cursor_agent_beacon import paths
 
 
