@@ -6,6 +6,12 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from cursor_agent_beacon.paths import default_themes_dir
+
+
+def redact_enabled() -> bool:
+    return _env_bool("CURSOR_AGENT_BEACON_REDACT_CONTENT", False)
+
 
 def _env_bool(name: str, default: bool) -> bool:
     raw = os.environ.get(name)
@@ -20,6 +26,7 @@ class BeaconConfig:
 
     enable_log_sink: bool = True
     enable_file_sink: bool = True
+    redact_content: bool = False
     status_file: Path = Path(".cursor-agent-beacon/status.json")
     http_url: str | None = None
     http_timeout_seconds: float = 1.0
@@ -44,9 +51,10 @@ class BeaconConfig:
         return cls(
             enable_log_sink=_env_bool("CURSOR_AGENT_BEACON_LOG", True),
             enable_file_sink=_env_bool("CURSOR_AGENT_BEACON_FILE", True),
+            redact_content=_env_bool("CURSOR_AGENT_BEACON_REDACT_CONTENT", False),
             status_file=status_file,
             http_url=http_url,
             http_timeout_seconds=timeout,
             theme_id=os.environ.get("CURSOR_AGENT_BEACON_THEME", "standard"),
-            themes_dir=Path(os.environ.get("CURSOR_AGENT_BEACON_THEMES_DIR", "themes")),
+            themes_dir=default_themes_dir(),
         )

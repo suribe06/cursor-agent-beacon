@@ -90,6 +90,24 @@
         "command": "python3 .cursor/hooks/hook-handler.py",
         "timeout": 5
       }
+    ],
+    "beforeReadFile": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
+    ],
+    "preCompact": [
+      {
+        "command": "python3 .cursor/hooks/hook-handler.py",
+        "timeout": 5
+      }
     ]
   }
 }

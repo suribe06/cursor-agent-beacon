@@ -127,7 +127,8 @@ Hooks must never block Cursor. The handler:
 | `CURSOR_AGENT_BEACON_SERIAL_PORT` | unset | VIEWE USB serial device |
 | `CURSOR_AGENT_BEACON_SERIAL_BAUD` | `115200` | Serial baud rate |
 | `CURSOR_AGENT_BEACON_THEME` | `standard` | Active theme id |
-| `CURSOR_AGENT_BEACON_THEMES_DIR` | `themes` | Theme packs root |
+| `CURSOR_AGENT_BEACON_THEMES_DIR` | packaged or repo `themes/` | Theme packs root |
+| `CURSOR_AGENT_BEACON_REDACT_CONTENT` | `false` | Hide prompt/response in status |
 
 ## Project layout
 

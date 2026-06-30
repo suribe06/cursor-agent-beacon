@@ -1,0 +1,13 @@
+{
+  "hook_event_name": "afterFileEdit",
+  "conversation_id": "conv-1",
+  "generation_id": "gen-1",
+  "file_path": "src/cursor_agent_beacon/mapper.py",
+  "edits": [
+    {
+      "old_string": "return None",
+      "new_string": "return status"
+    }
+  ],
+  "workspace_roots": ["/home/user/projects/cursor-agent-beacon"]
+}

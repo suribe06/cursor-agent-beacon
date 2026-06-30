@@ -33,7 +33,7 @@ Target: Ubuntu / GNOME Shell 46+ top-bar indicator (pre-release v0.10).
 - [x] User-level hook installer (`scripts/install-user-hooks.sh`)
 - [x] Session pin menu + human-readable timestamps
 - [ ] Stable panel position across shell restarts
-- [ ] Turn timer (`startedAt`) in panel
+- [x] Turn timer (`startedAt`) in panel
 
 Install: `./scripts/install-desktop.sh` · Docs: [`gnome-panel.md`](gnome-panel.md)
 

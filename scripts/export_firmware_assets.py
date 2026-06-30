@@ -55,7 +55,9 @@ def export_gif_frames(gif_path: Path, dest_dir: Path) -> list[dict]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Export LVGL-ready theme frames")
-    parser.add_argument("--theme", default="standard", help="Theme id (default: standard)")
+    parser.add_argument(
+        "--theme", default="standard", help="Theme id (default: standard)"
+    )
     parser.add_argument(
         "--output",
         type=Path,
@@ -84,7 +86,9 @@ def main() -> int:
             "width": DISPLAY_SIZE,
             "height": DISPLAY_SIZE,
             "format": "png_sequence",
-            "background": theme.manifest.get("display", {}).get("background", "#071020"),
+            "background": theme.manifest.get("display", {}).get(
+                "background", "#071020"
+            ),
             "target": "viewe-480",
         },
         "states": states,

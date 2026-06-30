@@ -1,4 +1,4 @@
-"""CLI utilities for local testing."""
+"""CLI utilities for local testing and installation."""
 
 from __future__ import annotations
 
@@ -37,9 +37,27 @@ def main() -> int:
 
     bridge_parser = subparsers.add_parser(
         "bridge",
-        help="Run the local HTTP + serial bridge service (Phase 2)",
+        help="Run the local HTTP + serial bridge service",
     )
     bridge_parser.set_defaults(func=_run_bridge)
+
+    install_hooks = subparsers.add_parser(
+        "install-hooks",
+        help="Install merge-safe user-level Cursor hooks",
+    )
+    install_hooks.set_defaults(func=_install_hooks)
+
+    install_gnome = subparsers.add_parser(
+        "install-gnome",
+        help="Install the GNOME Shell status panel extension",
+    )
+    install_gnome.set_defaults(func=_install_gnome)
+
+    install_desktop = subparsers.add_parser(
+        "install-desktop",
+        help="Install user hooks and GNOME panel",
+    )
+    install_desktop.set_defaults(func=_install_desktop)
 
     args = parser.parse_args()
     return int(args.func(args))
@@ -72,6 +90,51 @@ def _run_bridge(_args: argparse.Namespace) -> int:
     config = BridgeConfig.from_env()
     service = BridgeService(config)
     run_bridge_server(service, config.host, config.port)
+    return 0
+
+
+def _install_hooks(_args: argparse.Namespace) -> int:
+    from cursor_agent_beacon.install import verify_package_installed, write_user_hooks
+
+    try:
+        verify_package_installed()
+        hooks_path = write_user_hooks()
+    except (RuntimeError, FileNotFoundError) as exc:
+        print(f"[cursor-agent-beacon] install-hooks failed: {exc}", file=sys.stderr)
+        return 1
+
+    print(f"Hooks: {hooks_path}")
+    print("Restart Cursor after install.")
+    return 0
+
+
+def _install_gnome(_args: argparse.Namespace) -> int:
+    from cursor_agent_beacon.install import install_gnome_extension
+
+    try:
+        dest = install_gnome_extension()
+    except FileNotFoundError as exc:
+        print(f"[cursor-agent-beacon] install-gnome failed: {exc}", file=sys.stderr)
+        return 1
+
+    print(f"GNOME extension: {dest}")
+    print("Reload GNOME Shell if the panel does not update.")
+    return 0
+
+
+def _install_desktop(_args: argparse.Namespace) -> int:
+    from cursor_agent_beacon.install import install_desktop, verify_package_installed
+
+    try:
+        verify_package_installed()
+        hooks_path, ext_path = install_desktop()
+    except (RuntimeError, FileNotFoundError) as exc:
+        print(f"[cursor-agent-beacon] install-desktop failed: {exc}", file=sys.stderr)
+        return 1
+
+    print(f"Hooks: {hooks_path}")
+    print(f"GNOME extension: {ext_path}")
+    print("Restart Cursor and reload GNOME Shell.")
     return 0
 
 

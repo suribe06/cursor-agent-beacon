@@ -46,6 +46,10 @@ cursor-agent-beacon bridge
 # Forward hook status to the bridge
 export CURSOR_AGENT_BEACON_HTTP_URL=http://127.0.0.1:8765/status
 python3 scripts/simulate_hook.py examples/sample-events/after_agent_thought.json
+
+# Install globally (hooks + GNOME panel)
+cursor-agent-beacon install-desktop
+# or: ./scripts/install-desktop.sh
 ```
 
 Open this repository in Cursor to activate the bundled `.cursor/hooks.json`.
@@ -90,8 +94,9 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 | `CURSOR_AGENT_BEACON_BRIDGE_PORT` | `8765` | Bridge HTTP port |
 | `CURSOR_AGENT_BEACON_SERIAL_PORT` | unset | ESP32 serial device (dry-run if unset) |
 | `CURSOR_AGENT_BEACON_SERIAL_BAUD` | `115200` | Serial baud rate |
-| `CURSOR_AGENT_BEACON_THEME` | `standard` | Theme id (`standard` or `custom/<name>`) |
-| `CURSOR_AGENT_BEACON_THEMES_DIR` | `themes` | Root folder for theme packs |
+| `CURSOR_AGENT_BEACON_THEME` | `standard` | Theme id (`standard` or custom theme name) |
+| `CURSOR_AGENT_BEACON_THEMES_DIR` | packaged `themes/` or repo `themes/` | Root folder for theme packs |
+| `CURSOR_AGENT_BEACON_REDACT_CONTENT` | `false` | Hide prompt/response text in status |
 
 ## Project status
 
@@ -129,10 +134,15 @@ Report security issues privately — see [SECURITY.md](SECURITY.md).
 pip install -e ".[dev,bridge]"
 pytest
 ruff check src tests
+ruff format --check src tests
+pyright
 python -m build
 cursor-agent-beacon bridge
+cursor-agent-beacon install-hooks
 PYTHONPATH=src python3 -m cursor_agent_beacon.cli map examples/sample-events/stop_completed.json
 ```
+
+Systemd user service template: [`packaging/cursor-agent-beacon-bridge.service`](packaging/cursor-agent-beacon-bridge.service)
 
 ## License
 

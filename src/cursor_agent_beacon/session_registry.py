@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -183,6 +184,15 @@ class SessionRegistry:
         else:
             entry["active"] = True
 
+        busy = is_busy_state(status.state.value)
+        was_busy = is_busy_state(str(entry.get("state", "")))
+        if busy and not was_busy:
+            entry["started_at"] = status.timestamp
+        elif not busy and was_busy:
+            if entry.get("started_at"):
+                entry["last_turn_started_at"] = entry["started_at"]
+            entry.pop("started_at", None)
+
         if status.workspace_root:
             entry["workspace_root"] = status.workspace_root
 
@@ -225,6 +235,8 @@ class SessionRegistry:
         payload["active_count"] = busy_count
         payload["focused_conversation_id"] = focused.get("id") if focused else None
         payload["focus_mode"] = "auto"
+        if focused and focused.get("started_at"):
+            payload["started_at"] = focused["started_at"]
         return payload
 
     def _sync_session_files(self, sessions: dict[str, dict[str, Any]]) -> None:
@@ -235,7 +247,12 @@ class SessionRegistry:
             for path in self._sessions_dir.glob("*.json"):
                 if path.name not in known:
                     path.unlink(missing_ok=True)
-        except Exception:
+        except Exception as exc:
+            print(
+                f"[cursor-agent-beacon] session registry cleanup failed: {exc}",
+                file=sys.stderr,
+                flush=True,
+            )
             return
 
     def _load_registry(self) -> dict[str, Any]:
@@ -253,5 +270,10 @@ class SessionRegistry:
                 encoding="utf-8",
             )
             temp_path.replace(path)
-        except Exception:
+        except Exception as exc:
+            print(
+                f"[cursor-agent-beacon] session registry write failed ({path}): {exc}",
+                file=sys.stderr,
+                flush=True,
+            )
             return

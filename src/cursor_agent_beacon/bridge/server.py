@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from cursor_agent_beacon.bridge.service import BridgeService
 
+_MAX_BODY_BYTES = 64 * 1024
+
 
 def run_bridge_server(service: BridgeService, host: str, port: int) -> None:
     handler = _make_handler(service)
@@ -92,6 +94,13 @@ def _make_handler(service: BridgeService) -> type[BaseHTTPRequestHandler]:
                 self._json_response(
                     400,
                     {"ok": False, "error": "invalid Content-Length"},
+                )
+                return
+
+            if length > _MAX_BODY_BYTES:
+                self._json_response(
+                    413,
+                    {"ok": False, "error": "request body too large"},
                 )
                 return
 

@@ -47,7 +47,10 @@ class BridgeService:
 
     def handle_status(self, payload: dict[str, Any]) -> dict[str, Any]:
         status = AgentStatus.from_dict(payload)
-        animation = self._theme.animation_for(status.state.value)
+        animation = self._theme.animation_for(
+            status.state.value,
+            hook_event_name=status.hook_event_name,
+        )
 
         serial_line = status.serial_line()
         self._serial.write_line(serial_line)
