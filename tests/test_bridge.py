@@ -144,3 +144,38 @@ def test_bridge_http_post_status(tmp_path: Path):
     assert health["ok"] is True
     assert health["latest"]["state"] == "thinking"
     service.close()
+
+
+def test_bridge_service_stop_hook_prefers_stop_gif(tmp_path: Path):
+    themes_root = tmp_path / "themes"
+    theme_root = themes_root / "standard"
+    assets = theme_root / "assets"
+    assets.mkdir(parents=True)
+    (assets / "success.gif").write_bytes(b"GIF")
+    (assets / "stop.gif").write_bytes(b"GIF2")
+    manifest = {
+        "id": "standard",
+        "name": "Test",
+        "states": {
+            "success": {"animation": "assets/success.gif", "loop": True},
+            "stop": {"animation": "assets/stop.gif", "loop": False},
+        },
+    }
+    (theme_root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    config = BridgeConfig(theme_id="standard", themes_dir=themes_root)
+    service = BridgeService(
+        config,
+        theme=load_theme("standard", themes_root),
+        serial_writer=DryRunSerialWriter(),
+    )
+
+    result = service.handle_status(
+        {
+            "state": "success",
+            "message": "Ready",
+            "hook_event_name": "stop",
+        }
+    )
+    assert result["gif"] == "assets/stop.gif"
+    service.close()

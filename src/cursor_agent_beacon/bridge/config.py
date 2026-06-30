@@ -6,6 +6,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from cursor_agent_beacon.paths import default_themes_dir
+
 
 def default_bridge_url(host: str = "127.0.0.1", port: int = 8765) -> str:
     return f"http://{host}:{port}/status"
@@ -48,5 +50,5 @@ class BridgeConfig:
             serial_port=serial_port,
             serial_baud=baud,
             theme_id=os.environ.get("CURSOR_AGENT_BEACON_THEME", "standard"),
-            themes_dir=Path(os.environ.get("CURSOR_AGENT_BEACON_THEMES_DIR", "themes")),
+            themes_dir=default_themes_dir(),
         )
