@@ -1,0 +1,7 @@
+{
+  "hook_event_name": "preCompact",
+  "conversation_id": "conv-1",
+  "generation_id": "gen-1",
+  "trigger": "auto",
+  "workspace_roots": ["/home/user/projects/cursor-agent-beacon"]
+}

@@ -23,6 +23,9 @@ Official Cursor docs: https://cursor.com/docs/hooks
 | `postToolUseFailure` | `error` | Failed: tool |
 | `subagentStart` | `thinking` | Subagent: explore |
 | `subagentStop` | `thinking` | Thinking... |
+| `beforeReadFile` | `thinking` | Reading file... |
+| `afterFileEdit` | `thinking` | Editing file... |
+| `preCompact` | `thinking` | Compacting context... |
 
 Unsupported hooks are ignored safely.
 

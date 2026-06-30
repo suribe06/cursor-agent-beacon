@@ -5,7 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from cursor_agent_beacon.config import redact_enabled
+from cursor_agent_beacon.hooks import is_supported_hook
 from cursor_agent_beacon.models import AgentState, AgentStatus, HookEvent
+
+__all__ = ["map_hook_event", "is_supported_hook"]
 
 _MAX_MESSAGE_LEN = 64
 _SHELL_FAILURE_MARKERS = (
@@ -45,7 +49,23 @@ def _mcp_tool_name(payload: dict[str, Any]) -> str:
     return _truncate(tool_name)
 
 
+def _shell_exit_code(payload: dict[str, Any]) -> int | None:
+    for key in ("exit_code", "exitCode", "exit_status", "exitStatus"):
+        raw = payload.get(key)
+        if raw is None:
+            continue
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
 def _shell_failed(payload: dict[str, Any]) -> bool:
+    exit_code = _shell_exit_code(payload)
+    if exit_code is not None:
+        return exit_code != 0
+
     output = str(payload.get("output") or "").lower()
     if not output:
         return False
@@ -102,11 +122,16 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
 
     if name == "beforeSubmitPrompt":
         prompt = str(payload.get("prompt") or "")
-        preview = _truncate(prompt) if prompt else "Processing prompt..."
+        if redact_enabled():
+            preview = "Processing prompt..."
+            label = "Processing prompt..."
+        else:
+            preview = _truncate(prompt) if prompt else "Processing prompt..."
+            label = preview
         return AgentStatus(
             state=AgentState.WAITING,
             message=preview,
-            label=preview,
+            label=label,
             metadata={"prompt_length": len(prompt)},
             **base_kwargs,
         )
@@ -166,11 +191,56 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
 
     if name == "afterAgentResponse":
         text = str(payload.get("text") or "")
-        preview = _truncate(text) if text else "Thinking..."
+        if redact_enabled():
+            preview = "Thinking..."
+        else:
+            preview = _truncate(text) if text else "Thinking..."
         return AgentStatus(
             state=AgentState.THINKING,
             message=preview,
             metadata={"response_length": len(text)},
+            **base_kwargs,
+        )
+
+    if name == "beforeReadFile":
+        path = str(payload.get("path") or payload.get("file_path") or "")
+        if redact_enabled():
+            message = "Reading file..."
+        else:
+            message = _truncate(Path(path).name if path else "Reading file...")
+        return AgentStatus(
+            state=AgentState.THINKING,
+            message=message,
+            metadata={"path": path} if path and not redact_enabled() else {},
+            **base_kwargs,
+        )
+
+    if name == "afterFileEdit":
+        path = str(payload.get("file_path") or payload.get("path") or "")
+        edits = payload.get("edits") or []
+        if redact_enabled():
+            message = "Editing file..."
+        else:
+            name_part = Path(path).name if path else "file"
+            message = _truncate(f"Editing {name_part}")
+        return AgentStatus(
+            state=AgentState.THINKING,
+            message=message,
+            metadata={
+                "path": path,
+                "edit_count": len(edits) if isinstance(edits, list) else 0,
+            }
+            if path and not redact_enabled()
+            else {"edit_count": len(edits) if isinstance(edits, list) else 0},
+            **base_kwargs,
+        )
+
+    if name == "preCompact":
+        trigger = str(payload.get("trigger") or "auto")
+        return AgentStatus(
+            state=AgentState.THINKING,
+            message="Compacting context...",
+            metadata={"trigger": trigger},
             **base_kwargs,
         )
 
@@ -230,24 +300,3 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
         )
 
     return None
-
-
-def is_supported_hook(hook_event_name: str) -> bool:
-    """Return True when the hook is mapped to a status update."""
-    return hook_event_name in {
-        "sessionStart",
-        "sessionEnd",
-        "beforeSubmitPrompt",
-        "afterAgentThought",
-        "beforeShellExecution",
-        "afterShellExecution",
-        "beforeMCPExecution",
-        "afterMCPExecution",
-        "afterAgentResponse",
-        "stop",
-        "preToolUse",
-        "postToolUse",
-        "postToolUseFailure",
-        "subagentStart",
-        "subagentStop",
-    }
