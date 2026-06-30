@@ -12,7 +12,8 @@ Pre-release (**v0.10**) GNOME Shell extension that reads multi-session status fr
 From the repo root:
 
 ```bash
-./scripts/install-desktop.sh
+cursor-agent-beacon install-desktop
+# or: ./scripts/install-desktop.sh
 ```
 
 Or step by step:
@@ -31,14 +32,17 @@ Cursor hooks → ~/.local/share/cursor-agent-beacon/
                  registry.json
                  sessions/<id>.json
                  status.json
-                      ↓ poll
+                      ↓ file watch + fallback poll
                GNOME panel (gnome-extension/)
 ```
 
+The panel trusts Python's `focused_conversation_id` from `status.json` / `registry.json` (no duplicate focus logic in JS).
+
 ## Panel features
 
-- Shows busiest session by default; badge when multiple agents are active
+- Shows focused session from Python registry; badge when multiple agents are active
 - Menu lists active sessions; click to **pin** (★)
+- Turn timer when a session is busy (`startedAt`)
 - Human-readable timestamps (`2m ago`, not ISO)
 - Optional panel side: `gsettings set org.gnome.shell.extensions.cursor-status-panel panel-side left`
 

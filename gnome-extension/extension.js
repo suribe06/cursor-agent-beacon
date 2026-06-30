@@ -1,4 +1,4 @@
-/* Cursor Status Panel — multi-session agent status */
+/* Cursor Status Panel — reads Python session registry (source of truth) */
 
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
@@ -26,7 +26,8 @@ const CURSOR_STORAGE_PATH = GLib.build_filenamev([
     'globalStorage',
     'storage.json',
 ]);
-const POLL_MS = 500;
+const FALLBACK_POLL_MS = 5000;
+const CURSOR_PROC_CACHE_SEC = 10;
 const MAX_LABEL_CHARS = 24;
 
 const STATE_CLASSES = ['idle', 'thinking', 'working', 'error'];
@@ -36,15 +37,6 @@ const BUSY_STATES = new Set([
     'running_shell',
     'running_mcp',
 ]);
-const STATE_PRIORITY = {
-    thinking: 0,
-    running_shell: 1,
-    running_mcp: 2,
-    waiting: 3,
-    error: 4,
-    success: 5,
-    idle: 6,
-};
 
 const ICONS = {
     idle: 'view-reveal-symbolic',
@@ -80,6 +72,8 @@ const PROFILES = {
     },
 };
 
+let _cursorRunningCache = { value: false, checkedAt: 0 };
+
 function readJson(path) {
     try {
         const [ok, bytes] = GLib.file_get_contents(path);
@@ -97,23 +91,24 @@ function truncate(text, limit = MAX_LABEL_CHARS) {
     return `${cleaned.slice(0, limit - 1)}…`;
 }
 
-function parseTs(value) {
-    if (!value) return 0;
-    const parsed = Date.parse(value);
-    return Number.isNaN(parsed) ? 0 : parsed;
-}
-
 function isBusy(state) {
     return BUSY_STATES.has(state);
 }
 
 function isCursorRunning() {
+    const now = GLib.get_monotonic_time() / 1_000_000;
+    if (now - _cursorRunningCache.checkedAt < CURSOR_PROC_CACHE_SEC)
+        return _cursorRunningCache.value;
+
+    let running = false;
     try {
         const [, , exitStatus] = GLib.spawn_command_line_sync('pgrep -x cursor');
-        return GLib.spawn_check_wait_status(exitStatus);
+        running = GLib.spawn_check_wait_status(exitStatus);
     } catch {
-        return false;
+        running = false;
     }
+    _cursorRunningCache = { value: running, checkedAt: now };
+    return running;
 }
 
 function folderUriToPath(uri) {
@@ -161,29 +156,26 @@ function profileFor(status) {
     return PROFILES[status.state] ?? PROFILES.idle;
 }
 
-function pickAutoFocus(sessions) {
-    const live = (sessions || []).filter(session => session.active !== false);
-    if (!live.length) return null;
-
-    live.sort((a, b) => {
-        const priA = STATE_PRIORITY[a.state] ?? 99;
-        const priB = STATE_PRIORITY[b.state] ?? 99;
-        if (priA !== priB) return priA - priB;
-        return parseTs(b.updated_at) - parseTs(a.updated_at);
-    });
-    return live[0];
-}
-
-function pickDisplaySession(registry, pinnedId) {
+function pickDisplaySession(registry, status, pinnedId) {
     const sessions = registry?.sessions || [];
     if (pinnedId) {
         const pinned = sessions.find(session => session.id === pinnedId);
         if (pinned) return pinned;
     }
-    return pickAutoFocus(sessions) || sessions[0] || null;
+
+    const focusId =
+        status?.focused_conversation_id || registry?.focused_conversation_id;
+    if (focusId) {
+        const focused = sessions.find(session => session.id === focusId);
+        if (focused) return focused;
+    }
+
+    return status || sessions[0] || null;
 }
 
-function busyCount(sessions) {
+function busyCount(registry, status, sessions) {
+    if (typeof status?.active_count === 'number') return status.active_count;
+    if (typeof registry?.active_count === 'number') return registry.active_count;
     return (sessions || []).filter(
         session => session.active !== false && isBusy(session.state),
     ).length;
@@ -207,6 +199,15 @@ function formatWhen(iso) {
         hour: '2-digit',
         minute: '2-digit',
     });
+}
+
+function formatTurnDuration(startedAt) {
+    if (!startedAt) return '';
+    const start = Date.parse(startedAt);
+    if (Number.isNaN(start)) return '';
+    const sec = Math.max(0, Math.floor((Date.now() - start) / 1000));
+    if (sec < 60) return `${sec}s`;
+    return `${Math.floor(sec / 60)}m ${sec % 60}s`;
 }
 
 function stateLabel(state) {
@@ -234,6 +235,9 @@ function hookLabel(hook) {
         postToolUse: 'Tool done',
         beforeSubmitPrompt: 'Prompt',
         afterAgentResponse: 'Response',
+        beforeReadFile: 'Reading',
+        afterFileEdit: 'Editing',
+        preCompact: 'Compacting',
         sessionStart: 'Session',
         sessionEnd: 'Session ended',
         subagentStart: 'Subagent',
@@ -255,7 +259,9 @@ function panelLabel(status, profile, activeCount) {
 function sessionMenuLabel(session, pinnedId) {
     const pin = session.id === pinnedId ? '★' : '○';
     const project = truncate(session.project || 'workspace', 16);
-    return `${pin}  ${project}  ·  ${stateLabel(session.state)}  ·  ${formatWhen(session.updated_at)}`;
+    const turn = formatTurnDuration(session.started_at);
+    const turnSuffix = turn ? `  ·  ${turn}` : '';
+    return `${pin}  ${project}  ·  ${stateLabel(session.state)}  ·  ${formatWhen(session.updated_at)}${turnSuffix}`;
 }
 
 export default class CursorStatusPanelExtension extends Extension {
@@ -265,6 +271,7 @@ export default class CursorStatusPanelExtension extends Extension {
         this._styleClass = null;
         this._sessionMenuItems = [];
         this._menuSignature = '';
+        this._fileMonitors = [];
 
         this._stylesheet = Gio.File.new_for_path(
             GLib.build_filenamev([this.path, 'stylesheet.css']),
@@ -359,16 +366,22 @@ export default class CursorStatusPanelExtension extends Extension {
         }
         Main.panel.addToStatusArea(this.uuid, this._indicator, 0, panelSide);
         this._setupPositionGuard();
+        this._setupFileWatchers();
 
         this._tick();
-        this._timer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, POLL_MS, () => {
-            this._tick();
-            return GLib.SOURCE_CONTINUE;
-        });
+        this._timer = GLib.timeout_add(
+            GLib.PRIORITY_DEFAULT,
+            FALLBACK_POLL_MS,
+            () => {
+                this._tick();
+                return GLib.SOURCE_CONTINUE;
+            },
+        );
     }
 
     disable() {
         this._clearTimer();
+        this._teardownFileWatchers();
         this._teardownPositionGuard();
 
         if (this._stylesheet) {
@@ -401,6 +414,25 @@ export default class CursorStatusPanelExtension extends Extension {
         delete Main.panel.statusArea[this.uuid];
     }
 
+    _setupFileWatchers() {
+        this._teardownFileWatchers();
+        for (const path of [STATUS_PATH, REGISTRY_PATH]) {
+            const file = Gio.File.new_for_path(path);
+            try {
+                const monitor = file.monitor_file(Gio.FileMonitorFlags.NONE, null);
+                monitor.connect('changed', () => this._tick());
+                this._fileMonitors.push(monitor);
+            } catch (e) {
+                console.error(`[Cursor Status Panel] file monitor ${path}: ${e}`);
+            }
+        }
+    }
+
+    _teardownFileWatchers() {
+        for (const monitor of this._fileMonitors || []) monitor.cancel();
+        this._fileMonitors = [];
+    }
+
     _panelBox() {
         let side = 'right';
         try {
@@ -414,8 +446,7 @@ export default class CursorStatusPanelExtension extends Extension {
     _pinToFront() {
         if (this._pinning) return;
         const box = this._panelBox();
-        if (!this._indicator || this._indicator.get_parent() !== box)
-            return;
+        if (!this._indicator || this._indicator.get_parent() !== box) return;
         const index = box.get_children().indexOf(this._indicator);
         if (index <= 0) return;
 
@@ -447,8 +478,7 @@ export default class CursorStatusPanelExtension extends Extension {
     }
 
     _clearPositionTimers() {
-        for (const id of this._positionTimers || [])
-            GLib.source_remove(id);
+        for (const id of this._positionTimers || []) GLib.source_remove(id);
         this._positionTimers = [];
     }
 
@@ -491,7 +521,7 @@ export default class CursorStatusPanelExtension extends Extension {
         const signature = sessions
             .map(
                 session =>
-                    `${session.id}:${session.state}:${session.updated_at}:${session.active}:${pinnedId}`,
+                    `${session.id}:${session.state}:${session.updated_at}:${session.active}:${session.started_at}:${pinnedId}`,
             )
             .join('|');
         if (signature === this._menuSignature) return;
@@ -552,12 +582,13 @@ export default class CursorStatusPanelExtension extends Extension {
         if (!this._label) return;
 
         const registry = readJson(REGISTRY_PATH) || { sessions: [] };
+        const status = readJson(STATUS_PATH);
         const pinnedId = this._settings.get_string('pinned-conversation-id');
         const openFolders = readOpenWorkspaceFolders();
         const sessions = registry.sessions || [];
         const visible = filterVisibleSessions(sessions, openFolders);
-        const active = busyCount(visible);
-        const display = pickDisplaySession({ sessions: visible }, pinnedId) || readJson(STATUS_PATH);
+        const active = busyCount(registry, status, visible);
+        const display = pickDisplaySession(registry, status, pinnedId);
 
         const profile = profileFor(display);
         this._setIcon(profile.icon);
@@ -571,6 +602,7 @@ export default class CursorStatusPanelExtension extends Extension {
         const hook = display?.hook_event_name ?? '—';
         const ts = display?.updated_at || display?.timestamp || '—';
         const focus = pinnedId ? 'Pinned' : 'Auto';
+        const turn = formatTurnDuration(display?.started_at);
 
         this._menuTitle.label.text =
             active > 0 ? `Cursor Agent  ·  ${active} active` : 'Cursor Agent';
@@ -585,7 +617,8 @@ export default class CursorStatusPanelExtension extends Extension {
             label && label !== '—' ? label : message,
             64,
         );
-        this._menuMeta.label.text = `${focus}  ·  ${hookLabel(hook)}  ·  ${formatWhen(ts)}`;
+        const turnSuffix = turn ? `  ·  turn ${turn}` : '';
+        this._menuMeta.label.text = `${focus}  ·  ${hookLabel(hook)}  ·  ${formatWhen(ts)}${turnSuffix}`;
 
         this._rebuildSessionMenu(visible, pinnedId);
     }
