@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from cursor_agent_beacon.compat import StrEnum
+from cursor_agent_beacon.protocol import StatusCommand
 
 
 class AgentState(StrEnum):
@@ -61,8 +62,7 @@ class AgentStatus:
 
     def serial_line(self) -> str:
         """Format used by the VIEWE bridge: STATUS|state|message."""
-        safe_message = self.message.replace("|", "/")[:64]
-        return f"STATUS|{self.state.value}|{safe_message}"
+        return StatusCommand(state=self.state.value, message=self.message).serial_line()
 
 
 @dataclass(frozen=True, slots=True)

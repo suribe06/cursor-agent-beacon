@@ -7,6 +7,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from cursor_agent_beacon.paths import default_themes_dir
+
 
 @dataclass(frozen=True, slots=True)
 class ThemeAnimation:
@@ -24,15 +26,21 @@ class ThemePack:
     manifest: dict
     animations: dict[str, ThemeAnimation]
 
-    def animation_for(self, agent_state: str) -> ThemeAnimation | None:
+    def animation_for(
+        self,
+        agent_state: str,
+        *,
+        hook_event_name: str | None = None,
+    ) -> ThemeAnimation | None:
+        if hook_event_name == "stop" and agent_state in {"success", "idle"}:
+            stop_anim = self.animations.get("stop")
+            if stop_anim is not None:
+                return stop_anim
         return self.animations.get(agent_state)
 
 
 def default_themes_root() -> Path:
-    env_root = os.environ.get("CURSOR_AGENT_BEACON_THEMES_DIR")
-    if env_root:
-        return Path(env_root)
-    return Path("themes")
+    return default_themes_dir()
 
 
 def default_theme_id() -> str:
@@ -48,6 +56,8 @@ def load_theme(
 
     if theme_id == "standard":
         theme_root = root_base / "standard"
+    elif theme_id.startswith("custom/"):
+        theme_root = root_base / theme_id.removeprefix("custom/")
     else:
         theme_root = root_base / "custom" / theme_id
 

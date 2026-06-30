@@ -9,6 +9,7 @@ import urllib.request
 from pathlib import Path
 
 from cursor_agent_beacon.models import AgentStatus
+from cursor_agent_beacon.session_registry import SessionRegistry
 
 
 class HttpStatusSink:
@@ -18,10 +19,13 @@ class HttpStatusSink:
         self,
         url: str,
         timeout_seconds: float = 1.0,
+        *,
+        registry: SessionRegistry | None = None,
         focused_status_file: Path | None = None,
     ) -> None:
         self._url = url
         self._timeout_seconds = timeout_seconds
+        self._registry = registry
         self._focused_status_file = focused_status_file
 
     def publish(self, status: AgentStatus) -> None:
@@ -48,6 +52,23 @@ class HttpStatusSink:
         if self._focused_status_file and self._focused_status_file.is_file():
             try:
                 return json.loads(self._focused_status_file.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                pass
+            except (OSError, json.JSONDecodeError) as exc:
+                print(
+                    f"[cursor-agent-beacon] http sink read failed: {exc}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+
+        if self._registry is not None:
+            try:
+                self._registry.publish(status)
+                raw = self._registry.status_path.read_text(encoding="utf-8")
+                return json.loads(raw)
+            except (OSError, json.JSONDecodeError) as exc:
+                print(
+                    f"[cursor-agent-beacon] http sink registry failed: {exc}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+
         return status.to_dict()
