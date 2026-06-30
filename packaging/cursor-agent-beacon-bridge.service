@@ -1,0 +1,14 @@
+[Unit]
+Description=Cursor Agent Beacon bridge (HTTP → serial)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/cursor-agent-beacon bridge
+Environment=CURSOR_AGENT_BEACON_BRIDGE_HOST=127.0.0.1
+Environment=CURSOR_AGENT_BEACON_BRIDGE_PORT=8765
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target
