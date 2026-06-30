@@ -26,6 +26,7 @@ pip install -e ".[dev,bridge]"
 pytest
 ruff check src tests
 ruff format --check src tests
+pyright
 python -m build
 ```
 

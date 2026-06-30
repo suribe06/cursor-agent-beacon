@@ -17,7 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Mapper: `postToolUse`, `afterShellExecution`, etc. return `thinking` until `stop` (not premature `success`)
+- **Packaging**: themes and GNOME extension bundled in wheel; `cursor-agent-beacon install-*` CLI
+- **Privacy**: `CURSOR_AGENT_BEACON_REDACT_CONTENT` hides prompt/response in status
+- **Install**: merge-safe user hooks; uses installed `cursor-agent-beacon run` entry point
+- **GNOME panel**: trusts Python `focused_conversation_id`; file watchers; turn timer
+- **Bridge**: `stop` hook resolves `stop.gif`; POST body size limit (64 KiB)
+- **Sinks**: shared session registry for HTTP-without-file; failure logging
+- **Hooks**: `beforeReadFile`, `afterFileEdit`, `preCompact` mapped; single `SUPPORTED_HOOKS` source of truth
+- **CI**: ruff format check, pyright, 75% coverage gate
+
+### Changed (mapper)
+
+- `postToolUse`, `afterShellExecution`, etc. return `thinking` until `stop`
 - `AgentStatus` includes `project` and `label` for panel display
 
 ### Added (infra)
@@ -45,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Cursor hook handler with normalized agent states
 - Pluggable sinks: log, file, HTTP
-- Standard pixel-robot GIF theme (240×240)
+- Standard pixel-robot GIF theme (480×480)
 - Custom theme layout and loader
 - Browser display simulator
 - Hook simulation script and unit tests

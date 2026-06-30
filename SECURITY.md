@@ -32,4 +32,4 @@ This project runs locally on the developer machine:
 - The bridge binds to `127.0.0.1` by default
 - Serial output targets a local USB device
 
-Report issues such as unintended network exposure, path traversal in file sinks, or unsafe deserialization of hook payloads.
+Report issues such as unintended network exposure, path traversal in file sinks, unsafe deserialization of hook payloads, or sensitive prompt/response data in status files (use `CURSOR_AGENT_BEACON_REDACT_CONTENT=true`).
