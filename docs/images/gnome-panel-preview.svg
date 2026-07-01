@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="120" viewBox="0 0 720 120" role="img" aria-label="GNOME top bar preview with Cursor status panel">
+  <defs>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2d2d2d"/>
+      <stop offset="100%" stop-color="#242424"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="48" fill="url(#bar)"/>
+  <text x="24" y="30" fill="#cfcfcf" font-family="Cantarell, Ubuntu, sans-serif" font-size="14">Activities</text>
+  <rect x="300" y="10" width="120" height="28" rx="14" fill="#3d3d3d"/>
+  <rect x="500" y="14" width="200" height="20" rx="10" fill="#3a3a3a"/>
+  <g transform="translate(548, 12)">
+    <rect x="0" y="0" width="140" height="24" rx="12" fill="#404040" stroke="#5a9fd4" stroke-width="1"/>
+    <circle cx="14" cy="12" r="6" fill="#5a9fd4" opacity="0.9"/>
+    <text x="26" y="16" fill="#f0f0f0" font-family="Cantarell, Ubuntu, sans-serif" font-size="12">Shell · npm install</text>
+  </g>
+  <text x="24" y="78" fill="#888" font-family="sans-serif" font-size="11">Illustration  replace with a real screenshot from your desktop if you prefer</text>
+</svg>

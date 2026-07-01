@@ -1,35 +1,27 @@
 # Cursor Agent Beacon
 
 [![CI](https://github.com/suribe06/cursor-agent-beacon/actions/workflows/ci.yml/badge.svg)](https://github.com/suribe06/cursor-agent-beacon/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/cursor-agent-beacon.svg)](https://pypi.org/project/cursor-agent-beacon/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
 Deterministic monitoring of Cursor agent activity using native [Cursor Hooks](https://cursor.com/docs/hooks).
 
-**Repository:** https://github.com/suribe06/cursor-agent-beacon
+Cursor fires hook events automatically during the agent lifecycle — the model does not need to report status. Cursor Agent Beacon maps those events to a small set of high-level states and publishes updates through pluggable sinks (file, log, HTTP).
 
-Cursor fires hook events automatically during the agent lifecycle. Cursor Agent Beacon listens to those events, maps them to a small set of high-level states, and publishes status updates through pluggable sinks.
+Use it today for a **GNOME top-bar status panel** and CLI (`doctor` / `status`). It is also the software foundation for a **physical status display** (ESP32 + color TFT via the local bridge).
 
-This is the software foundation for a physical status panel (ESP32 + color TFT). **v0.3** ships Python hooks, **bundled standard GIF themes**, a **local bridge service**, and **one-shot setup**.
+## GNOME status panel
 
-## Features
+![GNOME top-bar preview](docs/images/gnome-panel-preview.svg)
 
-- **One-shot setup**: `./setup.sh` or `pip install` + `cursor-agent-beacon setup`
-- **`doctor` / `status` / `uninstall`** CLI for install verification and teardown
-- Normalized status model (`idle`, `thinking`, `running_shell`, `running_mcp`, `success`, `error`, ...)
-- **Standard theme**: 8 animated pixel-robot GIFs (480×480) in `themes/standard/assets/`
-- **Custom themes**: drop your own GIFs in `themes/custom/<name>/`
-- Fail-open behavior — hooks never block Cursor
-- JSON log sink (stderr) for the Hooks output channel
-- File sink with latest status snapshot
-- HTTP sink for the local bridge service
-- **Bridge service** (`cursor-agent-beacon bridge`): `POST /status` → theme GIF resolution → serial commands
-- **GNOME status panel** (v0.10, pre-release): Ubuntu top-bar indicator — [`gnome-extension/`](gnome-extension/) + [`docs/gnome-panel.md`](docs/gnome-panel.md)
-- **Multi-session registry**: per-chat status under `~/.local/share/cursor-agent-beacon/`
+On Ubuntu/GNOME, the extension reads `~/.local/share/cursor-agent-beacon/` and shows the focused agent session in the top bar (state, tool name, turn timer). See [GNOME Status Panel](docs/gnome-panel.md).
+
+> **Real screenshot:** the image above is an illustration. For a photo from your desktop, capture the top bar after `./setup.sh` and save it as `docs/images/gnome-panel-screenshot.png`, then point the README at that file.
 
 ## Quick start
 
-### From git (recommended for development)
+### From git (development)
 
 ```bash
 git clone https://github.com/suribe06/cursor-agent-beacon.git
@@ -46,21 +38,16 @@ pip install "cursor-agent-beacon[bridge]"
 cursor-agent-beacon setup
 ```
 
-Restart Cursor when setup finishes. On Ubuntu, reload GNOME Shell if the top-bar panel does not appear.
+Restart Cursor when setup finishes. On Ubuntu, reload GNOME Shell if the top-bar panel does not appear (`Alt+F2` → `r` on X11, or log out/in on Wayland).
 
-Verify installation:
-
-```bash
-.venv/bin/cursor-agent-beacon doctor
-```
-
-After using the agent:
+Verify and inspect:
 
 ```bash
-.venv/bin/cursor-agent-beacon status
+cursor-agent-beacon doctor
+cursor-agent-beacon status    # after an Agent chat
 ```
 
-Check status (any project):
+Raw status file (any project):
 
 ```bash
 cat ~/.local/share/cursor-agent-beacon/status.json
@@ -68,10 +55,28 @@ cat ~/.local/share/cursor-agent-beacon/status.json
 
 See [Getting Started](docs/getting-started.md) for bridge, themes, and development setup.
 
+## Features
+
+**Desktop (shipped)**
+
+- One-shot setup: `./setup.sh` or `pip install` + `cursor-agent-beacon setup`
+- `doctor` / `status` / `uninstall` CLI
+- GNOME status panel (v0.10 pre-release) with multi-session registry
+- Normalized states: `idle`, `waiting`, `thinking`, `running_shell`, `running_mcp`, `success`, `error`
+- Fail-open hooks — never block Cursor
+
+**Themes & hardware (optional)**
+
+- Standard pixel-robot GIF theme (480×480) in `themes/standard/assets/`
+- Custom themes in `themes/custom/<name>/`
+- Local bridge (`cursor-agent-beacon bridge`): HTTP → theme GIF → serial (ESP32 / VIEWE)
+
 ## Architecture
 
 ```text
-Cursor → hooks.json → hook-handler.py → cursor_agent_beacon → sinks
+Cursor → ~/.cursor/hooks.json → cursor-agent-beacon run → mapper → sinks
+                                                      ↓
+                              ~/.local/share/cursor-agent-beacon/ → GNOME panel
 ```
 
 Read more in [`docs/architecture.md`](docs/architecture.md).
@@ -82,7 +87,7 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 | --- | --- | --- |
 | `CURSOR_AGENT_BEACON_LOG` | `true` | Emit JSON lines to stderr |
 | `CURSOR_AGENT_BEACON_FILE` | `true` | Write latest status file |
-| `CURSOR_AGENT_BEACON_STATUS_FILE` | `.cursor-agent-beacon/status.json` (project) or `~/.local/share/cursor-agent-beacon/status.json` (user install) | Status snapshot path |
+| `CURSOR_AGENT_BEACON_STATUS_FILE` | `~/.local/share/cursor-agent-beacon/status.json` (user install) | Status snapshot path |
 | `CURSOR_AGENT_BEACON_HTTP_URL` | unset | Bridge `POST /status` endpoint |
 | `CURSOR_AGENT_BEACON_BRIDGE_HOST` | `127.0.0.1` | Bridge bind address |
 | `CURSOR_AGENT_BEACON_BRIDGE_PORT` | `8765` | Bridge HTTP port |
@@ -97,8 +102,8 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 | Component | Status |
 | --- | --- |
 | Python hook handler | ✅ v0.3 |
-| Multi-session file sink | ✅ v0.3 |
 | One-shot setup + doctor CLI | ✅ v0.3 |
+| Multi-session file sink | ✅ v0.3 |
 | GNOME status panel | 🧪 v0.10 pre-release |
 | Standard GIF theme | ✅ bundled |
 | Custom GIF themes | ✅ `themes/custom/` |
@@ -129,14 +134,11 @@ Report security issues privately — see [SECURITY.md](SECURITY.md).
 ./setup.sh
 source .venv/bin/activate
 pip install -e ".[dev,bridge]"
-pytest
+pytest -m "not smoke"
 ruff check src tests
 ruff format --check src tests
 pyright
 python -m build
-cursor-agent-beacon bridge
-cursor-agent-beacon install-hooks
-PYTHONPATH=src python3 -m cursor_agent_beacon.cli map examples/sample-events/stop_completed.json
 ```
 
 Systemd user service template: [`packaging/cursor-agent-beacon-bridge.service`](packaging/cursor-agent-beacon-bridge.service)
