@@ -1,0 +1,11 @@
+{
+  "conversation_id": "conv-123",
+  "generation_id": "gen-456",
+  "model": "gpt-5",
+  "hook_event_name": "postToolUseFailure",
+  "cursor_version": "1.7.2",
+  "workspace_roots": ["/tmp/workspace"],
+  "tool_name": "Shell",
+  "failure_type": "permission_denied",
+  "error_message": "User denied shell execution"
+}

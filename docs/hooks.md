@@ -20,7 +20,7 @@ Official Cursor docs: https://cursor.com/docs/hooks
 | `stop` | `success` / `error` / `idle` | Ready / error / aborted |
 | `preToolUse` | `waiting` | Using tool |
 | `postToolUse` | `thinking` | Thinking... |
-| `postToolUseFailure` | `error` | Failed: tool |
+| `postToolUseFailure` | `error` / `waiting` | Failed: tool / Denied: tool (user rejected) |
 | `subagentStart` | `thinking` | Subagent: explore |
 | `subagentStop` | `thinking` | Thinking... |
 | `beforeReadFile` | `thinking` | Reading file... |

@@ -269,8 +269,13 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
             state = AgentState.WAITING
             message = f"Using {tool_name}"
         elif name == "postToolUseFailure":
-            state = AgentState.ERROR
-            message = f"Failed: {tool_name}"
+            failure_type = str(payload.get("failure_type") or "")
+            if failure_type == "permission_denied":
+                state = AgentState.WAITING
+                message = f"Denied: {tool_name}"
+            else:
+                state = AgentState.ERROR
+                message = f"Failed: {tool_name}"
         else:
             # ponytail: turn not done until `stop`; agent thinks again after each tool
             state = AgentState.THINKING

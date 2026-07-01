@@ -1,5 +1,7 @@
 """Parametrized mapper coverage."""
 
+from pathlib import Path
+
 import pytest
 
 from cursor_agent_beacon.hooks import SUPPORTED_HOOKS, is_supported_hook
@@ -99,3 +101,30 @@ def test_redact_file_edit(monkeypatch):
     assert status is not None
     assert "secret" not in status.message
     assert status.message == "Editing file..."
+
+
+def test_post_tool_use_permission_denied_maps_to_waiting():
+    status = map_hook_event(
+        _event(
+            "postToolUseFailure",
+            tool_name="Shell",
+            failure_type="permission_denied",
+        )
+    )
+    assert status is not None
+    assert status.state == AgentState.WAITING
+    assert status.message == "Denied: Shell"
+
+
+def test_permission_denied_sample_event_file():
+    from cursor_agent_beacon.handler import parse_hook_input
+
+    sample = (
+        Path(__file__).resolve().parents[1]
+        / "examples/sample-events/post_tool_use_permission_denied.json"
+    )
+    event = parse_hook_input(sample.read_text(encoding="utf-8"))
+    status = map_hook_event(event)
+    assert status is not None
+    assert status.state == AgentState.WAITING
+    assert "Denied" in status.message

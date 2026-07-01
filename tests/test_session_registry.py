@@ -1,5 +1,6 @@
 """Tests for multi-session registry."""
 
+import json
 from pathlib import Path
 
 from cursor_agent_beacon.models import AgentState, AgentStatus
@@ -197,6 +198,73 @@ def test_prune_old_inactive_sessions(tmp_path: Path):
     }
     apply_session_housekeeping(sessions, now_ts=1782496800.0)
     assert "old" not in sessions
+
+
+def test_stale_busy_session_decays(tmp_path: Path):
+    registry = SessionRegistry(tmp_path)
+    registry.publish(
+        _status(
+            conversation_id="stale-busy",
+            state=AgentState.THINKING,
+            hook="postToolUse",
+            timestamp="2026-06-30T18:00:00+00:00",
+        )
+    )
+
+    sessions = {
+        "stale-busy": {
+            "id": "stale-busy",
+            "state": "thinking",
+            "updated_at": "2026-06-30T18:00:00+00:00",
+            "active": True,
+            "started_at": "2026-06-30T18:00:00+00:00",
+        }
+    }
+    apply_session_housekeeping(sessions, now_ts=1782843000.0)
+    assert sessions["stale-busy"]["state"] == "success"
+    assert sessions["stale-busy"]["message"] == "Ready"
+    assert "started_at" not in sessions["stale-busy"]
+
+
+def test_reconcile_refreshes_stale_focus(tmp_path: Path):
+    registry = SessionRegistry(tmp_path)
+    now_ts = 1782844000.0
+    stale_ts = "2026-06-30T18:00:00+00:00"
+    live_ts = "2026-06-30T18:26:40+00:00"  # 5m before now_ts
+
+    payload = {
+        "focused_conversation_id": "stale-busy",
+        "active_count": 2,
+        "sessions": [
+            {
+                "id": "stale-busy",
+                "state": "thinking",
+                "message": "Thinking...",
+                "hook_event_name": "postToolUse",
+                "updated_at": stale_ts,
+                "active": True,
+                "project": "stale",
+                "started_at": stale_ts,
+            },
+            {
+                "id": "live",
+                "state": "running_shell",
+                "message": "npm test",
+                "hook_event_name": "beforeShellExecution",
+                "updated_at": live_ts,
+                "active": True,
+                "project": "live",
+                "started_at": live_ts,
+            },
+        ],
+    }
+    (tmp_path / "registry.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    assert registry.reconcile(now_ts=now_ts) is True
+    payload = json.loads((tmp_path / "registry.json").read_text(encoding="utf-8"))
+    assert payload["focused_conversation_id"] == "live"
+    status = json.loads((tmp_path / "status.json").read_text(encoding="utf-8"))
+    assert status["state"] == "running_shell"
 
 
 def test_is_busy_state():

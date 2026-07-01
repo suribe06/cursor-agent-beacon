@@ -27,6 +27,7 @@ const CURSOR_STORAGE_PATH = GLib.build_filenamev([
     'storage.json',
 ]);
 const FALLBACK_POLL_MS = 5000;
+const STALE_BUSY_SEC = 10 * 60;
 const CURSOR_PROC_CACHE_SEC = 10;
 const MAX_LABEL_CHARS = 24;
 
@@ -50,7 +51,12 @@ const ICONS = {
 const PROFILES = {
     idle: { icon: ICONS.idle, label: 'Cursor', style: 'idle' },
     success: { icon: ICONS.idle, label: 'Ready', style: 'idle' },
-    waiting: { icon: ICONS.waiting, label: 'Waiting', style: 'thinking' },
+    waiting: {
+        icon: ICONS.waiting,
+        label: 'Waiting',
+        style: 'thinking',
+        useMessage: true,
+    },
     thinking: { icon: ICONS.thinking, label: 'Thinking', style: 'thinking' },
     running_shell: {
         icon: ICONS.terminal,
@@ -93,6 +99,26 @@ function truncate(text, limit = MAX_LABEL_CHARS) {
 
 function isBusy(state) {
     return BUSY_STATES.has(state);
+}
+
+function decayStaleBusySession(session) {
+    if (!session?.state || !isBusy(session.state)) return session;
+    const updated = session.updated_at || session.timestamp;
+    if (!updated) return session;
+    const ageSec = Math.max(
+        0,
+        Math.floor((Date.now() - Date.parse(updated)) / 1000),
+    );
+    if (ageSec <= STALE_BUSY_SEC) return session;
+    return {
+        ...session,
+        state: 'success',
+        message: 'Ready',
+    };
+}
+
+function decayStaleSessions(sessions) {
+    return (sessions || []).map(decayStaleBusySession);
 }
 
 function isCursorRunning() {
@@ -233,6 +259,7 @@ function hookLabel(hook) {
         afterMCPExecution: 'MCP done',
         preToolUse: 'Tool',
         postToolUse: 'Tool done',
+        postToolUseFailure: 'Tool failed',
         beforeSubmitPrompt: 'Prompt',
         afterAgentResponse: 'Response',
         beforeReadFile: 'Reading',
@@ -582,13 +609,16 @@ export default class CursorStatusPanelExtension extends Extension {
         if (!this._label) return;
 
         const registry = readJson(REGISTRY_PATH) || { sessions: [] };
-        const status = readJson(STATUS_PATH);
+        const rawStatus = readJson(STATUS_PATH);
+        const status = decayStaleBusySession(rawStatus);
         const pinnedId = this._settings.get_string('pinned-conversation-id');
         const openFolders = readOpenWorkspaceFolders();
-        const sessions = registry.sessions || [];
+        const sessions = decayStaleSessions(registry.sessions || []);
         const visible = filterVisibleSessions(sessions, openFolders);
         const active = busyCount(registry, status, visible);
-        const display = pickDisplaySession(registry, status, pinnedId);
+        const display = decayStaleBusySession(
+            pickDisplaySession({ ...registry, sessions }, status, pinnedId),
+        );
 
         const profile = profileFor(display);
         this._setIcon(profile.icon);

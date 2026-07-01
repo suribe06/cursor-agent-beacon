@@ -28,6 +28,7 @@ _STATE_PRIORITY = {
 }
 _SAFE_ID = re.compile(r"[^A-Za-z0-9_.-]+")
 _STALE_SESSION_HOURS = 24
+_STALE_BUSY_MINUTES = 10
 _PRUNE_INACTIVE_DAYS = 7
 _STALE_STATES = {AgentState.SUCCESS, AgentState.IDLE}
 
@@ -57,6 +58,22 @@ def _parse_ts(value: str | None) -> float:
 
 def _now_ts() -> float:
     return datetime.now(timezone.utc).timestamp()
+
+
+def _is_stale_busy_session(session: dict[str, Any], now_ts: float) -> bool:
+    if not session.get("active", True):
+        return False
+    if not is_busy_state(str(session.get("state", ""))):
+        return False
+    age = now_ts - _parse_ts(str(session.get("updated_at") or ""))
+    return age >= _STALE_BUSY_MINUTES * 60
+
+
+def _decay_stale_busy_session(session: dict[str, Any]) -> None:
+    """Turn timed-out busy sessions into ready — `stop` hook may never fire."""
+    session["state"] = AgentState.SUCCESS.value
+    session["message"] = "Ready"
+    session.pop("started_at", None)
 
 
 def _is_stale_session(session: dict[str, Any], now_ts: float) -> bool:
@@ -93,6 +110,9 @@ def apply_session_housekeeping(
         if _should_prune_session(session, ts):
             sessions.pop(session_id, None)
             continue
+        if _is_stale_busy_session(session, ts):
+            _decay_stale_busy_session(session)
+            continue
         if _is_stale_session(session, ts):
             session["active"] = False
 
@@ -126,6 +146,54 @@ class SessionRegistry:
     @property
     def status_path(self) -> Path:
         return self._status_path
+
+    def reconcile(self, *, now_ts: float | None = None) -> bool:
+        """Re-run housekeeping and refresh status.json.
+
+        Returns True if anything changed.
+        """
+        registry = self._load_registry()
+        sessions: dict[str, dict[str, Any]] = {
+            str(item["id"]): dict(item) for item in registry.get("sessions", [])
+        }
+        if not sessions:
+            return False
+
+        before = json.dumps(sessions, sort_keys=True)
+        apply_session_housekeeping(sessions, now_ts=now_ts)
+        if json.dumps(sessions, sort_keys=True) == before:
+            return False
+
+        self._sync_session_files(sessions)
+        registry_sessions = sorted(
+            sessions.values(),
+            key=lambda item: _parse_ts(str(item.get("updated_at") or "")),
+            reverse=True,
+        )
+        busy_count = sum(
+            1
+            for item in registry_sessions
+            if item.get("active", True) and is_busy_state(str(item.get("state", "")))
+        )
+        focused = pick_auto_focus(registry_sessions)
+        registry_payload = {
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "active_count": busy_count,
+            "focused_conversation_id": focused.get("id") if focused else None,
+            "sessions": registry_sessions,
+        }
+        self._write_json(self._registry_path, registry_payload)
+        focused_status = self._focused_status_payload(
+            AgentStatus(
+                state=AgentState.IDLE,
+                message="—",
+                hook_event_name="reconcile",
+            ),
+            focused,
+            busy_count,
+        )
+        self._write_json(self._status_path, focused_status)
+        return True
 
     def publish(self, status: AgentStatus) -> None:
         conversation_id = safe_conversation_id(status.conversation_id)
@@ -172,6 +240,7 @@ class SessionRegistry:
         status: AgentStatus,
     ) -> dict[str, Any]:
         entry = dict(existing or {})
+        was_busy = is_busy_state(str(entry.get("state", "")))
         entry["id"] = safe_conversation_id(status.conversation_id)
         entry["state"] = status.state.value
         entry["message"] = status.message
@@ -185,7 +254,6 @@ class SessionRegistry:
             entry["active"] = True
 
         busy = is_busy_state(status.state.value)
-        was_busy = is_busy_state(str(entry.get("state", "")))
         if busy and not was_busy:
             entry["started_at"] = status.timestamp
         elif not busy and was_busy:
