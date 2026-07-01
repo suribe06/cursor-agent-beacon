@@ -59,12 +59,28 @@ jobs:
         run: pip install -e ".[dev,bridge]"
 
       - name: Run tests with coverage
-        run: pytest --cov=cursor_agent_beacon --cov-report=term-missing --cov-fail-under=75
+        run: pytest -m "not smoke" --cov=cursor_agent_beacon --cov-report=term-missing --cov-fail-under=75
+
+  smoke:
+    name: Smoke (setup.sh)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install package
+        run: pip install -e ".[dev,bridge]"
+
+      - name: Run setup smoke tests
+        run: pytest -m smoke -v
 
   build:
     name: Build package
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test]
+    needs: [lint, typecheck, test, smoke]
     steps:
       - uses: actions/checkout@v7
 

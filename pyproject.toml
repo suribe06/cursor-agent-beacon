@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cursor-agent-beacon"
-version = "0.2.0"
+version = "0.3.0"
 description = "Deterministic Cursor agent status monitoring via native hooks"
 readme = "README.md"
 license = "MIT"
@@ -51,6 +51,9 @@ include = ["src/cursor_agent_beacon", "themes", "gnome-extension", "README.md", 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "smoke: end-to-end install smoke tests (runs pip install via setup.sh)",
+]
 
 [tool.coverage.run]
 source = ["cursor_agent_beacon"]
