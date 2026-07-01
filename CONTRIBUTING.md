@@ -11,6 +11,10 @@ Thanks for your interest in contributing. This project is intentionally small an
 
 ## Development setup
 
+End users can run `./setup.sh` from a clone (creates `.venv` and installs hooks).
+
+For package development:
+
 ```bash
 git clone https://github.com/suribe06/cursor-agent-beacon.git
 cd cursor-agent-beacon
@@ -20,10 +24,13 @@ source .venv/bin/activate
 pip install -e ".[dev,bridge]"
 ```
 
+Or use `./setup.sh` then `pip install -e ".[dev]"` for extra dev tools on top of the user install.
+
 ## Running checks locally
 
 ```bash
-pytest
+pytest -m "not smoke"    # unit tests (smoke runs pip install via setup.sh)
+pytest -m smoke          # optional: end-to-end ./setup.sh
 ruff check src tests
 ruff format --check src tests
 pyright

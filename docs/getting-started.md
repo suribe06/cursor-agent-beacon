@@ -1,41 +1,76 @@
 # Getting Started
 
+## Install (recommended)
+
+### From git
+
+```bash
+git clone https://github.com/suribe06/cursor-agent-beacon.git
+cd cursor-agent-beacon
+./setup.sh
+```
+
+### From PyPI
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install "cursor-agent-beacon[bridge]"
+cursor-agent-beacon setup
+```
+
+Then **restart Cursor**. On Ubuntu with GNOME, reload the shell when prompted (`Alt+F2` → `r` on X11, or log out/in on Wayland).
+
+Verify:
+
+```bash
+cursor-agent-beacon doctor
+cursor-agent-beacon doctor --probe   # optional end-to-end hook test
+```
+
+After an Agent chat:
+
+```bash
+cursor-agent-beacon status
+```
+
+(When using `./setup.sh`, prefix with `.venv/bin/` if the venv is not activated.)
+
+## Uninstall
+
+```bash
+cursor-agent-beacon uninstall              # hooks + GNOME panel
+cursor-agent-beacon uninstall --purge-status   # also delete status files
+```
+
+Restart Cursor after uninstall.
+
+That installs:
+
+- Python package in `.venv/`
+- User-level hooks in `~/.cursor/hooks.json` (works in **any** project)
+- GNOME top-bar panel on Ubuntu (when available)
+
+Status files:
+
+```bash
+cat ~/.local/share/cursor-agent-beacon/status.json
+cat ~/.local/share/cursor-agent-beacon/registry.json
+```
+
 ## Prerequisites
 
 - Python 3.10+
 - [Cursor](https://cursor.com) with hooks enabled
 
-## Install locally
+## Options
 
 ```bash
-git clone https://github.com/suribe06/cursor-agent-beacon.git
-cd cursor-agent-beacon
-
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+./setup.sh --hooks-only    # hooks only, no GNOME panel
+./setup.sh --no-gnome      # skip GNOME extension
 ```
 
-## Enable hooks
-
-This repo includes project hooks:
-
-- `.cursor/hooks.json`
-- `.cursor/hooks/hook-handler.py`
-
-Open the folder in Cursor. Hooks reload when the config is saved.
-
-To use the beacon in another project, run `./scripts/install-user-hooks.sh` or copy `.cursor/hooks.json` + hook handler.
-
-## Ubuntu GNOME panel
-
-Install hooks globally and the top-bar extension:
-
-```bash
-./scripts/install-desktop.sh
-```
-
-See [GNOME Status Panel](gnome-panel.md).
+After `./setup.sh`, advanced commands are available via `.venv/bin/cursor-agent-beacon` (bridge, map, etc.).
 
 ## Verify without Cursor (CLI)
 
@@ -60,15 +95,14 @@ pytest
 
 ## End-to-end test in Cursor
 
-1. Open this repository in Cursor (`File → Open Folder`).
-2. Confirm `.cursor/hooks.json` exists at the project root.
+1. Run `./setup.sh` and restart Cursor.
+2. Open **any** project (or this repo) in Cursor.
 3. Open **Output → Hooks** in the panel below the editor.
-4. Start an Agent chat and send any prompt (triggers `beforeSubmitPrompt`, `afterAgentThought`, etc.).
-5. Ask the agent to run a harmless shell command, e.g. `echo hello` (triggers `beforeShellExecution` / `afterShellExecution`).
-6. Check the latest status file:
+4. Start an Agent chat and send any prompt.
+5. Check status:
 
 ```bash
-cat .cursor-agent-beacon/status.json
+cat ~/.local/share/cursor-agent-beacon/status.json
 ```
 
 You should see JSON with `"state"`, `"message"`, and `"hook_event_name"` updating as the agent works.

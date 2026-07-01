@@ -9,18 +9,22 @@ Pre-release (**v0.10**) GNOME Shell extension that reads multi-session status fr
 
 ## Install
 
-From the repo root:
+From the repo root (hooks + panel in one step):
 
 ```bash
-cursor-agent-beacon install-desktop
-# or: ./scripts/install-desktop.sh
+./setup.sh
 ```
 
-Or step by step:
+Hooks only:
 
 ```bash
-./scripts/install-user-hooks.sh   # ~/.cursor/hooks.json + global status dir
-./scripts/install-gnome-panel.sh  # GNOME extension
+./setup.sh --hooks-only
+```
+
+GNOME panel only (after `./setup.sh`):
+
+```bash
+.venv/bin/cursor-agent-beacon install-gnome
 ```
 
 Then restart Cursor and GNOME Shell (`Alt+F2` → `r` on X11).

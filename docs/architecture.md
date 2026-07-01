@@ -6,12 +6,14 @@ Cursor Agent Beacon turns native Cursor hook events into normalized agent status
 
 Cursor hooks fire deterministically during the agent lifecycle. They do not depend on the model choosing to report status. That makes them ideal for physical panels, dashboards, logging, and automation.
 
-## Current scope (v0.2)
+## Current scope (v0.3)
 
 | Layer | Status |
 |---|---|
 | Python hook handler | ✅ Shipped |
 | Status sinks (log, file, HTTP) | ✅ Shipped |
+| One-shot setup (`./setup.sh`) | ✅ Shipped |
+| `doctor` / `status` / `uninstall` CLI | ✅ Shipped |
 | Standard GIF theme (480×480, VIEWE) | ✅ Bundled in repo |
 | Custom theme packs | ✅ Layout + loader |
 | Local bridge service | ✅ Shipped |
@@ -52,7 +54,15 @@ Cursor hooks → session_registry → ~/.local/share/cursor-agent-beacon/
                                     gnome-extension/ (top bar)
 ```
 
-Install: `./scripts/install-desktop.sh`. See [GNOME Status Panel](gnome-panel.md).
+Install:
+
+```bash
+./setup.sh
+# or after pip install:
+cursor-agent-beacon setup
+```
+
+Verify: `cursor-agent-beacon doctor`. See [GNOME Status Panel](gnome-panel.md).
 
 ## Data flow (today)
 

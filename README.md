@@ -10,11 +10,12 @@ Deterministic monitoring of Cursor agent activity using native [Cursor Hooks](ht
 
 Cursor fires hook events automatically during the agent lifecycle. Cursor Agent Beacon listens to those events, maps them to a small set of high-level states, and publishes status updates through pluggable sinks.
 
-This is the software foundation for a physical status panel (ESP32 + color TFT). **v0.2** ships Python hooks, **bundled standard GIF themes**, and a **local bridge service**.
+This is the software foundation for a physical status panel (ESP32 + color TFT). **v0.3** ships Python hooks, **bundled standard GIF themes**, a **local bridge service**, and **one-shot setup**.
 
 ## Features
 
-- Single hook handler for agent lifecycle events
+- **One-shot setup**: `./setup.sh` or `pip install` + `cursor-agent-beacon setup`
+- **`doctor` / `status` / `uninstall`** CLI for install verification and teardown
 - Normalized status model (`idle`, `thinking`, `running_shell`, `running_mcp`, `success`, `error`, ...)
 - **Standard theme**: 8 animated pixel-robot GIFs (480×480) in `themes/standard/assets/`
 - **Custom themes**: drop your own GIFs in `themes/custom/<name>/`
@@ -28,51 +29,44 @@ This is the software foundation for a physical status panel (ESP32 + color TFT).
 
 ## Quick start
 
+### From git (recommended for development)
+
+```bash
+git clone https://github.com/suribe06/cursor-agent-beacon.git
+cd cursor-agent-beacon
+./setup.sh
+```
+
+### From PyPI
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
-
-# Preview display + exported GIFs
-xdg-open preview/display-simulator.html
-
-# Regenerate standard GIFs after editing sprites
-pip install Pillow
-python3 scripts/export_standard_gifs.py
-
-# Run the local bridge (dry-run serial logs to stderr)
-cursor-agent-beacon bridge
-
-# Forward hook status to the bridge
-export CURSOR_AGENT_BEACON_HTTP_URL=http://127.0.0.1:8765/status
-python3 scripts/simulate_hook.py examples/sample-events/after_agent_thought.json
-
-# Install globally (hooks + GNOME panel)
-cursor-agent-beacon install-desktop
-# or: ./scripts/install-desktop.sh
+pip install "cursor-agent-beacon[bridge]"
+cursor-agent-beacon setup
 ```
 
-Open this repository in Cursor to activate the bundled `.cursor/hooks.json`.
+Restart Cursor when setup finishes. On Ubuntu, reload GNOME Shell if the top-bar panel does not appear.
 
-**Ubuntu desktop (hooks + GNOME panel):**
+Verify installation:
 
 ```bash
-./scripts/install-desktop.sh
-# Alt+F2 → r to reload GNOME Shell
+.venv/bin/cursor-agent-beacon doctor
 ```
 
-Global status (any Cursor project):
+After using the agent:
+
+```bash
+.venv/bin/cursor-agent-beacon status
+```
+
+Check status (any project):
 
 ```bash
 cat ~/.local/share/cursor-agent-beacon/status.json
-cat ~/.local/share/cursor-agent-beacon/registry.json
 ```
 
-Project-local status (when using repo hooks without install-user-hooks):
-
-```bash
-cat .cursor-agent-beacon/status.json
-```
+See [Getting Started](docs/getting-started.md) for bridge, themes, and development setup.
 
 ## Architecture
 
@@ -102,8 +96,9 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 
 | Component | Status |
 | --- | --- |
-| Python hook handler | ✅ v0.2 |
-| Multi-session file sink | ✅ v0.2 |
+| Python hook handler | ✅ v0.3 |
+| Multi-session file sink | ✅ v0.3 |
+| One-shot setup + doctor CLI | ✅ v0.3 |
 | GNOME status panel | 🧪 v0.10 pre-release |
 | Standard GIF theme | ✅ bundled |
 | Custom GIF themes | ✅ `themes/custom/` |
@@ -131,6 +126,8 @@ Report security issues privately — see [SECURITY.md](SECURITY.md).
 ## Development
 
 ```bash
+./setup.sh
+source .venv/bin/activate
 pip install -e ".[dev,bridge]"
 pytest
 ruff check src tests
