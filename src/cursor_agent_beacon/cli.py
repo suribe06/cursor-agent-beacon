@@ -59,6 +59,72 @@ def main() -> int:
     )
     install_desktop.set_defaults(func=_install_desktop)
 
+    setup_parser = subparsers.add_parser(
+        "setup",
+        help="Install user hooks and GNOME panel (after pip install)",
+    )
+    setup_parser.add_argument(
+        "--no-gnome",
+        action="store_true",
+        help="Skip GNOME Shell extension",
+    )
+    setup_parser.add_argument(
+        "--hooks-only",
+        action="store_true",
+        help="Install user hooks only",
+    )
+    setup_parser.add_argument(
+        "--beacon-bin",
+        type=Path,
+        default=None,
+        help="Path to cursor-agent-beacon executable for the hook wrapper",
+    )
+    setup_parser.set_defaults(func=_setup)
+
+    doctor_parser = subparsers.add_parser(
+        "doctor",
+        help="Verify hooks, wrapper, and status directory",
+    )
+    doctor_parser.add_argument(
+        "--probe",
+        action="store_true",
+        help="Run a sample hook event and verify status.json updates",
+    )
+    doctor_parser.set_defaults(func=_doctor)
+
+    status_parser = subparsers.add_parser(
+        "status",
+        help="Show the latest agent status snapshot",
+    )
+    status_parser.add_argument(
+        "--file",
+        type=Path,
+        default=None,
+        help="Status JSON path (default: user status file)",
+    )
+    status_parser.set_defaults(func=_status)
+
+    uninstall_parser = subparsers.add_parser(
+        "uninstall",
+        help="Remove user hooks and optional GNOME panel",
+    )
+    uninstall_parser.add_argument(
+        "--hooks-only",
+        action="store_true",
+        help="Remove hooks only (skip GNOME extension)",
+    )
+    uninstall_parser.add_argument(
+        "--no-gnome",
+        action="store_true",
+        help="Skip GNOME extension removal",
+    )
+    uninstall_parser.add_argument(
+        "--purge-status",
+        action="store_true",
+        help="Delete ~/.local/share/cursor-agent-beacon/",
+    )
+    uninstall_parser.set_defaults(func=_uninstall)
+
     args = parser.parse_args()
     return int(args.func(args))
 
@@ -123,18 +189,94 @@ def _install_gnome(_args: argparse.Namespace) -> int:
 
 
 def _install_desktop(_args: argparse.Namespace) -> int:
-    from cursor_agent_beacon.install import install_desktop, verify_package_installed
+    from cursor_agent_beacon.setup import format_next_steps, run_setup
 
     try:
-        verify_package_installed()
-        hooks_path, ext_path = install_desktop()
+        result = run_setup()
     except (RuntimeError, FileNotFoundError) as exc:
         print(f"[cursor-agent-beacon] install-desktop failed: {exc}", file=sys.stderr)
         return 1
 
-    print(f"Hooks: {hooks_path}")
-    print(f"GNOME extension: {ext_path}")
-    print("Restart Cursor and reload GNOME Shell.")
+    print(format_next_steps(result))
+    return 0
+
+
+def _setup(args: argparse.Namespace) -> int:
+    from cursor_agent_beacon.setup import format_next_steps, run_setup
+
+    try:
+        result = run_setup(
+            skip_gnome=args.no_gnome,
+            hooks_only=args.hooks_only,
+            beacon_bin=args.beacon_bin,
+        )
+    except (RuntimeError, FileNotFoundError) as exc:
+        print(f"[cursor-agent-beacon] setup failed: {exc}", file=sys.stderr)
+        return 1
+
+    print(format_next_steps(result))
+    return 0
+
+
+def _doctor(args: argparse.Namespace) -> int:
+    from cursor_agent_beacon.doctor import (
+        doctor_exit_code,
+        format_doctor_report,
+        run_doctor,
+    )
+
+    results = run_doctor(probe=args.probe)
+    print(format_doctor_report(results))
+    return doctor_exit_code(results)
+
+
+def _status(args: argparse.Namespace) -> int:
+    from cursor_agent_beacon.doctor import format_status_report, read_status_payload
+    from cursor_agent_beacon.install import DEFAULT_STATUS_FILE
+    from cursor_agent_beacon.session_registry import SessionRegistry
+
+    path = args.file or DEFAULT_STATUS_FILE
+    SessionRegistry(path.parent).reconcile()
+    try:
+        payload = read_status_payload(path)
+    except FileNotFoundError:
+        print(
+            f"[cursor-agent-beacon] no status at {path}\n"
+            "Run an Agent chat in Cursor, or: cursor-agent-beacon doctor --probe",
+            file=sys.stderr,
+        )
+        return 1
+    except json.JSONDecodeError as exc:
+        print(f"[cursor-agent-beacon] invalid JSON in {path}: {exc}", file=sys.stderr)
+        return 1
+
+    print(format_status_report(payload, status_file=path))
+    return 0
+
+
+def _uninstall(args: argparse.Namespace) -> int:
+    from cursor_agent_beacon.install import uninstall_desktop
+
+    result = uninstall_desktop(
+        hooks_only=args.hooks_only,
+        skip_gnome=args.no_gnome,
+        keep_status=not args.purge_status,
+    )
+
+    lines = ["Uninstall complete.", ""]
+    if result["hooks_path"] is not None:
+        lines.append(f"Removed hooks from: {result['hooks_path']}")
+    else:
+        lines.append("Hooks: no beacon entries found")
+    if result["gnome_path"] is not None:
+        lines.append(f"Removed GNOME panel: {result['gnome_path']}")
+    elif not args.hooks_only and not args.no_gnome:
+        lines.append("GNOME panel: not installed")
+    if result["status_dir"] is not None:
+        lines.append(f"Removed status data: {result['status_dir']}")
+    lines.append("")
+    lines.append("Restart Cursor to stop loading beacon hooks.")
+    print("\n".join(lines))
     return 0
 
 

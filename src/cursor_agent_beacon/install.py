@@ -17,6 +17,7 @@ BEACON_HOOK_MARKER = "cursor-agent-beacon"
 GNOME_UUID = "cursor-status-panel@suribe06"
 DEFAULT_STATUS_DIR = Path.home() / ".local/share/cursor-agent-beacon"
 DEFAULT_STATUS_FILE = DEFAULT_STATUS_DIR / "status.json"
+DEFAULT_WRAPPER_PATH = Path.home() / ".cursor/hooks/cursor-agent-beacon.sh"
 
 
 def _hooks_json_entry(command: str) -> dict[str, Any]:
@@ -51,6 +52,7 @@ def write_user_hooks(
     *,
     cursor_dir: Path | None = None,
     status_file: Path | None = None,
+    beacon_bin: Path | str | None = None,
 ) -> Path:
     """Install merge-safe user hooks. Returns path to hooks.json."""
     cursor_dir = cursor_dir or Path.home() / ".cursor"
@@ -60,8 +62,11 @@ def write_user_hooks(
     status_file.parent.mkdir(parents=True, exist_ok=True)
 
     wrapper = hooks_dir / "cursor-agent-beacon.sh"
-    cmd_parts = beacon_command()
-    exec_line = " ".join(_shell_quote(part) for part in cmd_parts)
+    if beacon_bin is not None:
+        exec_line = f'"{Path(beacon_bin).resolve()}" run'
+    else:
+        cmd_parts = beacon_command()
+        exec_line = " ".join(_shell_quote(part) for part in cmd_parts)
     wrapper.write_text(
         "#!/usr/bin/env bash\n"
         f'export CURSOR_AGENT_BEACON_STATUS_FILE="{status_file}"\n'
@@ -140,5 +145,114 @@ def verify_package_installed() -> None:
         if cmd[0].endswith("cursor-agent-beacon") and not Path(cmd[0]).is_file():
             raise RuntimeError(
                 "cursor-agent-beacon CLI not found. "
-                'Install with: pip install -e ".[dev,bridge]"'
+                'Install with: pip install "cursor-agent-beacon[bridge]" '
+                'or pip install -e ".[dev,bridge]"'
             )
+
+
+def strip_beacon_hooks_from_config(existing: dict[str, Any]) -> dict[str, Any]:
+    """Return hooks.json with beacon hook entries removed."""
+    merged: dict[str, Any] = dict(existing or {})
+    hooks: dict[str, list[dict[str, Any]]] = dict(merged.get("hooks") or {})
+    stripped_hooks: dict[str, list[dict[str, Any]]] = {}
+
+    for hook_name, entries in hooks.items():
+        kept = [item for item in entries if not _is_beacon_hook(item)]
+        if kept:
+            stripped_hooks[hook_name] = kept
+
+    merged["hooks"] = stripped_hooks
+    return merged
+
+
+def remove_user_hooks(
+    *,
+    cursor_dir: Path | None = None,
+) -> tuple[Path, bool]:
+    """Remove beacon wrapper and hook entries. Returns (hooks.json path, changed)."""
+    cursor_dir = cursor_dir or Path.home() / ".cursor"
+    hooks_path = cursor_dir / "hooks.json"
+    wrapper = cursor_dir / "hooks" / "cursor-agent-beacon.sh"
+    changed = False
+
+    if wrapper.is_file():
+        try:
+            content = wrapper.read_text(encoding="utf-8")
+        except OSError:
+            content = ""
+        if BEACON_HOOK_MARKER in content or "cursor-agent-beacon" in content:
+            wrapper.unlink(missing_ok=True)
+            changed = True
+
+    if not hooks_path.is_file():
+        return hooks_path, changed
+
+    try:
+        existing = json.loads(hooks_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return hooks_path, changed
+
+    stripped = strip_beacon_hooks_from_config(existing)
+    if stripped.get("hooks") == existing.get("hooks"):
+        return hooks_path, changed
+
+    hooks_path.write_text(json.dumps(stripped, indent=2) + "\n", encoding="utf-8")
+    return hooks_path, True
+
+
+def remove_gnome_extension(
+    *,
+    dest_parent: Path | None = None,
+) -> Path | None:
+    """Disable and remove the installed GNOME extension. Returns path if removed."""
+    dest_parent = dest_parent or (Path.home() / ".local/share/gnome-shell/extensions")
+    dest = dest_parent / GNOME_UUID
+
+    subprocess.run(
+        ["gnome-extensions", "disable", GNOME_UUID],
+        check=False,
+        capture_output=True,
+    )
+
+    if not dest.exists():
+        return None
+
+    shutil.rmtree(dest)
+    return dest
+
+
+def remove_status_data(
+    *,
+    status_dir: Path | None = None,
+) -> Path | None:
+    """Delete user status directory. Returns path if removed."""
+    status_dir = status_dir or DEFAULT_STATUS_DIR
+    if not status_dir.exists():
+        return None
+    shutil.rmtree(status_dir)
+    return status_dir
+
+
+def uninstall_desktop(
+    *,
+    hooks_only: bool = False,
+    skip_gnome: bool = False,
+    keep_status: bool = True,
+    cursor_dir: Path | None = None,
+    status_dir: Path | None = None,
+) -> dict[str, Path | None]:
+    """Remove hooks, optional GNOME panel, and optional status data."""
+    hooks_path, hooks_changed = remove_user_hooks(cursor_dir=cursor_dir)
+    result: dict[str, Path | None] = {
+        "hooks_path": hooks_path if hooks_changed else None,
+        "gnome_path": None,
+        "status_dir": None,
+    }
+
+    if not skip_gnome and not hooks_only:
+        result["gnome_path"] = remove_gnome_extension()
+
+    if not keep_status:
+        result["status_dir"] = remove_status_data(status_dir=status_dir)
+
+    return result
