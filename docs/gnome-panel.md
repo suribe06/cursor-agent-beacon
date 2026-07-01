@@ -2,6 +2,10 @@
 
 Pre-release (**v0.10**) GNOME Shell extension that reads multi-session status from cursor-agent-beacon.
 
+![Thinking state](images/gnome-panel-thinking.png)
+
+![Running shell state](images/gnome-panel-shell.png)
+
 ## Requirements
 
 - Ubuntu / GNOME Shell 46+
