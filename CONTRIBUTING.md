@@ -53,6 +53,8 @@ cursor-agent-beacon bridge
 
 ## Pull request guidelines
 
+`main` is protected: changes must go through a pull request and pass **Lint**, **Typecheck**, and **Test (Python 3.10–3.13)** before merge.
+
 1. **Keep scope focused** — one logical change per PR when possible
 2. **Add tests** for behavior changes
 3. **Update docs** if users need to know about the change

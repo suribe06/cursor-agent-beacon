@@ -61,7 +61,7 @@ def test_pick_auto_focus_prefers_busy_session():
 
 
 def test_pick_auto_focus_prefers_newer_hard_busy_over_stale_thinking():
-    """Regression: finished chat stuck on afterAgentThought must not hide active work."""
+    """Regression: stale thinking must not hide active shell/MCP work."""
     sessions = [
         {
             "id": "finished",
