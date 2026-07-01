@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-if command -v cursor-agent-beacon >/dev/null 2>&1; then
-  exec cursor-agent-beacon install-gnome
-fi
-
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-export PYTHONPATH="${ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
-exec python3 -m cursor_agent_beacon.cli install-gnome
+BEACON="${ROOT}/.venv/bin/cursor-agent-beacon"
+if [[ ! -x "${BEACON}" ]]; then
+  echo "Run ./setup.sh first (creates .venv and installs the package)." >&2
+  exit 1
+fi
+exec "${BEACON}" install-gnome
