@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/images/logo.png" width="96" alt="Cursor Agent Beacon logo">
+</p>
+
 # Cursor Agent Beacon
 
 [![CI](https://github.com/suribe06/cursor-agent-beacon/actions/workflows/ci.yml/badge.svg)](https://github.com/suribe06/cursor-agent-beacon/actions/workflows/ci.yml)
@@ -13,11 +17,11 @@ Use it today for a **GNOME top-bar status panel** and CLI (`doctor` / `status`).
 
 ## GNOME status panel
 
-![GNOME top-bar preview](docs/images/gnome-panel-preview.svg)
+| Thinking | Running shell |
+| --- | --- |
+| ![GNOME panel — Thinking state](docs/images/gnome-panel-thinking.png) | ![GNOME panel — Running shell state](docs/images/gnome-panel-shell.png) |
 
-On Ubuntu/GNOME, the extension reads `~/.local/share/cursor-agent-beacon/` and shows the focused agent session in the top bar (state, tool name, turn timer). See [GNOME Status Panel](docs/gnome-panel.md).
-
-> **Real screenshot:** the image above is an illustration. For a photo from your desktop, capture the top bar after `./setup.sh` and save it as `docs/images/gnome-panel-screenshot.png`, then point the README at that file.
+On Ubuntu/GNOME, the extension reads `~/.local/share/cursor-agent-beacon/` and shows the focused agent session in the top bar (state, tool name, turn timer). The menu lists open workspace sessions. See [GNOME Status Panel](docs/gnome-panel.md).
 
 ## Quick start
 
