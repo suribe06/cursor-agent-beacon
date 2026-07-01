@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-30
+
+### Fixed
+
+- PyPI publish: drop SPDX `license` field (Metadata 2.4) and use official `pypa/gh-action-pypi-publish`
+
 ## [0.3.0] - 2026-06-30
 
 ### Added
@@ -68,7 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Browser display simulator
 - Hook simulation script and unit tests
 
-[Unreleased]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/suribe06/cursor-agent-beacon/releases/tag/v0.1.0
