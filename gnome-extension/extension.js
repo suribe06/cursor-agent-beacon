@@ -27,7 +27,8 @@ const CURSOR_STORAGE_PATH = GLib.build_filenamev([
     'storage.json',
 ]);
 const FALLBACK_POLL_MS = 5000;
-const STALE_BUSY_SEC = 10 * 60;
+const STALE_SOFT_BUSY_SEC = 60;
+const STALE_HARD_BUSY_SEC = 10 * 60;
 const CURSOR_PROC_CACHE_SEC = 10;
 const MAX_LABEL_CHARS = 24;
 
@@ -101,15 +102,37 @@ function isBusy(state) {
     return BUSY_STATES.has(state);
 }
 
-function decayStaleBusySession(session) {
+function isSoftBusy(state) {
+    return state === 'thinking' || state === 'waiting';
+}
+
+function isHardBusy(state) {
+    return state === 'running_shell' || state === 'running_mcp';
+}
+
+function latestHardBusyTs(sessions) {
+    let latest = 0;
+    for (const session of sessions || []) {
+        if (session?.active === false || !isHardBusy(session?.state)) continue;
+        const updated = Date.parse(session.updated_at || session.timestamp || '');
+        if (!Number.isNaN(updated)) latest = Math.max(latest, updated);
+    }
+    return latest;
+}
+
+function decayStaleBusySession(session, latestHardTs = 0) {
     if (!session?.state || !isBusy(session.state)) return session;
     const updated = session.updated_at || session.timestamp;
     if (!updated) return session;
-    const ageSec = Math.max(
-        0,
-        Math.floor((Date.now() - Date.parse(updated)) / 1000),
-    );
-    if (ageSec <= STALE_BUSY_SEC) return session;
+    const updatedMs = Date.parse(updated);
+    if (Number.isNaN(updatedMs)) return session;
+    const ageSec = Math.max(0, Math.floor((Date.now() - updatedMs) / 1000));
+    const staleSec = isSoftBusy(session.state)
+        ? STALE_SOFT_BUSY_SEC
+        : STALE_HARD_BUSY_SEC;
+    const superseded =
+        isSoftBusy(session.state) && updatedMs < latestHardTs;
+    if (!superseded && ageSec < staleSec) return session;
     return {
         ...session,
         state: 'success',
@@ -118,7 +141,10 @@ function decayStaleBusySession(session) {
 }
 
 function decayStaleSessions(sessions) {
-    return (sessions || []).map(decayStaleBusySession);
+    const latestHardTs = latestHardBusyTs(sessions);
+    return (sessions || []).map(session =>
+        decayStaleBusySession(session, latestHardTs),
+    );
 }
 
 function isCursorRunning() {
@@ -610,14 +636,16 @@ export default class CursorStatusPanelExtension extends Extension {
 
         const registry = readJson(REGISTRY_PATH) || { sessions: [] };
         const rawStatus = readJson(STATUS_PATH);
-        const status = decayStaleBusySession(rawStatus);
         const pinnedId = this._settings.get_string('pinned-conversation-id');
         const openFolders = readOpenWorkspaceFolders();
         const sessions = decayStaleSessions(registry.sessions || []);
+        const latestHardTs = latestHardBusyTs(sessions);
+        const status = decayStaleBusySession(rawStatus, latestHardTs);
         const visible = filterVisibleSessions(sessions, openFolders);
         const active = busyCount(registry, status, visible);
         const display = decayStaleBusySession(
             pickDisplaySession({ ...registry, sessions }, status, pinnedId),
+            latestHardTs,
         );
 
         const profile = profileFor(display);

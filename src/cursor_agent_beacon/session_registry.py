@@ -17,6 +17,8 @@ _BUSY_STATES = {
     AgentState.RUNNING_SHELL,
     AgentState.RUNNING_MCP,
 }
+_SOFT_BUSY_STATES = {AgentState.WAITING, AgentState.THINKING}
+_HARD_BUSY_STATES = {AgentState.RUNNING_SHELL, AgentState.RUNNING_MCP}
 _STATE_PRIORITY = {
     AgentState.THINKING: 0,
     AgentState.RUNNING_SHELL: 1,
@@ -29,6 +31,7 @@ _STATE_PRIORITY = {
 _SAFE_ID = re.compile(r"[^A-Za-z0-9_.-]+")
 _STALE_SESSION_HOURS = 24
 _STALE_BUSY_MINUTES = 10
+_STALE_SOFT_BUSY_SEC = 60
 _PRUNE_INACTIVE_DAYS = 7
 _STALE_STATES = {AgentState.SUCCESS, AgentState.IDLE}
 
@@ -60,13 +63,61 @@ def _now_ts() -> float:
     return datetime.now(timezone.utc).timestamp()
 
 
+def _stale_busy_threshold_sec(session: dict[str, Any]) -> float:
+    try:
+        state = AgentState(str(session.get("state", "")))
+    except ValueError:
+        return _STALE_BUSY_MINUTES * 60
+    if state in _SOFT_BUSY_STATES:
+        return float(_STALE_SOFT_BUSY_SEC)
+    return _STALE_BUSY_MINUTES * 60
+
+
 def _is_stale_busy_session(session: dict[str, Any], now_ts: float) -> bool:
     if not session.get("active", True):
         return False
     if not is_busy_state(str(session.get("state", ""))):
         return False
     age = now_ts - _parse_ts(str(session.get("updated_at") or ""))
-    return age >= _STALE_BUSY_MINUTES * 60
+    return age >= _stale_busy_threshold_sec(session)
+
+
+def _latest_hard_busy_ts(
+    sessions: list[dict[str, Any]],
+) -> float:
+    latest = 0.0
+    for session in sessions:
+        if not session.get("active", True):
+            continue
+        try:
+            state = AgentState(str(session.get("state", "")))
+        except ValueError:
+            continue
+        if state not in _HARD_BUSY_STATES:
+            continue
+        latest = max(latest, _parse_ts(str(session.get("updated_at") or "")))
+    return latest
+
+
+def _focus_priority(
+    session: dict[str, Any],
+    *,
+    now_ts: float,
+    latest_hard_ts: float,
+) -> int:
+    try:
+        state = AgentState(str(session.get("state", AgentState.IDLE.value)))
+    except ValueError:
+        return 99
+    priority = _STATE_PRIORITY[state]
+    if state not in _SOFT_BUSY_STATES:
+        return priority
+    updated = _parse_ts(str(session.get("updated_at") or ""))
+    if updated < latest_hard_ts:
+        return _STATE_PRIORITY[AgentState.SUCCESS]
+    if now_ts - updated >= _STALE_SOFT_BUSY_SEC:
+        return _STATE_PRIORITY[AgentState.SUCCESS]
+    return priority
 
 
 def _decay_stale_busy_session(session: dict[str, Any]) -> None:
@@ -117,18 +168,21 @@ def apply_session_housekeeping(
             session["active"] = False
 
 
-def pick_auto_focus(sessions: list[dict[str, Any]]) -> dict[str, Any] | None:
+def pick_auto_focus(
+    sessions: list[dict[str, Any]],
+    *,
+    now_ts: float | None = None,
+) -> dict[str, Any] | None:
     """Pick the session the panel should show by default."""
+    ts = _now_ts() if now_ts is None else now_ts
     live = [session for session in sessions if session.get("active", True)]
     if not live:
         return None
 
+    latest_hard_ts = _latest_hard_busy_ts(live)
+
     def sort_key(session: dict[str, Any]) -> tuple[int, float]:
-        state = str(session.get("state", AgentState.IDLE.value))
-        try:
-            priority = _STATE_PRIORITY[AgentState(state)]
-        except ValueError:
-            priority = 99
+        priority = _focus_priority(session, now_ts=ts, latest_hard_ts=latest_hard_ts)
         return (priority, -_parse_ts(str(session.get("updated_at") or "")))
 
     return sorted(live, key=sort_key)[0]

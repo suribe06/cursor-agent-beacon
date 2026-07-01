@@ -192,11 +192,11 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
     if name == "afterAgentResponse":
         text = str(payload.get("text") or "")
         if redact_enabled():
-            preview = "Thinking..."
+            preview = "Ready"
         else:
-            preview = _truncate(text) if text else "Thinking..."
+            preview = _truncate(text) if text else "Ready"
         return AgentStatus(
-            state=AgentState.THINKING,
+            state=AgentState.SUCCESS,
             message=preview,
             metadata={"response_length": len(text)},
             **base_kwargs,

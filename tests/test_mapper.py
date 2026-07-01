@@ -56,6 +56,13 @@ def test_post_tool_use_returns_to_thinking():
     assert status.state == AgentState.THINKING
 
 
+def test_after_agent_response_maps_to_success():
+    status = map_hook_event(_event("afterAgentResponse", text="All done."))
+    assert status is not None
+    assert status.state == AgentState.SUCCESS
+    assert status.message == "All done."
+
+
 def test_stop_completed_maps_to_success():
     status = map_hook_event(_event("stop", status="completed", loop_count=0))
     assert status is not None

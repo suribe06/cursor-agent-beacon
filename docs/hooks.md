@@ -16,7 +16,7 @@ Official Cursor docs: https://cursor.com/docs/hooks
 | `afterShellExecution` | `thinking` / `error` | Shell done / failed |
 | `beforeMCPExecution` | `running_mcp` | Tool: server:tool |
 | `afterMCPExecution` | `thinking` | Thinking... |
-| `afterAgentResponse` | `thinking` | Response preview |
+| `afterAgentResponse` | `success` | Response preview / Ready |
 | `stop` | `success` / `error` / `idle` | Ready / error / aborted |
 | `preToolUse` | `waiting` | Using tool |
 | `postToolUse` | `thinking` | Thinking... |

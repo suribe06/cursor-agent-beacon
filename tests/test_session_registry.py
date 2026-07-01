@@ -60,6 +60,47 @@ def test_pick_auto_focus_prefers_busy_session():
     assert focused["id"] == "b"
 
 
+def test_pick_auto_focus_prefers_newer_hard_busy_over_stale_thinking():
+    """Regression: finished chat stuck on afterAgentThought must not hide active work."""
+    sessions = [
+        {
+            "id": "finished",
+            "state": "thinking",
+            "updated_at": "2026-07-01T02:46:01+00:00",
+            "active": True,
+        },
+        {
+            "id": "live",
+            "state": "running_shell",
+            "updated_at": "2026-07-01T02:47:54+00:00",
+            "active": True,
+        },
+    ]
+    focused = pick_auto_focus(sessions, now_ts=1782844000.0)
+    assert focused is not None
+    assert focused["id"] == "live"
+
+
+def test_soft_busy_decays_faster_than_hard_busy():
+    sessions = {
+        "soft": {
+            "id": "soft",
+            "state": "thinking",
+            "updated_at": "2026-06-30T18:00:00+00:00",
+            "active": True,
+        },
+        "hard": {
+            "id": "hard",
+            "state": "running_shell",
+            "updated_at": "2026-06-30T18:09:30+00:00",
+            "active": True,
+        },
+    }
+    apply_session_housekeeping(sessions, now_ts=1782843000.0)
+    assert sessions["soft"]["state"] == "success"
+    assert sessions["hard"]["state"] == "running_shell"
+
+
 def test_registry_writes_session_files_and_index(tmp_path: Path):
     registry = SessionRegistry(tmp_path)
     registry.publish(_status(conversation_id="conv-a"))
