@@ -44,7 +44,7 @@ jobs:
     if: ${{ vars.PUBLISH_TO_PYPI == 'true' }}
     steps:
       - name: Download dist artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
