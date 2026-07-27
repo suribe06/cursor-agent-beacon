@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-27
+
+### Added
+
+- **VIEWE 2.1″ firmware**: LVGL UI with embedded standard-theme GIFs and `STATUS|state|message` serial protocol (`firmware/viewe/`, `scripts/flash-viewe.sh`, `scripts/embed_theme_gifs.py`)
+- **Bridge as systemd user service**: `scripts/install-bridge-service.sh` + updated `packaging/cursor-agent-beacon-bridge.service`
+- Bridge soft-busy **reconcile loop**: decay stale thinking/waiting and push Ready to the panel without a new hook
+- Hardware docs: [`docs/hardware.md`](docs/hardware.md) hub, refreshed [`docs/hardware-viewe.md`](docs/hardware-viewe.md) (MD80E vs MD80ET naming, USB/cable notes)
+
+### Fixed
+
+- Panel stuck on **Thinking** after the agent reply: ignore `subagentStop`, shorten soft-busy decay to 20s, slim HTTP POST bodies (avoid 413), lengthen `afterAgentResponse`/`stop` hook timeouts to 30s
+- Project hooks bake `CURSOR_AGENT_BEACON_HTTP_URL` so the bridge receives status from this repo’s `.cursor/hooks`
+
+### Changed
+
+- Hook installer can bake `CURSOR_AGENT_BEACON_HTTP_URL` into the user wrapper when set
+
 ## [0.3.1] - 2026-06-30
 
 ### Fixed
@@ -74,7 +92,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Browser display simulator
 - Hook simulation script and unit tests
 
-[Unreleased]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.1.0...v0.2.0

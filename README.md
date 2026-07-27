@@ -107,13 +107,13 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 
 | Component | Status |
 | --- | --- |
-| Python hook handler | ✅ v0.3 |
-| One-shot setup + doctor CLI | ✅ v0.3 |
-| Multi-session file sink | ✅ v0.3 |
+| Python hook handler | ✅ v0.4 |
+| One-shot setup + doctor CLI | ✅ v0.4 |
+| Multi-session file sink | ✅ v0.4 |
 | GNOME status panel | 🧪 v0.10 pre-release |
 | Standard GIF theme | ✅ bundled |
 | Custom GIF themes | ✅ `themes/custom/` |
-| Local bridge service | ✅ v0.2 |
+| Local bridge service | ✅ v0.4 |
 | VIEWE MD80ET firmware (GIF + caption) | ✅ in-repo (`firmware/viewe/`) |
 
 See [`docs/roadmap.md`](docs/roadmap.md).
