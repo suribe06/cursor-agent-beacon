@@ -1,14 +1,18 @@
 [Unit]
-Description=Cursor Agent Beacon bridge (HTTP → serial)
-After=network.target
+Description=Cursor Agent Beacon bridge (HTTP → serial for VIEWE)
+Documentation=https://github.com/suribe06/cursor-agent-beacon
+After=default.target
 
 [Service]
 Type=simple
-ExecStart=%h/.local/bin/cursor-agent-beacon bridge
+# Optional overrides: serial port, theme, host/port
+EnvironmentFile=-%h/.config/cursor-agent-beacon/bridge.env
 Environment=CURSOR_AGENT_BEACON_BRIDGE_HOST=127.0.0.1
 Environment=CURSOR_AGENT_BEACON_BRIDGE_PORT=8765
-Restart=on-failure
-RestartSec=3
+# install-bridge-service.sh rewrites ExecStart to the real binary path
+ExecStart=%h/.local/bin/cursor-agent-beacon bridge
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=default.target
