@@ -1,6 +1,6 @@
 # Architecture
 
-Cursor Agent Beacon turns native Cursor hook events into normalized agent status updates, with bundled GIF themes for a future physical display.
+Cursor Agent Beacon turns native Cursor hook events into normalized agent status updates, with bundled GIF themes and optional physical displays (VIEWE firmware shipped; other boards via the same serial protocol).
 
 ## Why hooks?
 
@@ -18,7 +18,7 @@ Cursor hooks fire deterministically during the agent lifecycle. They do not depe
 | Custom theme packs | ✅ Layout + loader |
 | Local bridge service | ✅ Shipped |
 | Multi-session registry + GNOME panel | 🧪 v0.10 pre-release |
-| VIEWE firmware (LVGL) | 🔜 Phase 3 |
+| VIEWE MD80ET firmware (LVGL + GIF) | ✅ Shipped (`firmware/viewe/`) |
 
 ## Data flow (with bridge)
 
