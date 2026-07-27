@@ -75,7 +75,6 @@ def test_write_user_hooks_bakes_http_url(tmp_path: Path, monkeypatch):
     assert 'CURSOR_AGENT_BEACON_HTTP_URL="http://127.0.0.1:8765/status"' in text
 
 
-
 def test_strip_beacon_hooks_removes_only_beacon_entries():
     existing = {
         "version": 1,

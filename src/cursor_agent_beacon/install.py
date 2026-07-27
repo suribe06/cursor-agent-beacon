@@ -44,9 +44,7 @@ def merge_hooks_config(
     hooks: dict[str, list[dict[str, Any]]] = dict(merged.get("hooks") or {})
 
     for hook_name in SUPPORTED_HOOKS:
-        timeout = (
-            _LONG_HOOK_TIMEOUT_SEC if hook_name in _LONG_TIMEOUT_HOOKS else 5
-        )
+        timeout = _LONG_HOOK_TIMEOUT_SEC if hook_name in _LONG_TIMEOUT_HOOKS else 5
         beacon_entry = _hooks_json_entry(hook_command, timeout=timeout)
         existing_entries = hooks.get(hook_name, [])
         current = [item for item in existing_entries if not _is_beacon_hook(item)]
@@ -71,8 +69,10 @@ def write_user_hooks(
     status_file.parent.mkdir(parents=True, exist_ok=True)
 
     # Bake HTTP URL when set so Cursor hooks can POST to the local bridge.
-    bridge_url = http_url if http_url is not None else os.environ.get(
-        "CURSOR_AGENT_BEACON_HTTP_URL"
+    bridge_url = (
+        http_url
+        if http_url is not None
+        else os.environ.get("CURSOR_AGENT_BEACON_HTTP_URL")
     )
 
     wrapper = hooks_dir / "cursor-agent-beacon.sh"

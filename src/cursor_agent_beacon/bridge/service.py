@@ -104,7 +104,7 @@ class BridgeService:
         }
 
     def _reconcile_loop(self) -> None:
-        """Decay stale thinking/waiting and push Ready to the panel without new hooks."""
+        """Decay stale thinking/waiting; push Ready without new hooks."""
         while not self._stop_reconcile.wait(_RECONCILE_SEC):
             try:
                 if not self._registry.reconcile():
