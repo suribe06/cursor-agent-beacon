@@ -1,90 +1,75 @@
-# VIEWE UEDX48480021-MD80E firmware
+# VIEWE UEDX48480021 firmware (2.1″ circular)
 
-Firmware for the **VIEWE ESP32-S3 Knob Display** (480×480 circular, ST7701S, LVGL).
+**Board-specific** firmware for the VIEWE ESP32-S3 480×480 round panel (LVGL + embedded GIFs).  
+Setup: [`docs/hardware-viewe.md`](../../docs/hardware-viewe.md) · other displays: [`docs/hardware.md`](../../docs/hardware.md).
 
-## Before you have the board
+SKU note: VIEWE **MD80E** = knob without touch, **MD80ET** = knob + touch. This sketch selects `BOARD_VIEWE_UEDX48480021_MD80ET` because that panel init worked on the touch unit we tested (plain `MD80E` looked garbled). Beacon UI does not need the rotary ring.
 
-You can still prepare and test:
+## Requirements
 
-| Step | Command | What it validates |
-| --- | --- | --- |
-| Bridge → serial | `scripts/fake_serial_device.py` | Protocol lines without hardware |
-| Export frames | `scripts/export_firmware_assets.py` | PNG sequences for LVGL |
-| Protocol parser | `protocol.cpp` + unit test on PC (optional) | `STATUS\|...\` parsing |
-
-## When the board arrives
-
-### 1. Arduino IDE setup
-
-1. Install [Arduino ESP32 core](https://docs.espressif.com/projects/arduino-esp32/en/latest/) (ESP32-S3).
-2. Library Manager:
-   - `ESP32_Display_Panel` (≥ 1.0.3)
-   - `lvgl` (8.4.x per VIEWE docs)
-3. Clone vendor examples: [VIEWESMART/ESP32-Arduino](https://github.com/VIEWESMART/ESP32-Arduino) → `examples/2.1inch`.
-4. Board: **ESP32-S3**. Select the macro for `UEDX48480021-MD80E` in `ESP32_Display_Panel` config.
-5. Confirm the **USB serial baud rate** in the vendor example (often `115200` on ESP32-S3 USB-CDC). Match `CURSOR_AGENT_BEACON_SERIAL_BAUD`.
-
-### 2. Flash workflow
-
-1. Open `examples/2.1inch` from VIEWESMART — verify the panel + knob work **before** merging beacon code.
-2. Copy initialization from the vendor example into `cursor_agent_beacon/cursor_agent_beacon.ino`.
-3. Wire in `protocol.cpp` for serial `STATUS|state|message` lines.
-4. Load PNG frames from `data/standard/` (SPIFFS/LittleFS) using `manifest.json`.
-5. Map `state` → sprite folder → LVGL `lv_img` animation.
-
-### 3. Connect to the bridge
+- [arduino-cli](https://arduino.github.io/arduino-cli/) or Arduino IDE
+- ESP32 Arduino core ≥ 3.1
+- Libraries (Library Manager):
+  - `ESP32_Display_Panel` ≥ 1.0.3 (+ deps)
+  - `lvgl` 8.4.x
 
 ```bash
-# Find port (Linux)
-ls /dev/ttyACM* /dev/ttyUSB*
-
-export CURSOR_AGENT_BEACON_SERIAL_PORT=/dev/ttyACM0
-export CURSOR_AGENT_BEACON_SERIAL_BAUD=115200
-cursor-agent-beacon bridge
+arduino-cli config add board_manager.additional_urls \
+  https://espressif.github.io/arduino-esp32/package_esp32_index.json
+arduino-cli core install esp32:esp32@3.1.3
+arduino-cli lib install "ESP32_Display_Panel@1.0.3" "lvgl@8.4.0"
 ```
 
-Send a test status:
+Board macro in `cursor_agent_beacon/esp_panel_board_supported_conf.h`:
+
+```c
+#define ESP_PANEL_BOARD_DEFAULT_USE_SUPPORTED (1)
+#define BOARD_VIEWE_UEDX48480021_MD80ET
+```
+
+Use **`MD80ET`** unless you have confirmed a no-touch MD80E that needs the other macro. (“T” = touch in VIEWE naming.)
+
+## Flash (Linux USB CDC)
+
+Port is usually `/dev/ttyACM0`. Prefer a **USB-C → USB-A** cable **direct to the PC** (docks often fail). User must be in group `dialout`. Stop the bridge service before upload.
 
 ```bash
-export CURSOR_AGENT_BEACON_HTTP_URL=http://127.0.0.1:8765/status
-python3 scripts/simulate_hook.py examples/sample-events/after_agent_thought.json
+./scripts/flash-viewe.sh
+# or:
+FQBN='esp32:esp32:esp32s3:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,FlashMode=qio,FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=opi,DebugLevel=info,EraseFlash=all'
+arduino-cli compile --fqbn "$FQBN" firmware/viewe/cursor_agent_beacon
+arduino-cli upload -p /dev/ttyACM0 --fqbn "$FQBN" firmware/viewe/cursor_agent_beacon
+```
+
+After flash, the panel should show the **idle (sleeping) GIF**.
+
+## Connect to the bridge
+
+See the checklist in [`docs/hardware-viewe.md`](../../docs/hardware-viewe.md). Short version:
+
+```bash
+cp config/hardware.env.example config/hardware.env
+set -a && source config/hardware.env && set +a
+cursor-agent-beacon setup --hooks-only --beacon-bin "$(pwd)/.venv/bin/cursor-agent-beacon"
+./scripts/install-bridge-service.sh   # or: cursor-agent-beacon bridge
 ```
 
 ## Serial protocol
 
-See [`docs/hardware-viewe.md`](../../docs/hardware-viewe.md) and Python mirror in `src/cursor_agent_beacon/protocol.py`.
-
 ```text
 PC → device:  STATUS|<state>|<message>
 PC → device:  THEME|<theme_id>
-device → PC:  EVENT|button_pressed   (optional, future MCP path)
 ```
 
-## Asset layout
+## Files
 
-```text
-data/standard/
-  manifest.json       # state → sprite → frame list
-  thinking/
-    frame_00.png
-    frame_01.png
-    ...
-```
-
-Regenerate after theme changes:
-
-```bash
-python3 scripts/export_standard_gifs.py
-python3 scripts/export_firmware_assets.py
-```
-
-## Files in this folder
-
-| File | Purpose |
+| Path | Purpose |
 | --- | --- |
-| `protocol.h` / `protocol.cpp` | Parse `STATUS\|...\` lines (portable C++) |
-| `cursor_agent_beacon/cursor_agent_beacon.ino` | Sketch skeleton — merge with VIEWESMART init |
+| `cursor_agent_beacon/*.ino` + LVGL port | GIF + status UI |
+| `cursor_agent_beacon/theme_gifs.*` | Generated embedded GIFs (`embed_theme_gifs.py`) |
+| `cursor_agent_beacon/protocol.*` | `STATUS\|...` parser |
+| `../protocol.*` | Same parser (reference / non-Arduino builds) |
 
 ## Display-only scope
 
-This repo focuses on **showing agent status**. Knob/button `EVENT|...` lines are defined in the protocol for future use but are not required for the first end-to-end test.
+Knob/button `EVENT|...` still deferred.

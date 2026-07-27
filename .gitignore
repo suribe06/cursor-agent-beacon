@@ -43,6 +43,8 @@ themes/custom/*
 !themes/custom/example/
 !themes/custom/example/**
 firmware/viewe/data/**/*.png
+firmware/viewe/cursor_agent_beacon/theme_gifs.c
+firmware/viewe/cursor_agent_beacon/theme_gifs.h
 config/hardware.env
 *.log
 
