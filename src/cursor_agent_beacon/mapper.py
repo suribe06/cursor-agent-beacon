@@ -297,11 +297,8 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
         )
 
     if name == "subagentStop":
-        return AgentStatus(
-            state=AgentState.THINKING,
-            message="Thinking...",
-            metadata={"status": payload.get("status")},
-            **base_kwargs,
-        )
+        # ponytail: parent afterAgentResponse/stop own the panel; subagentStop was
+        # leaving chats stuck on Thinking after the visible reply finished.
+        return None
 
     return None

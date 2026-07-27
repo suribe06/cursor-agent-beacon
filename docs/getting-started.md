@@ -165,16 +165,17 @@ Without `CURSOR_AGENT_BEACON_SERIAL_PORT`, serial output is logged to stderr:
 
 **With VIEWE board connected (Linux USB-CDC):**
 
+Full checklist (cable, flash, systemd bridge): **[Hardware — VIEWE](hardware-viewe.md)**. Hub + other boards: **[Hardware displays](hardware.md)**.
+
 ```bash
 cp config/hardware.env.example config/hardware.env
 # edit CURSOR_AGENT_BEACON_SERIAL_PORT (often /dev/ttyACM0)
 
-export CURSOR_AGENT_BEACON_SERIAL_PORT=/dev/ttyACM0
-export CURSOR_AGENT_BEACON_SERIAL_BAUD=115200
-cursor-agent-beacon bridge
+./scripts/flash-viewe.sh
+set -a && source config/hardware.env && set +a
+cursor-agent-beacon setup --hooks-only
+./scripts/install-bridge-service.sh
 ```
-
-See [Hardware — VIEWE](hardware-viewe.md) for the full plug-and-play checklist.
 
 Check bridge health:
 
@@ -200,5 +201,6 @@ curl -s http://127.0.0.1:8765/health | jq
 - [Hooks Reference](hooks.md)
 - [Display themes](display-themes.md)
 - [Architecture](architecture.md)
+- [Hardware displays](hardware.md)
 - [Hardware — VIEWE](hardware-viewe.md)
-- [Roadmap](roadmap.md) — VIEWE firmware
+- [Roadmap](roadmap.md)

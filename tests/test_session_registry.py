@@ -142,13 +142,19 @@ def test_registry_stores_workspace_root(tmp_path: Path):
 
 def test_session_end_marks_inactive(tmp_path: Path):
     registry = SessionRegistry(tmp_path)
-    registry.publish(_status(conversation_id="conv-a"))
+    registry.publish(
+        _status(
+            conversation_id="conv-a",
+            timestamp="2026-07-27T18:00:00+00:00",
+        )
+    )
     registry.publish(
         _status(
             conversation_id="conv-a",
             state=AgentState.IDLE,
             hook="sessionEnd",
             message="Session ended",
+            timestamp="2026-07-27T18:00:01+00:00",
         )
     )
 

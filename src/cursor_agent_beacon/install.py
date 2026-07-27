@@ -20,8 +20,13 @@ DEFAULT_STATUS_FILE = DEFAULT_STATUS_DIR / "status.json"
 DEFAULT_WRAPPER_PATH = Path.home() / ".cursor/hooks/cursor-agent-beacon.sh"
 
 
-def _hooks_json_entry(command: str) -> dict[str, Any]:
-    return {"command": command, "timeout": 5}
+# afterAgentResponse can carry a large stdin payload; stop should not race the timeout.
+_LONG_HOOK_TIMEOUT_SEC = 30
+_LONG_TIMEOUT_HOOKS = frozenset({"afterAgentResponse", "stop"})
+
+
+def _hooks_json_entry(command: str, *, timeout: int = 5) -> dict[str, Any]:
+    return {"command": command, "timeout": timeout}
 
 
 def _is_beacon_hook(entry: dict[str, Any]) -> bool:
@@ -38,8 +43,9 @@ def merge_hooks_config(
     merged.setdefault("version", 1)
     hooks: dict[str, list[dict[str, Any]]] = dict(merged.get("hooks") or {})
 
-    beacon_entry = _hooks_json_entry(hook_command)
     for hook_name in SUPPORTED_HOOKS:
+        timeout = _LONG_HOOK_TIMEOUT_SEC if hook_name in _LONG_TIMEOUT_HOOKS else 5
+        beacon_entry = _hooks_json_entry(hook_command, timeout=timeout)
         existing_entries = hooks.get(hook_name, [])
         current = [item for item in existing_entries if not _is_beacon_hook(item)]
         hooks[hook_name] = [beacon_entry, *current]
@@ -53,6 +59,7 @@ def write_user_hooks(
     cursor_dir: Path | None = None,
     status_file: Path | None = None,
     beacon_bin: Path | str | None = None,
+    http_url: str | None = None,
 ) -> Path:
     """Install merge-safe user hooks. Returns path to hooks.json."""
     cursor_dir = cursor_dir or Path.home() / ".cursor"
@@ -61,18 +68,28 @@ def write_user_hooks(
     hooks_dir.mkdir(parents=True, exist_ok=True)
     status_file.parent.mkdir(parents=True, exist_ok=True)
 
+    # Bake HTTP URL when set so Cursor hooks can POST to the local bridge.
+    bridge_url = (
+        http_url
+        if http_url is not None
+        else os.environ.get("CURSOR_AGENT_BEACON_HTTP_URL")
+    )
+
     wrapper = hooks_dir / "cursor-agent-beacon.sh"
     if beacon_bin is not None:
         exec_line = f'"{Path(beacon_bin).resolve()}" run'
     else:
         cmd_parts = beacon_command()
         exec_line = " ".join(_shell_quote(part) for part in cmd_parts)
-    wrapper.write_text(
-        "#!/usr/bin/env bash\n"
-        f'export CURSOR_AGENT_BEACON_STATUS_FILE="{status_file}"\n'
-        f"exec {exec_line}\n",
-        encoding="utf-8",
-    )
+
+    lines = [
+        "#!/usr/bin/env bash\n",
+        f'export CURSOR_AGENT_BEACON_STATUS_FILE="{status_file}"\n',
+    ]
+    if bridge_url:
+        lines.append(f'export CURSOR_AGENT_BEACON_HTTP_URL="{bridge_url}"\n')
+    lines.append(f"exec {exec_line}\n")
+    wrapper.write_text("".join(lines), encoding="utf-8")
     wrapper.chmod(wrapper.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     hooks_path = cursor_dir / "hooks.json"

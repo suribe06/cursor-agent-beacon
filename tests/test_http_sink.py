@@ -35,3 +35,22 @@ def test_http_sink_uses_focused_status_file(tmp_path: Path):
     assert payload["state"] == "thinking"
     assert payload["message"] == "Focused session"
     assert payload["conversation_id"] == "conv-b"
+
+
+def test_bridge_payload_strips_bulky_metadata():
+    slim = HttpStatusSink._bridge_payload(
+        {
+            "state": "running_shell",
+            "message": "npm test",
+            "hook_event_name": "beforeShellExecution",
+            "id": "conv-1",
+            "metadata": {
+                "command": "x" * 5000,
+                "cwd": "/tmp",
+                "failed": False,
+            },
+        }
+    )
+    assert slim["conversation_id"] == "conv-1"
+    assert len(slim["metadata"]["command"]) <= 120
+    assert "cwd" not in slim["metadata"]

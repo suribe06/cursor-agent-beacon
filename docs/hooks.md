@@ -22,12 +22,12 @@ Official Cursor docs: https://cursor.com/docs/hooks
 | `postToolUse` | `thinking` | Thinking... |
 | `postToolUseFailure` | `error` / `waiting` | Failed: tool / Denied: tool (user rejected) |
 | `subagentStart` | `thinking` | Subagent: explore |
-| `subagentStop` | `thinking` | Thinking... |
+| `subagentStop` | _(ignored)_ | Parent `afterAgentResponse` / `stop` own the panel |
 | `beforeReadFile` | `thinking` | Reading file... |
 | `afterFileEdit` | `thinking` | Editing file... |
 | `preCompact` | `thinking` | Compacting context... |
 
-Unsupported hooks are ignored safely.
+Unsupported hooks are ignored safely. Soft `thinking`/`waiting` without a newer hook decays to **Ready** after ~20s (bridge reconcile).
 
 ## Multi-session status files
 

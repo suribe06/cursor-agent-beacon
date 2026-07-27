@@ -52,13 +52,13 @@
     "afterAgentResponse": [
       {
         "command": "python3 .cursor/hooks/hook-handler.py",
-        "timeout": 5
+        "timeout": 30
       }
     ],
     "stop": [
       {
         "command": "python3 .cursor/hooks/hook-handler.py",
-        "timeout": 5
+        "timeout": 30
       }
     ],
     "preToolUse": [

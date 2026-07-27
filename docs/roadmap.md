@@ -37,9 +37,9 @@ Target: Ubuntu / GNOME Shell 46+ top-bar indicator (pre-release v0.10).
 
 Install: `./scripts/install-desktop.sh` · Docs: [`gnome-panel.md`](gnome-panel.md)
 
-## Phase 3 — VIEWE display firmware (ESP32-S3 + LVGL)
+## Phase 3 — VIEWE display firmware (ESP32-S3 + LVGL) ✅
 
-Target: **VIEWE UEDX48480021-MD80E** (480×480, ST7701S, knob + touch). See [`hardware-viewe.md`](hardware-viewe.md).
+Target: **VIEWE UEDX48480021-MD80ET** (480×480, ST7701S). Docs: [`hardware-viewe.md`](hardware-viewe.md) · hub: [`hardware.md`](hardware.md).
 
 ### Prep without hardware ✅
 
@@ -48,16 +48,18 @@ Target: **VIEWE UEDX48480021-MD80E** (480×480, ST7701S, knob + touch). See [`ha
 - [x] Firmware asset export (`scripts/export_firmware_assets.py`)
 - [x] Arduino sketch skeleton (`firmware/viewe/cursor_agent_beacon/`)
 
-### Needs the board
+### On the board ✅
 
-- [ ] Verify VIEWESMART `examples/2.1inch` compiles and runs
-- [ ] Merge vendor LVGL + `ESP32_Display_Panel` init into beacon sketch
-- [ ] Parse `STATUS|state|message` and switch LVGL animation
-- [ ] Load PNG frames from `firmware/viewe/data/standard/`
-- [ ] Optional caption line under character
+- [x] Verify VIEWESMART board / flash path (MD80ET + USB CDC)
+- [x] Merge vendor LVGL + `ESP32_Display_Panel` init into beacon sketch
+- [x] Parse `STATUS|state|message` and update UI
+- [x] Embed standard GIFs + `LV_USE_GIF` (`scripts/embed_theme_gifs.py`)
+- [x] Caption line under character
+- [x] Systemd user bridge (`scripts/install-bridge-service.sh`)
 - [ ] (Later) knob/button → `EVENT|...` serial lines
+- [ ] (Later) FFat theme swap without reflash
 
-Assets: [`themes/standard/ASSETS.md`](../themes/standard/ASSETS.md) · export with `scripts/export_firmware_assets.py`
+Assets: [`themes/standard/ASSETS.md`](../themes/standard/ASSETS.md) · embed with `scripts/embed_theme_gifs.py`
 
 ## Design notes
 

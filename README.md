@@ -13,7 +13,7 @@ Deterministic monitoring of Cursor agent activity using native [Cursor Hooks](ht
 
 Cursor fires hook events automatically during the agent lifecycle — the model does not need to report status. Cursor Agent Beacon maps those events to a small set of high-level states and publishes updates through pluggable sinks (file, log, HTTP).
 
-Use it today for a **GNOME top-bar status panel** and CLI (`doctor` / `status`). It is also the software foundation for a **physical status display** (ESP32 + color TFT via the local bridge).
+Use it today for a **GNOME top-bar status panel** and CLI (`doctor` / `status`). Optionally drive a **physical VIEWE 480×480 panel** (ESP32 firmware + local bridge); other displays can speak the same serial protocol.
 
 ## GNOME status panel
 
@@ -73,7 +73,9 @@ See [Getting Started](docs/getting-started.md) for bridge, themes, and developme
 
 - Standard pixel-robot GIF theme (480×480) in `themes/standard/assets/`
 - Custom themes in `themes/custom/<name>/`
-- Local bridge (`cursor-agent-beacon bridge`): HTTP → theme GIF → serial (ESP32 / VIEWE)
+- Local bridge (`cursor-agent-beacon bridge`): HTTP → serial (ESP32)
+- **VIEWE UEDX48480021-MD80ET** firmware + flash script ([setup](docs/hardware-viewe.md))
+- Bring-up notes for **other displays** ([hardware hub](docs/hardware.md))
 
 ## Architecture
 
@@ -112,7 +114,7 @@ Read more in [`docs/architecture.md`](docs/architecture.md).
 | Standard GIF theme | ✅ bundled |
 | Custom GIF themes | ✅ `themes/custom/` |
 | Local bridge service | ✅ v0.2 |
-| VIEWE display firmware | 🔜 planned |
+| VIEWE MD80ET firmware (GIF + caption) | ✅ in-repo (`firmware/viewe/`) |
 
 See [`docs/roadmap.md`](docs/roadmap.md).
 
@@ -122,7 +124,8 @@ See [`docs/roadmap.md`](docs/roadmap.md).
 - [Hooks Reference](docs/hooks.md)
 - [GNOME Status Panel](docs/gnome-panel.md)
 - [Architecture](docs/architecture.md)
-- [Hardware — VIEWE](docs/hardware-viewe.md)
+- [Hardware displays](docs/hardware.md) (hub + other boards)
+- [Hardware — VIEWE setup](docs/hardware-viewe.md)
 - [Roadmap](docs/roadmap.md)
 - [Changelog](CHANGELOG.md)
 
@@ -146,6 +149,12 @@ python -m build
 ```
 
 Systemd user service template: [`packaging/cursor-agent-beacon-bridge.service`](packaging/cursor-agent-beacon-bridge.service)
+
+```bash
+# Install + enable bridge in the background (uses config/hardware.env)
+./scripts/install-bridge-service.sh
+# logs: journalctl --user -u cursor-agent-beacon-bridge -f
+```
 
 ## License
 
