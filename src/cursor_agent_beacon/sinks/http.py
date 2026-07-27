@@ -29,7 +29,7 @@ class HttpStatusSink:
         self._focused_status_file = focused_status_file
 
     def publish(self, status: AgentStatus) -> None:
-        payload = self._display_payload(status)
+        payload = self._bridge_payload(self._display_payload(status))
         body = json.dumps(payload).encode("utf-8")
         request = urllib.request.Request(
             self._url,
@@ -46,6 +46,42 @@ class HttpStatusSink:
                 file=sys.stderr,
                 flush=True,
             )
+
+    @staticmethod
+    def _bridge_payload(raw: dict) -> dict:
+        """Keep POSTs small — bridge rejects bodies over 64 KiB."""
+        meta = raw.get("metadata")
+        if not isinstance(meta, dict):
+            meta = {}
+        slim_meta = {
+            key: meta[key]
+            for key in (
+                "duration_ms",
+                "failed",
+                "stop_status",
+                "loop_count",
+                "tool_name",
+                "last_tool",
+                "subagent_type",
+                "response_length",
+            )
+            if key in meta
+        }
+        command = meta.get("command")
+        if isinstance(command, str) and command.strip():
+            slim_meta["command"] = command.strip()[:120]
+        return {
+            "state": raw.get("state"),
+            "message": raw.get("message"),
+            "hook_event_name": raw.get("hook_event_name"),
+            "conversation_id": raw.get("conversation_id") or raw.get("id"),
+            "generation_id": raw.get("generation_id"),
+            "project": raw.get("project"),
+            "workspace_root": raw.get("workspace_root"),
+            "label": raw.get("label"),
+            "timestamp": raw.get("timestamp") or raw.get("updated_at"),
+            "metadata": slim_meta,
+        }
 
     def _display_payload(self, status: AgentStatus) -> dict:
         """Use focused status.json when available (multi-session auto focus)."""

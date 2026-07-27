@@ -31,7 +31,9 @@ _STATE_PRIORITY = {
 _SAFE_ID = re.compile(r"[^A-Za-z0-9_.-]+")
 _STALE_SESSION_HOURS = 24
 _STALE_BUSY_MINUTES = 10
-_STALE_SOFT_BUSY_SEC = 60
+# Soft busy (thinking/waiting) without a newer hook → Ready. Keep short so the
+# panel recovers when Cursor skips stop/afterAgentResponse.
+_STALE_SOFT_BUSY_SEC = 20
 _PRUNE_INACTIVE_DAYS = 7
 _STALE_STATES = {AgentState.SUCCESS, AgentState.IDLE}
 

@@ -46,16 +46,34 @@ def test_write_user_hooks_creates_wrapper(tmp_path: Path, monkeypatch):
         "cursor_agent_beacon.install.DEFAULT_STATUS_FILE",
         status_file,
     )
+    monkeypatch.delenv("CURSOR_AGENT_BEACON_HTTP_URL", raising=False)
 
     hooks_path = write_user_hooks(cursor_dir=cursor_dir, status_file=status_file)
 
     wrapper = cursor_dir / "hooks" / "cursor-agent-beacon.sh"
     assert wrapper.is_file()
-    assert "cursor-agent-beacon run" in wrapper.read_text(encoding="utf-8")
+    text = wrapper.read_text(encoding="utf-8")
+    assert "cursor-agent-beacon run" in text
+    assert "CURSOR_AGENT_BEACON_HTTP_URL" not in text
 
     payload = json.loads(hooks_path.read_text(encoding="utf-8"))
     hook_cmd = payload["hooks"]["beforeReadFile"][0]["command"]
     assert hook_cmd == "./hooks/cursor-agent-beacon.sh"
+
+
+def test_write_user_hooks_bakes_http_url(tmp_path: Path, monkeypatch):
+    cursor_dir = tmp_path / ".cursor"
+    status_file = tmp_path / "share/status.json"
+    monkeypatch.delenv("CURSOR_AGENT_BEACON_HTTP_URL", raising=False)
+
+    write_user_hooks(
+        cursor_dir=cursor_dir,
+        status_file=status_file,
+        http_url="http://127.0.0.1:8765/status",
+    )
+    text = (cursor_dir / "hooks" / "cursor-agent-beacon.sh").read_text(encoding="utf-8")
+    assert 'CURSOR_AGENT_BEACON_HTTP_URL="http://127.0.0.1:8765/status"' in text
+
 
 
 def test_strip_beacon_hooks_removes_only_beacon_entries():

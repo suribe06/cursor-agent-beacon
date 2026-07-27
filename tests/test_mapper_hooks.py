@@ -45,6 +45,10 @@ def test_supported_hooks_map_to_status(hook_name: str):
         "sessionEnd": {"reason": "logout"},
     }
     status = map_hook_event(_event(hook_name, **extras.get(hook_name, {})))
+    if hook_name == "subagentStop":
+        # Parent turn owns the panel; subagentStop must not force Thinking.
+        assert status is None
+        return
     assert status is not None
     assert status.state in AgentState
 
