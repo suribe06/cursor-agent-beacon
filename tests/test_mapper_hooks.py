@@ -97,6 +97,24 @@ def test_pre_compact_maps_to_compacting():
     assert status.metadata["trigger"] == "manual"
 
 
+def test_pre_compact_exposes_context_usage():
+    status = map_hook_event(
+        _event(
+            "preCompact",
+            trigger="auto",
+            context_usage_percent=85.4,
+            context_tokens=120000,
+            context_window_size=128000,
+            model_id="grok-4.5",
+        )
+    )
+    assert status is not None
+    assert status.context_usage_percent == 85.4
+    assert status.context_tokens == 120000
+    assert status.context_window_size == 128000
+    assert status.serial_line().endswith("|85")
+
+
 def test_redact_file_edit(monkeypatch):
     monkeypatch.setenv("CURSOR_AGENT_BEACON_REDACT_CONTENT", "true")
     status = map_hook_event(

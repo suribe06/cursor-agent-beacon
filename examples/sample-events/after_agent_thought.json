@@ -1,7 +1,13 @@
 {
   "conversation_id": "conv-123",
   "generation_id": "gen-456",
-  "model": "gpt-5",
+  "model": "claude-opus-4-7-thinking-max",
+  "model_id": "claude-opus-4-7-thinking-max",
+  "model_params": [
+    { "id": "thinking", "value": "true" },
+    { "id": "context", "value": "1m" },
+    { "id": "effort", "value": "max" }
+  ],
   "hook_event_name": "afterAgentThought",
   "cursor_version": "1.7.2",
   "workspace_roots": ["/tmp/workspace"],

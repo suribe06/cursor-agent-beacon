@@ -1,5 +1,6 @@
 #include "protocol.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 static bool starts_with(const char *line, const char *prefix) {
@@ -36,7 +37,43 @@ bool beacon_parse_status_line(const char *line, BeaconStatus *out) {
 
     strncpy(out->state, rest, state_len);
     out->state[state_len] = '\0';
-    copy_token(sep + 1, out->message, sizeof(out->message));
+
+    const char *msg = sep + 1;
+    const char *model_sep = strchr(msg, '|');
+    out->model[0] = '\0';
+    out->context_pct = -1;
+
+    if (model_sep) {
+        size_t msg_len = (size_t)(model_sep - msg);
+        if (msg_len >= sizeof(out->message)) {
+            msg_len = sizeof(out->message) - 1;
+        }
+        memcpy(out->message, msg, msg_len);
+        out->message[msg_len] = '\0';
+
+        const char *model = model_sep + 1;
+        const char *ctx_sep = strchr(model, '|');
+        if (ctx_sep) {
+            size_t model_len = (size_t)(ctx_sep - model);
+            if (model_len >= sizeof(out->model)) {
+                model_len = sizeof(out->model) - 1;
+            }
+            memcpy(out->model, model, model_len);
+            out->model[model_len] = '\0';
+            out->context_pct = atoi(ctx_sep + 1);
+            if (out->context_pct < 0) {
+                out->context_pct = 0;
+            }
+            if (out->context_pct > 100) {
+                out->context_pct = 100;
+            }
+        } else {
+            copy_token(model, out->model, sizeof(out->model));
+        }
+    } else {
+        copy_token(msg, out->message, sizeof(out->message));
+    }
+
     out->valid = true;
     return true;
 }

@@ -81,3 +81,64 @@ def test_before_mcp_execution_extracts_tool_name():
     assert status is not None
     assert status.state == AgentState.RUNNING_MCP
     assert "github:search_repositories" in status.message
+
+
+def test_model_params_surface_effort_and_raw_id():
+    status = map_hook_event(
+        _event(
+            "afterAgentThought",
+            duration_ms=500,
+            model="claude-opus-4-7-thinking-max",
+            model_id="claude-opus-4-7-thinking-max",
+            model_params=[
+                {"id": "thinking", "value": "true"},
+                {"id": "effort", "value": "max"},
+                {"id": "context", "value": "1m"},
+            ],
+        )
+    )
+    assert status is not None
+    assert status.model_id == "claude-opus-4-7-thinking-max"
+    assert status.model_label == "claude-opus-4-7-thinking-max"
+    assert status.effort == "max"
+    assert status.metadata["thinking"] == "true"
+    assert status.metadata["context"] == "1m"
+    assert "claude-opus-4-7-thinking-max" in status.serial_line()
+    assert "max" in status.serial_line()
+    assert "·" not in status.serial_line()
+    assert status.serial_line().count("|") >= 3
+
+
+def test_before_submit_prompt_summarizes_attachments():
+    status = map_hook_event(
+        _event(
+            "beforeSubmitPrompt",
+            prompt="Fix the flaky test",
+            attachments=[
+                {"type": "file", "file_path": "a.py"},
+                {"type": "file", "file_path": "b.py"},
+                {"type": "rule", "file_path": "rule.mdc"},
+            ],
+        )
+    )
+    assert status is not None
+    assert status.state == AgentState.WAITING
+    assert "+2 files" in status.message
+    assert "+1 rule" in status.message
+    assert status.metadata["attachment_count"] == 3
+    assert status.metadata["attachments_summary"] == "+2 files - +1 rule"
+
+
+def test_shell_exposes_current_tool_and_sandbox():
+    status = map_hook_event(
+        _event(
+            "beforeShellExecution",
+            command="npm test",
+            sandbox=True,
+            model="gpt-5",
+        )
+    )
+    assert status is not None
+    assert status.metadata["current_tool"] == "Shell"
+    assert status.metadata["sandbox"] is True
+    assert status.message == "npm test"

@@ -299,6 +299,68 @@ function hookLabel(hook) {
     return labels[hook] || hook;
 }
 
+function modelLine(status) {
+    const parts = [];
+    const modelId = (status?.model_id || '').trim();
+    const model = (status?.model || '').trim();
+    const slug =
+        modelId && modelId.toLowerCase() !== 'default'
+            ? modelId
+            : model && model.toLowerCase() !== 'default'
+              ? model
+              : '';
+    const effort = (status?.effort || '').trim();
+    if (slug) parts.push(slug);
+    if (effort) parts.push(effort);
+    const thinking = status?.metadata?.thinking;
+    if (thinking === true || thinking === 'true') parts.push('thinking');
+    return parts.join(' · ');
+}
+
+function pickContextField(display, status, key) {
+    const fromDisplay = display?.[key] ?? display?.metadata?.[key];
+    if (fromDisplay != null && fromDisplay !== '') return fromDisplay;
+    return status?.[key] ?? status?.metadata?.[key];
+}
+
+function contextLine(status, fallbackStatus = null) {
+    const pctRaw = pickContextField(status, fallbackStatus, 'context_usage_percent');
+    const tokens = pickContextField(status, fallbackStatus, 'context_tokens');
+    const window = pickContextField(status, fallbackStatus, 'context_window_size');
+    const pct = Number(pctRaw);
+    const hasPct = Number.isFinite(pct);
+    if (!hasPct && (tokens == null || window == null)) return '';
+
+    const pctText = hasPct ? `${Math.round(pct)}%` : '';
+    let tokenText = '';
+    if (tokens != null && window != null) {
+        tokenText = `${Number(tokens).toLocaleString()} / ${Number(window).toLocaleString()} tokens`;
+    } else if (tokens != null) {
+        tokenText = `${Number(tokens).toLocaleString()} tokens`;
+    }
+
+    if (tokenText && pctText) return `Context  ${pctText}  ·  ${tokenText}`;
+    if (tokenText) return `Context  ${tokenText}`;
+    return `Context  ${pctText}`;
+}
+
+function contextBadge(status, fallbackStatus = null) {
+    const pctRaw = pickContextField(status, fallbackStatus, 'context_usage_percent');
+    const pct = Number(pctRaw);
+    if (!Number.isFinite(pct)) return '';
+    return `${Math.round(pct)}%`;
+}
+
+function detailExtras(status) {
+    const parts = [];
+    const attach = (status?.metadata?.attachments_summary || '').trim();
+    if (attach) parts.push(attach);
+    const tool = (status?.metadata?.current_tool || '').trim();
+    if (tool && !(status?.message || '').includes(tool)) parts.push(tool);
+    if (status?.metadata?.sandbox === true) parts.push('sandbox');
+    return parts.join(' · ');
+}
+
 function panelLabel(status, profile, activeCount) {
     const msg = truncate(status?.message);
     let text = profile.label;
@@ -357,8 +419,16 @@ export default class CursorStatusPanelExtension extends Extension {
         });
         this._label.y_align = Clutter.ActorAlign.CENTER;
 
+        this._ctxBadge = new St.Label({
+            text: '',
+            style_class: 'cursor-status-ctx',
+        });
+        this._ctxBadge.y_align = Clutter.ActorAlign.CENTER;
+        this._ctxBadge.visible = false;
+
         this._box.add_child(this._icon);
         this._box.add_child(this._label);
+        this._box.add_child(this._ctxBadge);
         this._indicator.add_child(this._box);
         this._setStyleClass('idle');
 
@@ -386,6 +456,14 @@ export default class CursorStatusPanelExtension extends Extension {
             reactive: false,
             style_class: 'cursor-status-menu-detail',
         });
+        this._menuModel = new PopupMenu.PopupMenuItem('', {
+            reactive: false,
+            style_class: 'cursor-status-menu-model',
+        });
+        this._menuContext = new PopupMenu.PopupMenuItem('', {
+            reactive: false,
+            style_class: 'cursor-status-menu-context',
+        });
         this._menuMeta = new PopupMenu.PopupMenuItem('', {
             reactive: false,
             style_class: 'cursor-status-menu-meta',
@@ -402,6 +480,8 @@ export default class CursorStatusPanelExtension extends Extension {
         this._indicator.menu.addMenuItem(this._menuState);
         this._indicator.menu.addMenuItem(this._menuProject);
         this._indicator.menu.addMenuItem(this._menuMessage);
+        this._indicator.menu.addMenuItem(this._menuModel);
+        this._indicator.menu.addMenuItem(this._menuContext);
         this._indicator.menu.addMenuItem(this._menuMeta);
         this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._indicator.menu.addMenuItem(this._sessionsHeader);
@@ -450,12 +530,15 @@ export default class CursorStatusPanelExtension extends Extension {
         this._box = null;
         this._icon = null;
         this._label = null;
+        this._ctxBadge = null;
         this._settings = null;
         this._menuTitle = null;
         this._followRecentItem = null;
         this._menuState = null;
         this._menuProject = null;
         this._menuMessage = null;
+        this._menuModel = null;
+        this._menuContext = null;
         this._menuMeta = null;
         this._sessionsHeader = null;
         this._sessionsSection = null;
@@ -652,6 +735,11 @@ export default class CursorStatusPanelExtension extends Extension {
         this._setIcon(profile.icon);
         this._setStyleClass(profile.style);
         this._label.text = panelLabel(display, profile, active);
+        const badge = contextBadge(display, status);
+        if (this._ctxBadge) {
+            this._ctxBadge.text = badge;
+            this._ctxBadge.visible = Boolean(badge);
+        }
 
         const state = display?.state ?? 'idle';
         const message = (display?.message || '').trim() || '—';
@@ -675,6 +763,14 @@ export default class CursorStatusPanelExtension extends Extension {
             label && label !== '—' ? label : message,
             64,
         );
+        const model = modelLine(display) || modelLine(status);
+        const extras = detailExtras(display) || detailExtras(status);
+        const modelText = [model, extras].filter(Boolean).join('  ·  ');
+        this._menuModel.label.text = modelText || 'Model unknown';
+        this._menuModel.visible = Boolean(modelText);
+        const ctxText = contextLine(display, status);
+        this._menuContext.label.text = ctxText || 'Context  —';
+        this._menuContext.visible = true;
         const turnSuffix = turn ? `  ·  turn ${turn}` : '';
         this._menuMeta.label.text = `${focus}  ·  ${hookLabel(hook)}  ·  ${formatWhen(ts)}${turnSuffix}`;
 

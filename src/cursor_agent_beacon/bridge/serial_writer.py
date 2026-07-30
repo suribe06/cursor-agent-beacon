@@ -69,7 +69,12 @@ class QueuedSerialWriter:
             if line is None:
                 return
             try:
-                self._serial.write(f"{line}\n".encode())
+                # Drain device TX (boot logs / accidental echo) so it never
+                # piles up on the host side of the CDC port.
+                waiting = getattr(self._serial, "in_waiting", 0) or 0
+                if waiting:
+                    self._serial.read(waiting)
+                self._serial.write(f"{line}\n".encode("ascii", "replace"))
                 self._serial.flush()
             except OSError as exc:
                 print(

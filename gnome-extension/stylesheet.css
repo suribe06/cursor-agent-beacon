@@ -19,6 +19,14 @@
     max-width: 200px;
 }
 
+#panel .cursor-status-ctx {
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 0 0 0 2px;
+    margin: 0;
+    color: rgba(120, 190, 255, 0.9);
+}
+
 #panel .cursor-status-panel-idle .cursor-status-icon {
     color: rgba(255, 255, 255, 0.45);
 }
@@ -92,6 +100,22 @@
 
 .cursor-status-menu-detail {
     color: rgba(255, 255, 255, 0.9);
+    padding: 2px 16px 4px;
+    margin: 0;
+}
+
+.cursor-status-menu-model {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.88em;
+    font-weight: 600;
+    padding: 0 16px 2px;
+    margin: 0;
+}
+
+.cursor-status-menu-context {
+    color: rgba(120, 190, 255, 0.95);
+    font-size: 0.9em;
+    font-weight: 700;
     padding: 2px 16px 4px;
     margin: 0;
 }
