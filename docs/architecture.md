@@ -96,18 +96,22 @@ Each hook produces an `AgentStatus` object:
 | Field | Description |
 | --- | --- |
 | `state` | `idle`, `waiting`, `thinking`, `running_shell`, `running_mcp`, `success`, `error` |
-| `message` | Short human-readable summary |
+| `message` | Short human-readable summary (tool/command/prompt preview) |
 | `hook_event_name` | Original Cursor hook name |
 | `conversation_id` | Cursor conversation id when available |
+| `model` / `model_id` | Raw model slug/id from Cursor (no renaming) |
+| `effort` | From `model_params` (`max`, `high`, …) when present |
 | `timestamp` | UTC ISO-8601 timestamp |
+| `metadata` | Event extras (`current_tool`, `attachments_summary`, `sandbox`, …) |
 
-Serial format for the bridge (planned):
+Serial format for the bridge:
 
 ```text
-STATUS|<state>|<message>
+STATUS|<state>|<message>[|<model>[|<context_pct>]]
 THEME|<theme_id>
 ```
 
+`context_pct` is 0–100 from Cursor `preCompact` (sticky on the session). Use ASCII only in captions — the VIEWE Montserrat font cannot render `·` / fancy dashes (shows as □).
 ## Theme packs
 
 Standard theme maps each agent state to a GIF in `themes/standard/assets/`. See [Display themes](display-themes.md).

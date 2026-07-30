@@ -2,6 +2,11 @@
   "hook_event_name": "preCompact",
   "conversation_id": "conv-1",
   "generation_id": "gen-1",
+  "model": "grok-4.5",
+  "model_id": "grok-4.5",
   "trigger": "auto",
+  "context_usage_percent": 85,
+  "context_tokens": 120000,
+  "context_window_size": 128000,
   "workspace_roots": ["/home/user/projects/cursor-agent-beacon"]
 }

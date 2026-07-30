@@ -62,6 +62,16 @@ The handler returns permissive responses so Cursor never gets blocked:
 
 See [`examples/sample-events/`](../examples/sample-events/).
 
+Common fields Cursor sends on every agent hook (forwarded into status when present):
+
+| Field | Use in beacon |
+| --- | --- |
+| `model` / `model_id` | Passed through as-is on status |
+| `model_params` | `effort`, plus `metadata.thinking` / `metadata.context` |
+| `attachments` (`beforeSubmitPrompt`) | `+N files · +M rules` suffix + metadata |
+| `sandbox` (shell hooks) | `metadata.sandbox` |
+| `tool_name` / command | Already the panel/display `message`; also `metadata.current_tool` |
+
 ## Debugging
 
 1. Open Cursor → Output → **Hooks**

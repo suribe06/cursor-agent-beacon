@@ -1,0 +1,19 @@
+{
+  "conversation_id": "conv-123",
+  "generation_id": "gen-456",
+  "model": "claude-opus-4-7-thinking-max",
+  "model_id": "claude-opus-4-7-thinking-max",
+  "model_params": [
+    { "id": "thinking", "value": "true" },
+    { "id": "effort", "value": "high" }
+  ],
+  "hook_event_name": "beforeSubmitPrompt",
+  "cursor_version": "1.7.2",
+  "workspace_roots": ["/tmp/workspace"],
+  "prompt": "Fix the flaky test in mapper",
+  "attachments": [
+    { "type": "file", "file_path": "tests/test_mapper.py" },
+    { "type": "file", "file_path": "src/cursor_agent_beacon/mapper.py" },
+    { "type": "rule", "file_path": ".cursor/rules/ponytail.mdc" }
+  ]
+}
