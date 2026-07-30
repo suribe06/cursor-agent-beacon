@@ -73,6 +73,8 @@ class HttpStatusSink:
                 "attachment_count",
                 "composer_mode",
                 "context_usage_percent",
+                "context_source",
+                "context_bytes_per_token",
             )
             if key in meta
         }
@@ -94,6 +96,8 @@ class HttpStatusSink:
             "context_usage_percent": raw.get("context_usage_percent"),
             "context_tokens": raw.get("context_tokens"),
             "context_window_size": raw.get("context_window_size"),
+            "context_source": raw.get("context_source")
+            or (slim_meta.get("context_source") if slim_meta else None),
             "timestamp": raw.get("timestamp") or raw.get("updated_at"),
             "metadata": slim_meta,
         }

@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from cursor_agent_beacon.context_estimate import enrich_status_context
 from cursor_agent_beacon.models import AgentState, AgentStatus
 
 _BUSY_STATES = {
@@ -257,6 +258,9 @@ class SessionRegistry:
         sessions: dict[str, dict[str, Any]] = {
             str(item["id"]): dict(item) for item in registry.get("sessions", [])
         }
+        prior = sessions.get(conversation_id) if conversation_id else None
+        # Estimate from transcript when Cursor omitted context (most hooks).
+        status = enrich_status_context(status, prior=prior)
 
         if conversation_id:
             entry = self._merge_session_entry(sessions.get(conversation_id), status)
@@ -339,13 +343,20 @@ class SessionRegistry:
         if status.effort:
             entry["effort"] = status.effort
 
-        # Sticky context window stats (Cursor mainly sends them on preCompact).
+        # Sticky context window stats (Cursor mainly sends them on preCompact;
+        # otherwise we fill from transcript estimates).
         if status.context_usage_percent is not None:
             entry["context_usage_percent"] = status.context_usage_percent
         if status.context_tokens is not None:
             entry["context_tokens"] = status.context_tokens
         if status.context_window_size is not None:
             entry["context_window_size"] = status.context_window_size
+        source = (status.metadata or {}).get("context_source")
+        if source:
+            entry["context_source"] = source
+        bpt = (status.metadata or {}).get("context_bytes_per_token")
+        if bpt is not None:
+            entry["context_bytes_per_token"] = bpt
 
         prev_meta = dict(entry.get("metadata") or {})
         next_meta = dict(status.metadata or {})
@@ -366,6 +377,9 @@ class SessionRegistry:
             "context_usage_percent",
             "context_tokens",
             "context_window_size",
+            "context_source",
+            "context_bytes_per_token",
+            "context_transcript_bytes",
         ):
             if key not in next_meta and key in prev_meta:
                 next_meta[key] = prev_meta[key]
@@ -399,6 +413,7 @@ class SessionRegistry:
             payload["context_usage_percent"] = focused.get("context_usage_percent")
             payload["context_tokens"] = focused.get("context_tokens")
             payload["context_window_size"] = focused.get("context_window_size")
+            payload["context_source"] = focused.get("context_source")
             payload["metadata"] = focused.get("metadata", {})
         else:
             payload = latest.to_dict()
