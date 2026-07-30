@@ -123,7 +123,9 @@ def _attachment_summary(attachments: Any) -> tuple[str, dict[str, Any]]:
     }
 
 
-def _base_kwargs(event: HookEvent, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+def _base_kwargs(
+    event: HookEvent, metadata: dict[str, Any] | None = None
+) -> dict[str, Any]:
     params = parse_model_params(event.raw.get("model_params"))
     if not params and event.model_params:
         params = {item["id"]: item["value"] for item in event.model_params}

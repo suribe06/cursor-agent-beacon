@@ -350,7 +350,10 @@ class SessionRegistry:
         prev_meta = dict(entry.get("metadata") or {})
         next_meta = dict(status.metadata or {})
         # Keep last attachment summary until the next prompt replaces it.
-        if "attachments_summary" not in next_meta and "attachments_summary" in prev_meta:
+        if (
+            "attachments_summary" not in next_meta
+            and "attachments_summary" in prev_meta
+        ):
             for key in (
                 "attachments_summary",
                 "attachment_count",
