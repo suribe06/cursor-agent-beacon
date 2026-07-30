@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-29
+
+### Added
+
+- **Model / effort / attachments** on status: raw model slug (skip Cursor `default`), sticky effort, prompt attachment summary
+- **Context window usage**: sticky `context_usage_percent` / tokens from `preCompact`; serial `STATUS|…|ctx_pct`
+- **VIEWE Meter Band**: labeled context bar with percent beside the model line
+- **GNOME panel**: Context menu row + top-bar `%` badge
+- **Hardware**: VIEWE 2.1 20° stand OpenSCAD (`hardware/case/viewe-2.1/`)
+
+### Changed
+
+- Serial protocol accepts optional 5th field `ctx_pct` (backward compatible with 3/4-field lines)
+- CI Actions: `actions/setup-python` v7, `actions/download-artifact` v8
+
 ## [0.4.0] - 2026-07-27
 
 ### Added
