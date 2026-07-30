@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-07-29
+
+### Added
+
+- **Context estimate**: approximate usage from Cursor agent transcripts between `preCompact` events (`context_source=estimated`)
+- GNOME panel marks estimates with `~` / `(est.)` and hides the Context row when unknown
+
+### Fixed
+
+- Context bar/menu no longer stuck empty or showing a blank `Context —` while Cursor UI still has usage
+
 ## [0.5.0] - 2026-07-29
 
 ### Added
