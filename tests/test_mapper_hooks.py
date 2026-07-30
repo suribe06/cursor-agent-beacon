@@ -112,6 +112,7 @@ def test_pre_compact_exposes_context_usage():
     assert status.context_usage_percent == 85.4
     assert status.context_tokens == 120000
     assert status.context_window_size == 128000
+    assert status.metadata["context_source"] == "measured"
     assert status.serial_line().endswith("|85")
 
 

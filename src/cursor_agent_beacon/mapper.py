@@ -353,7 +353,10 @@ def map_hook_event(event: HookEvent) -> AgentStatus | None:
             context_usage_percent=pct,
             context_tokens=tokens,
             context_window_size=window,
-            **_base_kwargs(event, meta),
+            **_base_kwargs(
+                event,
+                {**meta, "context_source": "measured"},
+            ),
         )
 
     if name == "stop":

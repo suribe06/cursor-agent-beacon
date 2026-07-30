@@ -323,6 +323,15 @@ function pickContextField(display, status, key) {
     return status?.[key] ?? status?.metadata?.[key];
 }
 
+function contextSource(status, fallbackStatus = null) {
+    return (
+        pickContextField(status, fallbackStatus, 'context_source') ||
+        status?.metadata?.context_source ||
+        fallbackStatus?.metadata?.context_source ||
+        ''
+    );
+}
+
 function contextLine(status, fallbackStatus = null) {
     const pctRaw = pickContextField(status, fallbackStatus, 'context_usage_percent');
     const tokens = pickContextField(status, fallbackStatus, 'context_tokens');
@@ -331,24 +340,28 @@ function contextLine(status, fallbackStatus = null) {
     const hasPct = Number.isFinite(pct);
     if (!hasPct && (tokens == null || window == null)) return '';
 
-    const pctText = hasPct ? `${Math.round(pct)}%` : '';
+    const approx = contextSource(status, fallbackStatus) === 'estimated';
+    const mark = approx ? '~' : '';
+    const pctText = hasPct ? `${mark}${Math.round(pct)}%` : '';
     let tokenText = '';
     if (tokens != null && window != null) {
-        tokenText = `${Number(tokens).toLocaleString()} / ${Number(window).toLocaleString()} tokens`;
+        tokenText = `${mark}${Number(tokens).toLocaleString()} / ${Number(window).toLocaleString()} tokens`;
     } else if (tokens != null) {
-        tokenText = `${Number(tokens).toLocaleString()} tokens`;
+        tokenText = `${mark}${Number(tokens).toLocaleString()} tokens`;
     }
 
-    if (tokenText && pctText) return `Context  ${pctText}  ·  ${tokenText}`;
-    if (tokenText) return `Context  ${tokenText}`;
-    return `Context  ${pctText}`;
+    const suffix = approx ? '  (est.)' : '';
+    if (tokenText && pctText) return `Context  ${pctText}  ·  ${tokenText}${suffix}`;
+    if (tokenText) return `Context  ${tokenText}${suffix}`;
+    return `Context  ${pctText}${suffix}`;
 }
 
 function contextBadge(status, fallbackStatus = null) {
     const pctRaw = pickContextField(status, fallbackStatus, 'context_usage_percent');
     const pct = Number(pctRaw);
     if (!Number.isFinite(pct)) return '';
-    return `${Math.round(pct)}%`;
+    const mark = contextSource(status, fallbackStatus) === 'estimated' ? '~' : '';
+    return `${mark}${Math.round(pct)}%`;
 }
 
 function detailExtras(status) {
@@ -769,8 +782,8 @@ export default class CursorStatusPanelExtension extends Extension {
         this._menuModel.label.text = modelText || 'Model unknown';
         this._menuModel.visible = Boolean(modelText);
         const ctxText = contextLine(display, status);
-        this._menuContext.label.text = ctxText || 'Context  —';
-        this._menuContext.visible = true;
+        this._menuContext.label.text = ctxText;
+        this._menuContext.visible = Boolean(ctxText);
         const turnSuffix = turn ? `  ·  turn ${turn}` : '';
         this._menuMeta.label.text = `${focus}  ·  ${hookLabel(hook)}  ·  ${formatWhen(ts)}${turnSuffix}`;
 
