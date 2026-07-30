@@ -107,9 +107,7 @@ class AgentStatus:
         pct = _coerce_float(
             payload.get("context_usage_percent", meta.get("context_usage_percent"))
         )
-        tokens = _coerce_int(
-            payload.get("context_tokens", meta.get("context_tokens"))
-        )
+        tokens = _coerce_int(payload.get("context_tokens", meta.get("context_tokens")))
         window = _coerce_int(
             payload.get("context_window_size", meta.get("context_window_size"))
         )

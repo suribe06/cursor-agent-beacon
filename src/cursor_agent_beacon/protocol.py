@@ -16,10 +16,7 @@ class LineKind(StrEnum):
 def _ascii_field(text: str, limit: int) -> str:
     """Keep serial captions firmware-safe (Montserrat is ASCII-ish)."""
     cleaned = (
-        text.replace("|", "/")
-        .replace("·", "-")
-        .replace("—", "-")
-        .replace("–", "-")
+        text.replace("|", "/").replace("·", "-").replace("—", "-").replace("–", "-")
     )
     cleaned = "".join(ch if 32 <= ord(ch) < 127 else " " for ch in cleaned)
     cleaned = " ".join(cleaned.split())
