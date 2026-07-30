@@ -5,10 +5,12 @@
 struct BeaconStatus {
     char state[24];
     char message[65];
+    char model[49];
+    int context_pct;  // 0-100, or -1 if unknown
     bool valid;
 };
 
-/// Parse one line: STATUS|state|message
+/// Parse: STATUS|state|message[|model[|ctx_pct]]
 bool beacon_parse_status_line(const char *line, BeaconStatus *out);
 
 /// Parse one line: THEME|theme_id (optional, returns true if matched)
