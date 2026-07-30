@@ -317,3 +317,69 @@ def test_reconcile_refreshes_stale_focus(tmp_path: Path):
 def test_is_busy_state():
     assert is_busy_state("thinking")
     assert not is_busy_state("success")
+
+
+def test_registry_keeps_sticky_model_and_attachments(tmp_path: Path):
+    registry = SessionRegistry(tmp_path)
+    registry.publish(
+        AgentStatus(
+            state=AgentState.WAITING,
+            message="Fix tests (+2 files)",
+            hook_event_name="beforeSubmitPrompt",
+            conversation_id="conv-1",
+            project="beacon",
+            model="claude-opus-4-7-thinking-max",
+            model_id="claude-opus-4-7-thinking-max",
+            effort="max",
+            metadata={
+                "attachments_summary": "+2 files",
+                "attachment_count": 2,
+            },
+            timestamp="2026-06-26T18:00:00+00:00",
+        )
+    )
+    registry.publish(
+        AgentStatus(
+            state=AgentState.THINKING,
+            message="Thinking...",
+            hook_event_name="afterAgentThought",
+            conversation_id="conv-1",
+            project="beacon",
+            timestamp="2026-06-26T18:00:01+00:00",
+        )
+    )
+    status = json.loads((tmp_path / "status.json").read_text(encoding="utf-8"))
+    assert status["model_id"] == "claude-opus-4-7-thinking-max"
+    assert status["effort"] == "max"
+    assert status["metadata"]["attachments_summary"] == "+2 files"
+
+
+def test_registry_keeps_sticky_context_usage(tmp_path: Path):
+    registry = SessionRegistry(tmp_path)
+    registry.publish(
+        AgentStatus(
+            state=AgentState.THINKING,
+            message="Compacting context...",
+            hook_event_name="preCompact",
+            conversation_id="conv-1",
+            project="beacon",
+            context_usage_percent=85,
+            context_tokens=120000,
+            context_window_size=128000,
+            timestamp="2026-06-26T18:00:00+00:00",
+        )
+    )
+    registry.publish(
+        AgentStatus(
+            state=AgentState.THINKING,
+            message="Thinking...",
+            hook_event_name="afterAgentThought",
+            conversation_id="conv-1",
+            project="beacon",
+            timestamp="2026-06-26T18:00:01+00:00",
+        )
+    )
+    status = json.loads((tmp_path / "status.json").read_text(encoding="utf-8"))
+    assert status["context_usage_percent"] == 85
+    assert status["context_tokens"] == 120000
+    assert status["context_window_size"] == 128000

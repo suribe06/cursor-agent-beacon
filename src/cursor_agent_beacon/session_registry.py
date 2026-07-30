@@ -330,7 +330,45 @@ class SessionRegistry:
         elif not entry.get("label"):
             entry["label"] = entry.get("project", "Agent chat")
 
-        entry["metadata"] = status.metadata
+        # Sticky model/effort across hooks — Cursor sends them on every event,
+        # but keep the last known values if a payload omits them.
+        if status.model:
+            entry["model"] = status.model
+        if status.model_id:
+            entry["model_id"] = status.model_id
+        if status.effort:
+            entry["effort"] = status.effort
+
+        # Sticky context window stats (Cursor mainly sends them on preCompact).
+        if status.context_usage_percent is not None:
+            entry["context_usage_percent"] = status.context_usage_percent
+        if status.context_tokens is not None:
+            entry["context_tokens"] = status.context_tokens
+        if status.context_window_size is not None:
+            entry["context_window_size"] = status.context_window_size
+
+        prev_meta = dict(entry.get("metadata") or {})
+        next_meta = dict(status.metadata or {})
+        # Keep last attachment summary until the next prompt replaces it.
+        if "attachments_summary" not in next_meta and "attachments_summary" in prev_meta:
+            for key in (
+                "attachments_summary",
+                "attachment_count",
+                "attachment_files",
+                "attachment_rules",
+            ):
+                if key in prev_meta:
+                    next_meta[key] = prev_meta[key]
+        for key in (
+            "context_usage_percent",
+            "context_tokens",
+            "context_window_size",
+        ):
+            if key not in next_meta and key in prev_meta:
+                next_meta[key] = prev_meta[key]
+            if key in next_meta and key not in entry:
+                entry[key] = next_meta[key]
+        entry["metadata"] = next_meta
         return entry
 
     def _focused_status_payload(
@@ -352,6 +390,12 @@ class SessionRegistry:
             payload["timestamp"] = focused.get("updated_at", latest.timestamp)
             payload["project"] = focused.get("project")
             payload["label"] = focused.get("label")
+            payload["model"] = focused.get("model")
+            payload["model_id"] = focused.get("model_id")
+            payload["effort"] = focused.get("effort")
+            payload["context_usage_percent"] = focused.get("context_usage_percent")
+            payload["context_tokens"] = focused.get("context_tokens")
+            payload["context_window_size"] = focused.get("context_window_size")
             payload["metadata"] = focused.get("metadata", {})
         else:
             payload = latest.to_dict()

@@ -62,8 +62,17 @@ class HttpStatusSink:
                 "loop_count",
                 "tool_name",
                 "last_tool",
+                "current_tool",
                 "subagent_type",
+                "subagent_model",
                 "response_length",
+                "thinking",
+                "context",
+                "sandbox",
+                "attachments_summary",
+                "attachment_count",
+                "composer_mode",
+                "context_usage_percent",
             )
             if key in meta
         }
@@ -79,6 +88,12 @@ class HttpStatusSink:
             "project": raw.get("project"),
             "workspace_root": raw.get("workspace_root"),
             "label": raw.get("label"),
+            "model": raw.get("model"),
+            "model_id": raw.get("model_id"),
+            "effort": raw.get("effort"),
+            "context_usage_percent": raw.get("context_usage_percent"),
+            "context_tokens": raw.get("context_tokens"),
+            "context_window_size": raw.get("context_window_size"),
             "timestamp": raw.get("timestamp") or raw.get("updated_at"),
             "metadata": slim_meta,
         }
