@@ -104,6 +104,23 @@ def main() -> int:
     )
     status_parser.set_defaults(func=_status)
 
+    reload_parser = subparsers.add_parser(
+        "reload",
+        help="Reload display.toml and push the current status to the bridge",
+    )
+    reload_parser.add_argument(
+        "--file",
+        type=Path,
+        default=None,
+        help="Status JSON path (default: user status file)",
+    )
+    reload_parser.add_argument(
+        "--no-bridge",
+        action="store_true",
+        help="Only refresh status.json; do not POST to the local bridge",
+    )
+    reload_parser.set_defaults(func=_reload)
+
     uninstall_parser = subparsers.add_parser(
         "uninstall",
         help="Remove user hooks and optional GNOME panel",
@@ -251,6 +268,44 @@ def _status(args: argparse.Namespace) -> int:
         return 1
 
     print(format_status_report(payload, status_file=path))
+    return 0
+
+
+def _reload(args: argparse.Namespace) -> int:
+    from cursor_agent_beacon.display_prefs import reload_display
+
+    result = reload_display(
+        status_file=args.file,
+        push_bridge=not args.no_bridge,
+    )
+    print(f"Display prefs: {result['config']}")
+    show = (result.get("prefs") or {}).get("show") or {}
+    enabled = [key for key, on in show.items() if on]
+    disabled = [key for key, on in show.items() if not on]
+    if enabled:
+        print(f"  on:  {', '.join(enabled)}")
+    if disabled:
+        print(f"  off: {', '.join(disabled)}")
+    badge = ((result.get("prefs") or {}).get("extension") or {}).get("panel_badge")
+    print(f"  panel_badge: {badge}")
+
+    if result.get("serial"):
+        print(f"Serial: {result['serial']}")
+    else:
+        print(f"Status: no usable snapshot at {result['status_file']}")
+
+    if args.no_bridge:
+        print("Bridge: skipped (--no-bridge)")
+    elif result.get("bridge_ok") is True:
+        print("Bridge: updated")
+    elif result.get("bridge_ok") is False:
+        print(
+            f"Bridge: unreachable ({result.get('bridge_error')})",
+            file=sys.stderr,
+        )
+        print("Prefs refreshed in status.json; start the bridge to update the display.")
+    else:
+        print("Bridge: skipped (no status snapshot)")
     return 0
 
 

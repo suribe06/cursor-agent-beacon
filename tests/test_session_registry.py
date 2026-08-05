@@ -1,6 +1,7 @@
 """Tests for multi-session registry."""
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 from cursor_agent_beacon.models import AgentState, AgentStatus
@@ -142,10 +143,12 @@ def test_registry_stores_workspace_root(tmp_path: Path):
 
 def test_session_end_marks_inactive(tmp_path: Path):
     registry = SessionRegistry(tmp_path)
+    # Use "now" timestamps so 7-day inactive prune does not delete the file.
+    now = datetime.now(timezone.utc).isoformat()
     registry.publish(
         _status(
             conversation_id="conv-a",
-            timestamp="2026-07-27T18:00:00+00:00",
+            timestamp=now,
         )
     )
     registry.publish(
@@ -154,7 +157,7 @@ def test_session_end_marks_inactive(tmp_path: Path):
             state=AgentState.IDLE,
             hook="sessionEnd",
             message="Session ended",
-            timestamp="2026-07-27T18:00:01+00:00",
+            timestamp=now,
         )
     )
 

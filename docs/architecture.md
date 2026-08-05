@@ -134,6 +134,7 @@ Hooks must never block Cursor. The handler:
 | `CURSOR_AGENT_BEACON_LOG` | `true` | Write JSON lines to stderr |
 | `CURSOR_AGENT_BEACON_FILE` | `true` | Persist latest status to disk |
 | `CURSOR_AGENT_BEACON_STATUS_FILE` | `.cursor-agent-beacon/status.json` (project) or `~/.local/share/cursor-agent-beacon/status.json` (user install) | Status snapshot path |
+| `CURSOR_AGENT_BEACON_DISPLAY_CONFIG` | `~/.config/cursor-agent-beacon/display.toml` | What to show on display + GNOME panel |
 | `CURSOR_AGENT_BEACON_HTTP_URL` | unset | POST status to local bridge |
 | `CURSOR_AGENT_BEACON_HTTP_TIMEOUT` | `1.0` | HTTP timeout in seconds |
 | `CURSOR_AGENT_BEACON_BRIDGE_HOST` | `127.0.0.1` | Bridge bind address |

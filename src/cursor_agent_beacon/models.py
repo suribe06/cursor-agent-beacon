@@ -134,22 +134,27 @@ class AgentStatus:
 
     def model_caption(self) -> str:
         """ASCII model/effort line for the VIEWE display (separate from message)."""
-        bits = [bit for bit in (self.model_label, self.effort) if bit]
-        return " ".join(bits)
+        from cursor_agent_beacon.display_prefs import load_display_prefs
+
+        prefs = load_display_prefs()
+        return prefs.model_caption(self.model_label, self.effort)
 
     def serial_line(self) -> str:
         """Format used by the VIEWE bridge: STATUS|state|message|model|ctx."""
-        message = self.message
+        from cursor_agent_beacon.display_prefs import load_display_prefs
+
+        prefs = load_display_prefs()
+        message = self.message if prefs.message else ""
         # State label already shows Ready/Thinking — avoid duplicating it.
         if message in {"Ready", "Thinking...", "Session started"}:
             message = ""
         ctx = None
-        if self.context_usage_percent is not None:
+        if prefs.context and self.context_usage_percent is not None:
             ctx = max(0, min(100, int(round(self.context_usage_percent))))
         return StatusCommand(
             state=self.state.value,
             message=message,
-            model=self.model_caption(),
+            model=prefs.model_caption(self.model_label, self.effort),
             context_pct=ctx,
         ).serial_line()
 

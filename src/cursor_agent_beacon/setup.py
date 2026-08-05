@@ -7,6 +7,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from cursor_agent_beacon.display_prefs import ensure_display_config
 from cursor_agent_beacon.install import (
     DEFAULT_STATUS_FILE,
     install_gnome_extension,
@@ -21,6 +22,7 @@ class SetupResult:
     status_file: Path
     beacon_bin: Path
     gnome_path: Path | None = None
+    display_config: Path | None = None
 
 
 def resolve_beacon_bin(explicit: Path | str | None = None) -> Path:
@@ -62,6 +64,7 @@ def run_setup(
     """Install user hooks and optionally the GNOME status panel."""
     bin_path = resolve_beacon_bin(beacon_bin)
     hooks_path = write_user_hooks(beacon_bin=bin_path)
+    display_config = ensure_display_config()
 
     gnome_path: Path | None = None
     if not skip_gnome and not hooks_only and gnome_extension_available():
@@ -72,6 +75,7 @@ def run_setup(
         status_file=DEFAULT_STATUS_FILE,
         beacon_bin=bin_path,
         gnome_path=gnome_path,
+        display_config=display_config,
     )
 
 
@@ -96,6 +100,8 @@ def format_next_steps(result: SetupResult) -> str:
             f"Status: {result.status_file.parent}/",
         ]
     )
+    if result.display_config is not None:
+        lines.append(f"Display prefs: {result.display_config}")
     if result.gnome_path is not None:
         lines.append(f"GNOME panel: {result.gnome_path}")
     elif not gnome_extension_available():
