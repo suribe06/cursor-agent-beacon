@@ -68,8 +68,15 @@ def main() -> None:
     card.paste(logo, (72, 72), logo)
 
     draw.text((72, 200), "Cursor Agent Beacon", fill=(230, 233, 240), font=font(54))
-    draw.text((72, 280), "See what your Cursor agent is doing", fill=(125, 211, 252), font=font(28))
-    draw.text((72, 320), "without watching the chat.", fill=(125, 211, 252), font=font(28))
+    draw.text(
+        (72, 280),
+        "See what your Cursor agent is doing",
+        fill=(125, 211, 252),
+        font=font(28),
+    )
+    draw.text(
+        (72, 320), "without watching the chat.", fill=(125, 211, 252), font=font(28)
+    )
     draw.text(
         (72, 400),
         "GNOME panel  ·  status CLI  ·  optional desk display",
