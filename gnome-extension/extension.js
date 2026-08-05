@@ -18,6 +18,12 @@ const BEACON_DIR = GLib.build_filenamev([
 ]);
 const STATUS_PATH = GLib.build_filenamev([BEACON_DIR, 'status.json']);
 const REGISTRY_PATH = GLib.build_filenamev([BEACON_DIR, 'registry.json']);
+const DISPLAY_CONFIG_PATH = GLib.build_filenamev([
+    GLib.get_home_dir(),
+    '.config',
+    'cursor-agent-beacon',
+    'display.toml',
+]);
 const CURSOR_STORAGE_PATH = GLib.build_filenamev([
     GLib.get_home_dir(),
     '.config',
@@ -31,6 +37,16 @@ const STALE_SOFT_BUSY_SEC = 60;
 const STALE_HARD_BUSY_SEC = 10 * 60;
 const CURSOR_PROC_CACHE_SEC = 10;
 const MAX_LABEL_CHARS = 24;
+
+const DEFAULT_DISPLAY_PREFS = {
+    model: true,
+    effort: true,
+    context: true,
+    message: true,
+    attachments: true,
+    sandbox: true,
+    panel_badge: true,
+};
 
 const STATE_CLASSES = ['idle', 'thinking', 'working', 'error'];
 const BUSY_STATES = new Set([
@@ -299,7 +315,7 @@ function hookLabel(hook) {
     return labels[hook] || hook;
 }
 
-function modelLine(status) {
+function modelLine(status, prefs = DEFAULT_DISPLAY_PREFS) {
     const parts = [];
     const modelId = (status?.model_id || '').trim();
     const model = (status?.model || '').trim();
@@ -310,8 +326,8 @@ function modelLine(status) {
               ? model
               : '';
     const effort = (status?.effort || '').trim();
-    if (slug) parts.push(slug);
-    if (effort) parts.push(effort);
+    if (prefs.model && slug) parts.push(slug);
+    if (prefs.effort && effort) parts.push(effort);
     const thinking = status?.metadata?.thinking;
     if (thinking === true || thinking === 'true') parts.push('thinking');
     return parts.join(' · ');
@@ -332,7 +348,62 @@ function contextSource(status, fallbackStatus = null) {
     );
 }
 
-function contextLine(status, fallbackStatus = null) {
+function parseDisplayToml(text) {
+    const prefs = { ...DEFAULT_DISPLAY_PREFS };
+    let section = '';
+    for (const raw of String(text || '').split('\n')) {
+        const line = raw.trim();
+        if (!line || line.startsWith('#')) continue;
+        if (line.startsWith('[') && line.endsWith(']')) {
+            section = line.slice(1, -1).trim().toLowerCase();
+            continue;
+        }
+        const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(true|false)\b/i);
+        if (!match) continue;
+        const key = match[1].toLowerCase();
+        const flag = match[2].toLowerCase() === 'true';
+        if (
+            section === 'show' &&
+            Object.prototype.hasOwnProperty.call(DEFAULT_DISPLAY_PREFS, key) &&
+            key !== 'panel_badge'
+        )
+            prefs[key] = flag;
+        else if (section === 'extension' && key === 'panel_badge')
+            prefs.panel_badge = flag;
+    }
+    return prefs;
+}
+
+function displayPrefsFromStatus(status) {
+    const embedded = status?.display;
+    if (!embedded || typeof embedded !== 'object') return null;
+    const show = embedded.show || {};
+    const extension = embedded.extension || {};
+    return {
+        model: show.model !== false,
+        effort: show.effort !== false,
+        context: show.context !== false,
+        message: show.message !== false,
+        attachments: show.attachments !== false,
+        sandbox: show.sandbox !== false,
+        panel_badge: extension.panel_badge !== false,
+    };
+}
+
+function loadDisplayPrefs(status) {
+    const fromStatus = displayPrefsFromStatus(status);
+    if (fromStatus) return fromStatus;
+    try {
+        const [ok, bytes] = GLib.file_get_contents(DISPLAY_CONFIG_PATH);
+        if (ok) return parseDisplayToml(new TextDecoder().decode(bytes));
+    } catch {
+        /* defaults */
+    }
+    return { ...DEFAULT_DISPLAY_PREFS };
+}
+
+function contextLine(status, fallbackStatus = null, prefs = DEFAULT_DISPLAY_PREFS) {
+    if (!prefs.context) return '';
     const pctRaw = pickContextField(status, fallbackStatus, 'context_usage_percent');
     const tokens = pickContextField(status, fallbackStatus, 'context_tokens');
     const window = pickContextField(status, fallbackStatus, 'context_window_size');
@@ -356,7 +427,8 @@ function contextLine(status, fallbackStatus = null) {
     return `Context  ${pctText}${suffix}`;
 }
 
-function contextBadge(status, fallbackStatus = null) {
+function contextBadge(status, fallbackStatus = null, prefs = DEFAULT_DISPLAY_PREFS) {
+    if (!prefs.context || !prefs.panel_badge) return '';
     const pctRaw = pickContextField(status, fallbackStatus, 'context_usage_percent');
     const pct = Number(pctRaw);
     if (!Number.isFinite(pct)) return '';
@@ -364,21 +436,28 @@ function contextBadge(status, fallbackStatus = null) {
     return `${mark}${Math.round(pct)}%`;
 }
 
-function detailExtras(status) {
+function detailExtras(status, prefs = DEFAULT_DISPLAY_PREFS) {
     const parts = [];
     const attach = (status?.metadata?.attachments_summary || '').trim();
-    if (attach) parts.push(attach);
+    if (prefs.attachments && attach) parts.push(attach);
     const tool = (status?.metadata?.current_tool || '').trim();
-    if (tool && !(status?.message || '').includes(tool)) parts.push(tool);
-    if (status?.metadata?.sandbox === true) parts.push('sandbox');
+    if (prefs.message && tool && !(status?.message || '').includes(tool))
+        parts.push(tool);
+    if (prefs.sandbox && status?.metadata?.sandbox === true) parts.push('sandbox');
     return parts.join(' · ');
 }
 
-function panelLabel(status, profile, activeCount) {
-    const msg = truncate(status?.message);
+function panelLabel(status, profile, activeCount, prefs = DEFAULT_DISPLAY_PREFS) {
+    const msg = prefs.message ? truncate(status?.message) : '';
     let text = profile.label;
-    if (profile.useMessage && msg) text = msg;
-    else if (profile.style === 'thinking' && msg && msg !== 'Thinking...') text = msg;
+    if (prefs.message && profile.useMessage && msg) text = msg;
+    else if (
+        prefs.message &&
+        profile.style === 'thinking' &&
+        msg &&
+        msg !== 'Thinking...'
+    )
+        text = msg;
 
     if (activeCount > 1) text = `${text} · ${activeCount}`;
     return text;
@@ -745,10 +824,11 @@ export default class CursorStatusPanelExtension extends Extension {
         );
 
         const profile = profileFor(display);
+        const prefs = loadDisplayPrefs(display) || loadDisplayPrefs(status);
         this._setIcon(profile.icon);
         this._setStyleClass(profile.style);
-        this._label.text = panelLabel(display, profile, active);
-        const badge = contextBadge(display, status);
+        this._label.text = panelLabel(display, profile, active, prefs);
+        const badge = contextBadge(display, status, prefs);
         if (this._ctxBadge) {
             this._ctxBadge.text = badge;
             this._ctxBadge.visible = Boolean(badge);
@@ -772,16 +852,23 @@ export default class CursorStatusPanelExtension extends Extension {
         this._setMenuStateStyle(state);
         this._menuProject.label.text = project;
         this._menuProject.visible = Boolean(project && project !== 'workspace');
-        this._menuMessage.label.text = truncate(
-            label && label !== '—' ? label : message,
-            64,
-        );
-        const model = modelLine(display) || modelLine(status);
-        const extras = detailExtras(display) || detailExtras(status);
+        if (prefs.message) {
+            this._menuMessage.label.text = truncate(
+                label && label !== '—' ? label : message,
+                64,
+            );
+            this._menuMessage.visible = true;
+        } else {
+            this._menuMessage.label.text = '';
+            this._menuMessage.visible = false;
+        }
+        const model = modelLine(display, prefs) || modelLine(status, prefs);
+        const extras =
+            detailExtras(display, prefs) || detailExtras(status, prefs);
         const modelText = [model, extras].filter(Boolean).join('  ·  ');
         this._menuModel.label.text = modelText || 'Model unknown';
         this._menuModel.visible = Boolean(modelText);
-        const ctxText = contextLine(display, status);
+        const ctxText = contextLine(display, status, prefs);
         this._menuContext.label.text = ctxText;
         this._menuContext.visible = Boolean(ctxText);
         const turnSuffix = turn ? `  ·  turn ${turn}` : '';

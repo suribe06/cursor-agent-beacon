@@ -36,6 +36,31 @@ cursor-agent-beacon status
 
 (When using `./setup.sh`, prefix with `.venv/bin/` if the venv is not activated.)
 
+## Display preferences
+
+`setup` creates `~/.config/cursor-agent-beacon/display.toml` once (it will not overwrite your edits). Shared `[show]` toggles control the VIEWE display and GNOME panel:
+
+```toml
+[show]
+model = true
+effort = true
+context = true
+message = true
+attachments = true
+sandbox = true
+
+[extension]
+panel_badge = true
+```
+
+After editing, apply immediately:
+
+```bash
+cursor-agent-beacon reload
+```
+
+(Auto-reload on file save is listed under [Future work](roadmap.md#future-work).)
+
 ## Uninstall
 
 ```bash

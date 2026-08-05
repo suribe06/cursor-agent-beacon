@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-08-04
+
+### Added
+
+- **Display prefs** (`~/.config/cursor-agent-beacon/display.toml`): shared toggles for model, effort, context, message, attachments, sandbox; plus `extension.panel_badge`
+- `cursor-agent-beacon setup` creates the file once (never overwrites edits)
+- `cursor-agent-beacon reload` applies display.toml changes and pushes status to the bridge
+
+### Fixed
+
+- Session registry test used wall-clock-stale timestamps that tripped the 7-day inactive prune
+
 ## [0.5.1] - 2026-07-29
 
 ### Added

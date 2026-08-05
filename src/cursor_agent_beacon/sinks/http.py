@@ -98,6 +98,7 @@ class HttpStatusSink:
             "context_window_size": raw.get("context_window_size"),
             "context_source": raw.get("context_source")
             or (slim_meta.get("context_source") if slim_meta else None),
+            "display": raw.get("display"),
             "timestamp": raw.get("timestamp") or raw.get("updated_at"),
             "metadata": slim_meta,
         }

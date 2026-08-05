@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cursor-agent-beacon"
-version = "0.5.1"
+version = "0.5.2"
 description = "Deterministic Cursor agent status monitoring via native hooks"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -423,6 +423,11 @@ class SessionRegistry:
         payload["focus_mode"] = "auto"
         if focused and focused.get("started_at"):
             payload["started_at"] = focused["started_at"]
+
+        # Surface display prefs so GNOME (and other clients) share one source.
+        from cursor_agent_beacon.display_prefs import load_display_prefs
+
+        payload["display"] = load_display_prefs().to_dict()
         return payload
 
     def _sync_session_files(self, sessions: dict[str, dict[str, Any]]) -> None:
