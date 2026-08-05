@@ -1,12 +1,12 @@
 # Architecture
 
-Cursor Agent Beacon turns native Cursor hook events into normalized agent status updates, with bundled GIF themes and optional physical displays (VIEWE firmware shipped; other boards via the same serial protocol).
+Cursor Agent Beacon turns native Cursor hook events into glanceable agent status — GNOME panel, CLI, optional desk display — with bundled GIF themes.
 
 ## Why hooks?
 
-Cursor hooks fire deterministically during the agent lifecycle. They do not depend on the model choosing to report status. That makes them ideal for physical panels, dashboards, logging, and automation.
+Cursor hooks fire during the agent lifecycle. They do not depend on the model choosing to report status. That makes them reliable for panels, desk displays, logging, and automation.
 
-## Current scope (v0.3)
+## Current scope
 
 | Layer | Status |
 |---|---|
@@ -14,11 +14,11 @@ Cursor hooks fire deterministically during the agent lifecycle. They do not depe
 | Status sinks (log, file, HTTP) | ✅ Shipped |
 | One-shot setup (`./setup.sh`) | ✅ Shipped |
 | `doctor` / `status` / `uninstall` CLI | ✅ Shipped |
-| Standard GIF theme (480×480, VIEWE) | ✅ Bundled in repo |
+| Standard GIF theme (pixel robot, 480×480) | ✅ Bundled in repo |
 | Custom theme packs | ✅ Layout + loader |
 | Local bridge service | ✅ Shipped |
-| Multi-session registry + GNOME panel | 🧪 v0.10 pre-release |
-| VIEWE MD80ET firmware (LVGL + GIF) | ✅ Shipped (`firmware/viewe/`) |
+| Multi-session registry + GNOME panel | ✅ Usable (polishing) |
+| VIEWE desk-display firmware (LVGL + GIF) | ✅ Shipped (`firmware/viewe/`) |
 
 ## Data flow (with bridge)
 
@@ -149,7 +149,7 @@ Hooks must never block Cursor. The handler:
 
 ```text
 src/cursor_agent_beacon/   Python package
-gnome-extension/           GNOME Shell panel (v0.10 pre-release)
+gnome-extension/           GNOME Shell panel
 themes/standard/           Bundled GIF theme
 themes/custom/             Personal themes (gitignored)
 .cursor/hooks/             Cursor hook entry point

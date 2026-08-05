@@ -1,6 +1,8 @@
 # Custom themes (personal GIF packs)
 
-Drop your own theme folder here. Everything under `custom/` is **gitignored** except this README and the `example/` template.
+The default face is the bundled pixel robot (`themes/standard/`). Use this folder when you want your own art — radars, game sprites, brand mascots — without changing Beacon itself.
+
+Everything under `custom/` is **gitignored** except this README and the `example/` template.
 
 ## Quick setup
 

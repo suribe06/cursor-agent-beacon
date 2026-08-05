@@ -1,6 +1,6 @@
 # GNOME Status Panel
 
-Pre-release (**v0.10**) GNOME Shell extension that reads multi-session status from cursor-agent-beacon.
+Top-bar indicator for Ubuntu / GNOME: focused Cursor agent session (state, tool, turn timer) plus a menu of open workspace sessions.
 
 ![Thinking state](images/gnome-panel-thinking.png)
 

@@ -1,10 +1,10 @@
 # Display themes
 
-Each theme is a folder with `manifest.json` + `assets/*.gif` (**480×480** for VIEWE UEDX48480021-MD80E).
+Each theme is a folder with `manifest.json` + `assets/*.gif` (**480×480** for the VIEWE desk panel and the browser simulator).
 
 ## Standard theme (default, in repo)
 
-Bundled pixel-robot GIFs generated from `scripts/build_character_sprites.py`:
+Bundled **pixel-robot** GIFs (the default product face) generated from `scripts/build_character_sprites.py`:
 
 | Agent state | GIF | Animation |
 |---|---|---|

@@ -1,21 +1,20 @@
 # Getting Started
 
-## Install (recommended)
+**Desktop path (recommended):** Ubuntu / GNOME + Cursor. Hooks and the CLI work on any OS where Cursor runs; the top-bar panel is GNOME-only today.
 
-### From git
+## Install (desktop)
 
 ```bash
-git clone https://github.com/suribe06/cursor-agent-beacon.git
-cd cursor-agent-beacon
-./setup.sh
+pip install cursor-agent-beacon
+cursor-agent-beacon setup
 ```
 
-### From PyPI
+Using a venv is fine if you prefer:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install "cursor-agent-beacon[bridge]"
+pip install cursor-agent-beacon
 cursor-agent-beacon setup
 ```
 
@@ -32,6 +31,26 @@ After an Agent chat:
 
 ```bash
 cursor-agent-beacon status
+```
+
+You're done when `doctor` is green and the top bar shows agent state.
+
+### Desk display (optional)
+
+Needs the serial bridge extra and a supported panel:
+
+```bash
+pip install "cursor-agent-beacon[bridge]"
+```
+
+Then follow [Hardware displays](hardware.md) (VIEWE setup: [hardware-viewe.md](hardware-viewe.md)).
+
+### From git (development)
+
+```bash
+git clone https://github.com/suribe06/cursor-agent-beacon.git
+cd cursor-agent-beacon
+./setup.sh
 ```
 
 (When using `./setup.sh`, prefix with `.venv/bin/` if the venv is not activated.)
@@ -70,9 +89,9 @@ cursor-agent-beacon uninstall --purge-status   # also delete status files
 
 Restart Cursor after uninstall.
 
-That installs:
+## What setup installs
 
-- Python package in `.venv/`
+- Python package (venv or user env, depending on how you installed)
 - User-level hooks in `~/.cursor/hooks.json` (works in **any** project)
 - GNOME top-bar panel on Ubuntu (when available)
 
@@ -87,6 +106,7 @@ cat ~/.local/share/cursor-agent-beacon/registry.json
 
 - Python 3.10+
 - [Cursor](https://cursor.com) with hooks enabled
+- **Desktop panel:** Ubuntu / GNOME Shell 46+ (hooks + CLI work without it)
 
 ## Options
 

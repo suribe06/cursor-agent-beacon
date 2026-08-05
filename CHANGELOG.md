@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Product landing**: README leads with benefit, default robot theme demos, desktop vs desk-display paths, and PyPI-first install (no `[bridge]` required for desktop)
+- PyPI / package description aligned to the same positioning
+
+### Added
+
+- Hero demo GIF (`docs/images/hero-demo.gif`) and social card (`docs/images/social.png`)
+- GitHub Pages workflow for the display simulator (`https://suribe06.github.io/cursor-agent-beacon/`)
+
 ## [0.5.2] - 2026-08-04
 
 ### Added

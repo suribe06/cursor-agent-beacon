@@ -1,10 +1,12 @@
 # Theme packs
 
-Visual GIF themes for the agent status display.
+Visual GIF themes for the agent status display (desk panel + simulator).
+
+The **standard** pixel-robot pack is the default face of Beacon. Custom packs let you swap in your own art (radars, game sprites, whatever) without changing the product.
 
 ## Standard theme (default, bundled in repo)
 
-Pre-built pixel robot GIFs — one character, animated per agent state.
+Pre-built pixel robot GIFs — one character, animated per agent state. This is what the README demos.
 
 ```text
 themes/standard/
@@ -26,6 +28,8 @@ Regenerate after editing sprites:
 ```bash
 pip install Pillow
 python3 scripts/export_standard_gifs.py
+python3 scripts/build_hero_demo.py      # README hero loop
+python3 scripts/build_social_card.py    # docs/images/social.png
 ```
 
 Preview in browser:

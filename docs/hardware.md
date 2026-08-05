@@ -1,12 +1,14 @@
 # Hardware displays
 
-Cursor Agent Beacon can drive a **physical status panel** over USB serial. The PC side (hooks → HTTP bridge → `STATUS|state|message`) is the same for every display. Only the **firmware** is board-specific.
+Optional path: drive a **physical desk panel** over USB serial so agent status sits in peripheral vision. The PC side (hooks → HTTP bridge → `STATUS|state|message`) is the same for every display. Only the **firmware** is board-specific.
+
+Desktop users do not need any of this — `pip install cursor-agent-beacon` + `setup` is enough for the GNOME panel.
 
 ## Supported today
 
 | Display | Firmware | Setup guide |
 | --- | --- | --- |
-| **VIEWE UEDX48480021** (2.1″ 480×480; firmware uses `MD80ET` board macro) | [`firmware/viewe/`](../firmware/viewe/README.md) | [VIEWE setup](hardware-viewe.md) |
+| **VIEWE** 2.1″ 480×480 (UEDX48480021; firmware uses `MD80ET` board macro) | [`firmware/viewe/`](../firmware/viewe/README.md) | [VIEWE setup](hardware-viewe.md) |
 
 Only this family has in-repo flash scripts and tested LVGL + GIF firmware. Store labels may say **MD80E** or **MD80ET** — see [Which SKU?](hardware-viewe.md#which-sku-md80e-vs-md80et).
 
