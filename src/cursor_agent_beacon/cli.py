@@ -303,7 +303,10 @@ def _reload(args: argparse.Namespace) -> int:
             f"Bridge: unreachable ({result.get('bridge_error')})",
             file=sys.stderr,
         )
-        print("Prefs refreshed in status.json; start the bridge to update the display.")
+        print(
+            "Prefs refreshed in status.json (GNOME panel reads that). "
+            "Start the bridge when the VIEWE is plugged in to update the display."
+        )
     else:
         print("Bridge: skipped (no status snapshot)")
     return 0
