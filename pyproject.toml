@@ -5,11 +5,11 @@ build-backend = "hatchling.build"
 [project]
 name = "cursor-agent-beacon"
 version = "0.5.2"
-description = "Deterministic Cursor agent status monitoring via native hooks"
+description = "See what your Cursor agent is doing — GNOME panel, status CLI, optional desk display"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "cursor-agent-beacon contributors" }]
-keywords = ["cursor", "hooks", "agent", "monitoring", "observability"]
+keywords = ["cursor", "hooks", "agent", "status", "gnome", "ambient", "monitoring"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

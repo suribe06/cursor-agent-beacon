@@ -1,13 +1,13 @@
 # Contributing to Cursor Agent Beacon
 
-Thanks for your interest in contributing. This project is intentionally small and focused: **deterministic agent status from Cursor hooks**, with optional hardware display later.
+Thanks for your interest in contributing. This project is focused: **glanceable Cursor agent status** from native hooks — desktop panel today, optional desk display, with themable GIF faces.
 
 ## Ways to contribute
 
 - Bug reports and feature requests via [GitHub Issues](https://github.com/suribe06/cursor-agent-beacon/issues)
 - Pull requests for fixes, tests, docs, themes, or bridge improvements
 - Sharing custom themes (locally — do not commit copyrighted assets)
-- ESP32 firmware work (Phase 3) when hardware is available
+- ESP32 firmware work when hardware is available
 
 ## Development setup
 
