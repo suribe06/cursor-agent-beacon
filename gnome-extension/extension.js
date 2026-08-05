@@ -390,9 +390,12 @@ function displayPrefsFromStatus(status) {
     };
 }
 
-function loadDisplayPrefs(status) {
-    const fromStatus = displayPrefsFromStatus(status);
-    if (fromStatus) return fromStatus;
+function loadDisplayPrefs(...sources) {
+    // Prefer status.json `display` (written by `reload`), then display.toml.
+    for (const source of sources) {
+        const fromStatus = displayPrefsFromStatus(source);
+        if (fromStatus) return fromStatus;
+    }
     try {
         const [ok, bytes] = GLib.file_get_contents(DISPLAY_CONFIG_PATH);
         if (ok) return parseDisplayToml(new TextDecoder().decode(bytes));
@@ -644,7 +647,7 @@ export default class CursorStatusPanelExtension extends Extension {
 
     _setupFileWatchers() {
         this._teardownFileWatchers();
-        for (const path of [STATUS_PATH, REGISTRY_PATH]) {
+        for (const path of [STATUS_PATH, REGISTRY_PATH, DISPLAY_CONFIG_PATH]) {
             const file = Gio.File.new_for_path(path);
             try {
                 const monitor = file.monitor_file(Gio.FileMonitorFlags.NONE, null);
@@ -824,7 +827,8 @@ export default class CursorStatusPanelExtension extends Extension {
         );
 
         const profile = profileFor(display);
-        const prefs = loadDisplayPrefs(display) || loadDisplayPrefs(status);
+        // status.json carries prefs from `reload`; session rows usually do not.
+        const prefs = loadDisplayPrefs(status, display, rawStatus);
         this._setIcon(profile.icon);
         this._setStyleClass(profile.style);
         this._label.text = panelLabel(display, profile, active, prefs);

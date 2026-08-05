@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- GNOME panel applies `display.toml` / `reload` prefs from `status.json` (focused session rows usually omit the `display` block); also watches `display.toml`
+- `reload` message when the bridge is down clarifies that the panel still updates; VIEWE needs the bridge + USB
+
 ### Changed
 
 - **Product landing**: README leads with benefit, default robot theme demos, desktop vs desk-display paths, and PyPI-first install (no `[bridge]` required for desktop)
