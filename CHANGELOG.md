@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- GNOME panel `metadata.json` declares Shell **46–50** so the extension loads on Ubuntu 26.04 (GNOME Shell 50); previously marked OUT OF DATE when only `"46"` was listed
 - GNOME panel applies `display.toml` / `reload` prefs from `status.json` (focused session rows usually omit the `display` block); also watches `display.toml`
 - `reload` message when the bridge is down clarifies that the panel still updates; VIEWE needs the bridge + USB
 

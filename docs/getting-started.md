@@ -106,7 +106,7 @@ cat ~/.local/share/cursor-agent-beacon/registry.json
 
 - Python 3.10+
 - [Cursor](https://cursor.com) with hooks enabled
-- **Desktop panel:** Ubuntu / GNOME Shell 46+ (hooks + CLI work without it)
+- **Desktop panel:** Ubuntu / GNOME Shell 46–50 (hooks + CLI work without it)
 
 ## Options
 
