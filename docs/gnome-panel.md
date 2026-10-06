@@ -8,7 +8,7 @@ Top-bar indicator for Ubuntu / GNOME: focused Cursor agent session (state, tool,
 
 ## Requirements
 
-- Ubuntu / GNOME Shell 46+
+- Ubuntu / GNOME Shell 46–50 (Ubuntu 24.04 through 26.04)
 - User-level hooks installed (see below)
 
 ## Install

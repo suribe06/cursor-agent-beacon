@@ -30,7 +30,7 @@ Living checklist against the current tree. Shipped items match code in `main` / 
 
 ## Phase 2.5 — GNOME desktop panel ✅
 
-Target: Ubuntu / GNOME Shell 46+ top-bar indicator.
+Target: Ubuntu / GNOME Shell 46–50 top-bar indicator.
 
 - [x] Multi-session registry on disk (`~/.local/share/cursor-agent-beacon/`)
 - [x] GNOME Shell extension (`gnome-extension/`)
