@@ -42,7 +42,7 @@ jobs:
           <p><a href="preview/display-simulator.html">Open display simulator</a></p>
           EOF
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v3
         with:
