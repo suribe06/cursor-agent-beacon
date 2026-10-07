@@ -764,12 +764,14 @@ export default class CursorStatusPanelExtension extends Extension {
         this._chips.add_child(this._chipEffort);
         this._chips.add_child(this._chipExtra);
         this._chips.add_child(this._chipCtx);
-        this._ctxFill = new St.Widget({ style_class: 'cursor-status-ctx-fill' });
+        this._ctxFill = new St.Widget({
+            style_class: 'cursor-status-ctx-fill',
+            x_align: Clutter.ActorAlign.START,
+            y_align: Clutter.ActorAlign.CENTER,
+        });
         this._ctxTrack = new St.Bin({
             style_class: 'cursor-status-ctx-track',
             x_expand: true,
-            x_fill: false,
-            x_align: Clutter.ActorAlign.START,
             child: this._ctxFill,
         });
         this._menuMeta = new St.Label({
