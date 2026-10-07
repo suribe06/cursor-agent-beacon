@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cursor Status Panel — visual options</title>
+<style>
+  :root {
+    --bg: #1a1b1e;
+    --desk: #2b2c2f;
+    --panel: #323337;
+    --ink: #f2f2f3;
+    --mute: rgba(242, 242, 243, 0.55);
+    --faint: rgba(242, 242, 243, 0.35);
+    --line: rgba(255, 255, 255, 0.08);
+    --amber: #e8a35c;
+    --steel: #8eb4d4;
+    --rose: #e08984;
+    --ok: #8fbf8a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font: 14px/1.4 "Cantarell", "Inter", system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(900px 420px at 20% 0%, #2a3140 0%, transparent 55%),
+      var(--bg);
+    padding: 32px 24px 64px;
+  }
+  h1 {
+    font-size: 1.15rem;
+    font-weight: 650;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .lede {
+    color: var(--mute);
+    max-width: 62ch;
+    margin: 0 0 28px;
+    font-size: 0.95rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 22px;
+    align-items: start;
+  }
+  .option { display: flex; flex-direction: column; gap: 10px; }
+  .option h2 {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+  .option p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--faint);
+    min-height: 2.6em;
+  }
+  .menu {
+    width: 100%;
+    max-width: 320px;
+    border-radius: 14px;
+    background: var(--panel);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .pad { padding: 12px 14px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .sep { height: 1px; background: var(--line); margin: 4px 0; }
+  .btn {
+    padding: 7px 12px;
+    border-radius: 8px;
+    color: var(--mute);
+    font-size: 0.9rem;
+  }
+  .btn:hover { background: rgba(255,255,255,0.05); color: var(--ink); }
+
+  /* A — Instrument */
+  .a .brand { font-size: 0.78rem; color: var(--mute); font-weight: 600; }
+  .a .count {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #1a1b1e;
+    background: var(--amber);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .a .hero {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.22);
+    border: 1px solid rgba(232,163,92,0.28);
+  }
+  .a .state {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--amber);
+    letter-spacing: -0.02em;
+  }
+  .a .project { font-size: 0.82rem; color: var(--mute); margin-top: 2px; }
+  .a .msg { margin-top: 8px; color: var(--ink); font-size: 0.92rem; }
+  .a .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .a .chip {
+    font-size: 0.72rem;
+    font-weight: 650;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.75);
+    border: 1px solid var(--line);
+  }
+  .a .chip.ctx { color: var(--steel); border-color: rgba(142,180,212,0.35); }
+  .a .track {
+    margin-top: 10px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+  .a .fill { height: 100%; width: 72%; background: var(--steel); border-radius: inherit; }
+  .a .meta { margin-top: 8px; font-size: 0.75rem; color: var(--faint); }
+  .a .section {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    padding: 10px 14px 4px;
+  }
+  .a .session {
+    display: flex; gap: 8px; align-items: center;
+    padding: 8px 14px; font-size: 0.86rem;
+  }
+  .a .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); flex: none; }
+  .a .dot.idle { background: rgba(255,255,255,0.25); }
+  .a .session .sub { color: var(--faint); font-size: 0.75rem; }
+
+  /* B — Quiet Adwaita */
+  .b .menu { background: #36363a; border-radius: 12px; }
+  .b .title { font-weight: 600; color: rgba(255,255,255,0.7); font-size: 0.88rem; }
+  .b .state { font-weight: 700; font-size: 1.05rem; margin-top: 10px; color: var(--ink); }
+  .b .state em { font-style: normal; color: var(--ok); }
+  .b .line { margin-top: 4px; color: rgba(255,255,255,0.78); }
+  .b .sub { color: rgba(255,255,255,0.45); font-size: 0.84rem; margin-top: 2px; }
+  .b .section {
+    font-size: 0.72rem; color: rgba(255,255,255,0.4);
+    letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 8px 14px 2px; font-weight: 600;
+  }
+
+  /* C — Signal */
+  .c .menu {
+    background: linear-gradient(180deg, #2e3238 0%, #26292e 100%);
+  }
+  .c .top {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 14px 10px;
+  }
+  .c .orb {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: rgba(142,180,212,0.14);
+    border: 1px solid rgba(142,180,212,0.35);
+    color: var(--steel); font-size: 1rem; font-weight: 700;
+  }
+  .c .top .state { font-weight: 750; font-size: 1.05rem; }
+  .c .top .hint { font-size: 0.8rem; color: var(--mute); }
+  .c .block { padding: 0 14px 12px; }
+  .c .meter-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.78rem; color: var(--mute); margin-bottom: 5px;
+  }
+  .c .meter {
+    height: 8px; border-radius: 4px;
+    background: rgba(255,255,255,0.08); overflow: hidden; display: flex;
+  }
+  .c .meter span { display: block; height: 100%; background: var(--steel); width: 72%; }
+  .c .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .c .tag {
+    font-size: 0.7rem; font-weight: 650; padding: 3px 8px;
+    border-radius: 999px; border: 1px solid var(--line); color: var(--mute);
+  }
+  .c .tag.on { color: var(--ok); border-color: rgba(143,191,138,0.4); }
+  .c .list-h {
+    padding: 8px 14px 4px; font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.07em; text-transform: uppercase; color: var(--faint);
+  }
+  .c .item {
+    padding: 9px 14px; display: flex; justify-content: space-between; gap: 8px;
+    border-top: 1px solid var(--line); font-size: 0.88rem;
+  }
+  .c .item small { color: var(--faint); display: block; font-size: 0.74rem; }
+  .c .loaded { color: var(--ok); font-size: 0.72rem; font-weight: 700; }
+
+  .pick {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: var(--amber);
+    font-weight: 650;
+  }
+  footer {
+    margin-top: 36px;
+    color: var(--faint);
+    font-size: 0.82rem;
+    max-width: 70ch;
+  }
+  code { font-family: ui-monospace, monospace; font-size: 0.86em; }
+</style>
+</head>
+<body>
+  <h1>Cursor Status Panel — visual options</h1>
+  <p class="lede">
+    Same information as today’s extension, three layouts. Inspired by ModelNap’s
+    hierarchy (status card → meter → list), but avoiding neon-mint / glow “AI slop”.
+    Open this file in a browser; A is the direction implemented on this branch.
+  </p>
+
+  <div class="grid">
+    <div class="option a">
+      <h2>A · Instrument</h2>
+      <p>Status card + chips + thin context meter. Amber thinking / steel working. Closest to ModelNap structure without the mint neon.</p>
+      <div class="menu">
+        <div class="pad">
+          <div class="row">
+            <span class="brand">Cursor Agent</span>
+            <span class="count">1 active</span>
+          </div>
+          <div class="btn" style="margin-top:6px">Unpin · follow most recent</div>
+          <div class="hero">
+            <div class="state">Thinking</div>
+            <div class="project">cursor-agent-beacon</div>
+            <div class="msg">Drafting gnome panel styles…</div>
+            <div class="chips">
+              <span class="chip">claude-4.6</span>
+              <span class="chip">high</span>
+              <span class="chip ctx">~72% ctx</span>
+            </div>
+            <div class="track"><div class="fill"></div></div>
+            <div class="meta">Auto · afterAgentResponse · just now · turn 1m12s</div>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <div class="section">Open windows</div>
+        <div class="session">
+          <span class="dot"></span>
+          <div>
+            <div>cursor-agent-beacon · Thinking</div>
+            <div class="sub">just now · turn 1m12s</div>
+          </div>
+        </div>
+        <div class="session">
+          <span class="dot idle"></span>
+          <div>
+            <div>other-repo · Ready</div>
+            <div class="sub">12m ago</div>
+          </div>
+        </div>
+      </div>
+      <div class="pick">← implemented on this branch</div>
+    </div>
+
+    <div class="option b">
+      <h2>B · Quiet Adwaita</h2>
+      <p>Almost stock GNOME: clearer type hierarchy, no cards, no meter. Safest / least “custom app”.</p>
+      <div class="menu">
+        <div class="pad">
+          <div class="title">Cursor Agent · 1 active</div>
+          <div class="btn" style="margin-top:6px">Follow most recent</div>
+          <div class="state"><em>Thinking</em></div>
+          <div class="sub">cursor-agent-beacon</div>
+          <div class="line">Drafting gnome panel styles…</div>
+          <div class="sub">claude-4.6 · high · ~72% context</div>
+          <div class="sub">Auto · just now · turn 1m12s</div>
+        </div>
+        <div class="sep"></div>
+        <div class="section">Open windows</div>
+        <div class="pad" style="padding-top:4px">
+          <div class="line">★ cursor-agent-beacon · Thinking</div>
+          <div class="sub">○ other-repo · Ready · 12m ago</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option c">
+      <h2>C · Signal</h2>
+      <p>ModelNap-adjacent: orb status, chunky context bar, “loaded” style session rows. More product UI, still no mint glow.</p>
+      <div class="menu">
+        <div class="top">
+          <div class="orb">◉</div>
+          <div>
+            <div class="state">Working</div>
+            <div class="hint">claude-4.6 in focus</div>
+          </div>
+        </div>
+        <div class="block">
+          <div class="meter-label"><span>Context</span><span>~72%</span></div>
+          <div class="meter"><span></span></div>
+          <div class="tags">
+            <span class="tag">shell</span>
+            <span class="tag on">pinned</span>
+            <span class="tag">high</span>
+          </div>
+        </div>
+        <div class="list-h">Open windows</div>
+        <div class="item">
+          <div>cursor-agent-beacon<small>Thinking · just now</small></div>
+          <div class="loaded">focus</div>
+        </div>
+        <div class="item">
+          <div>other-repo<small>Ready · 12m ago</small></div>
+          <div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Constraints: GNOME Shell menus use St widgets — we can get close to A/C with custom
+    <code>PopupBaseMenuItem</code> layouts + CSS; full SwiftUI polish (segmented pills, big toggles)
+    is out of scope for a panel popup. Prefer saying which letter you want next.
+  </footer>
+</body>
+</html>

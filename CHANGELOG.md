@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- GNOME panel visual refresh (WIP): “Instrument” status card with chips + context meter; mockups A/B/C in `gnome-extension/preview-menu.html`
+
 ### Fixed
 
 - GNOME panel `metadata.json` declares Shell **46–50** so the extension loads on Ubuntu 26.04 (GNOME Shell 50); previously marked OUT OF DATE when only `"46"` was listed

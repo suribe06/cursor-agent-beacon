@@ -467,11 +467,16 @@ function panelLabel(status, profile, activeCount, prefs = DEFAULT_DISPLAY_PREFS)
 }
 
 function sessionMenuLabel(session, pinnedId) {
-    const pin = session.id === pinnedId ? '★' : '○';
-    const project = truncate(session.project || 'workspace', 16);
+    const pin = session.id === pinnedId ? '◆' : '·';
+    const project = truncate(session.project || 'workspace', 18);
     const turn = formatTurnDuration(session.started_at);
-    const turnSuffix = turn ? `  ·  ${turn}` : '';
+    const turnSuffix = turn ? ` · ${turn}` : '';
     return `${pin}  ${project}  ·  ${stateLabel(session.state)}  ·  ${formatWhen(session.updated_at)}${turnSuffix}`;
+}
+
+function contextPercent(display, status) {
+    const pct = Number(pickContextField(display, status, 'context_usage_percent'));
+    return Number.isFinite(pct) ? Math.min(100, Math.max(0, pct)) : null;
 }
 
 export default class CursorStatusPanelExtension extends Extension {
@@ -527,10 +532,6 @@ export default class CursorStatusPanelExtension extends Extension {
         this._indicator.add_child(this._box);
         this._setStyleClass('idle');
 
-        this._menuTitle = new PopupMenu.PopupMenuItem('Cursor Agent', {
-            reactive: false,
-            style_class: 'cursor-status-menu-title',
-        });
         this._followRecentItem = new PopupMenu.PopupMenuItem('Follow most recent', {
             reactive: true,
         });
@@ -539,45 +540,18 @@ export default class CursorStatusPanelExtension extends Extension {
             this._tick();
         });
 
-        this._menuState = new PopupMenu.PopupMenuItem('Idle', {
-            reactive: false,
-            style_class: 'cursor-status-menu-state',
-        });
-        this._menuProject = new PopupMenu.PopupMenuItem('', {
-            reactive: false,
-            style_class: 'cursor-status-menu-project',
-        });
-        this._menuMessage = new PopupMenu.PopupMenuItem('No recent activity', {
-            reactive: false,
-            style_class: 'cursor-status-menu-detail',
-        });
-        this._menuModel = new PopupMenu.PopupMenuItem('', {
-            reactive: false,
-            style_class: 'cursor-status-menu-model',
-        });
-        this._menuContext = new PopupMenu.PopupMenuItem('', {
-            reactive: false,
-            style_class: 'cursor-status-menu-context',
-        });
-        this._menuMeta = new PopupMenu.PopupMenuItem('', {
-            reactive: false,
-            style_class: 'cursor-status-menu-meta',
-        });
-        this._sessionsHeader = new PopupMenu.PopupMenuItem('Open windows', {
+        this._headerItem = this._buildHeaderItem();
+        this._cardItem = this._buildStatusCard();
+        this._sessionsHeader = new PopupMenu.PopupMenuItem('OPEN WINDOWS', {
             reactive: false,
             style_class: 'cursor-status-menu-section',
         });
         this._sessionsSection = new PopupMenu.PopupMenuSection();
 
-        this._indicator.menu.addMenuItem(this._menuTitle);
+        this._indicator.menu.addMenuItem(this._headerItem);
         this._indicator.menu.addMenuItem(this._followRecentItem);
         this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this._indicator.menu.addMenuItem(this._menuState);
-        this._indicator.menu.addMenuItem(this._menuProject);
-        this._indicator.menu.addMenuItem(this._menuMessage);
-        this._indicator.menu.addMenuItem(this._menuModel);
-        this._indicator.menu.addMenuItem(this._menuContext);
-        this._indicator.menu.addMenuItem(this._menuMeta);
+        this._indicator.menu.addMenuItem(this._cardItem);
         this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._indicator.menu.addMenuItem(this._sessionsHeader);
         this._indicator.menu.addMenuItem(this._sessionsSection);
@@ -627,13 +601,21 @@ export default class CursorStatusPanelExtension extends Extension {
         this._label = null;
         this._ctxBadge = null;
         this._settings = null;
-        this._menuTitle = null;
+        this._headerItem = null;
+        this._cardItem = null;
         this._followRecentItem = null;
+        this._menuTitle = null;
+        this._countBadge = null;
+        this._card = null;
         this._menuState = null;
         this._menuProject = null;
         this._menuMessage = null;
-        this._menuModel = null;
-        this._menuContext = null;
+        this._chips = null;
+        this._chipModel = null;
+        this._chipEffort = null;
+        this._chipCtx = null;
+        this._ctxTrack = null;
+        this._ctxFill = null;
         this._menuMeta = null;
         this._sessionsHeader = null;
         this._sessionsSection = null;
@@ -728,6 +710,101 @@ export default class CursorStatusPanelExtension extends Extension {
         }
     }
 
+    _buildHeaderItem() {
+        const item = new PopupMenu.PopupBaseMenuItem({
+            reactive: false,
+            can_focus: false,
+            style_class: 'cursor-status-header-item',
+        });
+        const row = new St.BoxLayout({
+            style_class: 'cursor-status-header',
+            x_expand: true,
+        });
+        this._menuTitle = new St.Label({
+            text: 'Cursor Agent',
+            style_class: 'cursor-status-menu-title',
+            y_align: Clutter.ActorAlign.CENTER,
+            x_expand: true,
+        });
+        this._countBadge = new St.Label({
+            text: '',
+            style_class: 'cursor-status-count-badge',
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+        this._countBadge.visible = false;
+        row.add_child(this._menuTitle);
+        row.add_child(this._countBadge);
+        item.add_child(row);
+        return item;
+    }
+
+    _buildStatusCard() {
+        const item = new PopupMenu.PopupBaseMenuItem({
+            reactive: false,
+            can_focus: false,
+            style_class: 'cursor-status-card-item',
+        });
+        this._card = new St.BoxLayout({
+            vertical: true,
+            style_class: 'cursor-status-card',
+            x_expand: true,
+        });
+        this._menuState = new St.Label({
+            text: 'Idle',
+            style_class: 'cursor-status-menu-state',
+        });
+        this._menuProject = new St.Label({
+            text: '',
+            style_class: 'cursor-status-menu-project',
+        });
+        this._menuMessage = new St.Label({
+            text: 'No recent activity',
+            style_class: 'cursor-status-menu-detail',
+        });
+        this._chips = new St.BoxLayout({ style_class: 'cursor-status-chips' });
+        this._chipModel = new St.Label({
+            text: '',
+            style_class: 'cursor-status-chip',
+        });
+        this._chipEffort = new St.Label({
+            text: '',
+            style_class: 'cursor-status-chip',
+        });
+        this._chipCtx = new St.Label({
+            text: '',
+            style_class: 'cursor-status-chip cursor-status-chip-ctx',
+        });
+        this._chips.add_child(this._chipModel);
+        this._chips.add_child(this._chipEffort);
+        this._chips.add_child(this._chipCtx);
+        this._ctxTrack = new St.Widget({
+            style_class: 'cursor-status-ctx-track',
+            x_expand: true,
+        });
+        this._ctxFill = new St.Widget({ style_class: 'cursor-status-ctx-fill' });
+        this._ctxTrack.add_child(this._ctxFill);
+        this._menuMeta = new St.Label({
+            text: '',
+            style_class: 'cursor-status-menu-meta',
+        });
+
+        this._card.add_child(this._menuState);
+        this._card.add_child(this._menuProject);
+        this._card.add_child(this._menuMessage);
+        this._card.add_child(this._chips);
+        this._card.add_child(this._ctxTrack);
+        this._card.add_child(this._menuMeta);
+        item.add_child(this._card);
+        return item;
+    }
+
+    _setCardStyle(style) {
+        if (!this._card) return;
+        for (const name of ['idle', 'thinking', 'working', 'error'])
+            this._card.remove_style_class_name(`cursor-status-card-${name}`);
+        this._card.add_style_class_name(`cursor-status-card-${style}`);
+    }
+
     _setStyleClass(name) {
         if (this._styleClass === name) return;
         for (const cls of STATE_CLASSES) {
@@ -807,6 +884,7 @@ export default class CursorStatusPanelExtension extends Extension {
         };
         const style = styleMap[state] || 'idle';
         this._menuState?.add_style_class_name(`cursor-status-menu-state-${style}`);
+        this._setCardStyle(style);
     }
 
     _tick() {
@@ -847,36 +925,82 @@ export default class CursorStatusPanelExtension extends Extension {
         const focus = pinnedId ? 'Pinned' : 'Auto';
         const turn = formatTurnDuration(display?.started_at);
 
-        this._menuTitle.label.text =
-            active > 0 ? `Cursor Agent  ·  ${active} active` : 'Cursor Agent';
+        this._menuTitle.text = 'Cursor Agent';
+        if (active > 0) {
+            this._countBadge.text = `${active} active`;
+            this._countBadge.visible = true;
+        } else {
+            this._countBadge.visible = false;
+        }
         this._followRecentItem.label.text = pinnedId
-            ? 'Unpin  ·  follow most recent'
+            ? 'Unpin · follow most recent'
             : 'Follow most recent';
-        this._menuState.label.text = stateLabel(state);
+        this._menuState.text = stateLabel(state);
         this._setMenuStateStyle(state);
-        this._menuProject.label.text = project;
+        this._menuProject.text = project;
         this._menuProject.visible = Boolean(project && project !== 'workspace');
         if (prefs.message) {
-            this._menuMessage.label.text = truncate(
+            this._menuMessage.text = truncate(
                 label && label !== '—' ? label : message,
                 64,
             );
             this._menuMessage.visible = true;
         } else {
-            this._menuMessage.label.text = '';
+            this._menuMessage.text = '';
             this._menuMessage.visible = false;
         }
-        const model = modelLine(display, prefs) || modelLine(status, prefs);
+
+        const modelId = (display?.model_id || status?.model_id || '').trim();
+        const modelName = (display?.model || status?.model || '').trim();
+        const slug =
+            modelId && modelId.toLowerCase() !== 'default'
+                ? modelId
+                : modelName && modelName.toLowerCase() !== 'default'
+                  ? modelName
+                  : '';
+        const effort = (display?.effort || status?.effort || '').trim();
+        if (prefs.model && slug) {
+            this._chipModel.text = truncate(slug, 28);
+            this._chipModel.visible = true;
+        } else {
+            this._chipModel.visible = false;
+        }
+        if (prefs.effort && effort) {
+            this._chipEffort.text = effort;
+            this._chipEffort.visible = true;
+        } else {
+            this._chipEffort.visible = false;
+        }
+
+        const pct = prefs.context ? contextPercent(display, status) : null;
+        const approx = contextSource(display, status) === 'estimated';
+        if (pct != null) {
+            const mark = approx ? '~' : '';
+            this._chipCtx.text = `${mark}${Math.round(pct)}% ctx`;
+            this._chipCtx.visible = true;
+            this._ctxTrack.visible = true;
+            // Track is ~240px; St width via style (allocation can lag one frame).
+            const px = Math.max(4, Math.round((pct / 100) * 240));
+            this._ctxFill.style = `width: ${px}px;`;
+        } else {
+            this._chipCtx.visible = false;
+            this._ctxTrack.visible = false;
+        }
+        this._chips.visible =
+            this._chipModel.visible ||
+            this._chipEffort.visible ||
+            this._chipCtx.visible;
+
         const extras =
             detailExtras(display, prefs) || detailExtras(status, prefs);
-        const modelText = [model, extras].filter(Boolean).join('  ·  ');
-        this._menuModel.label.text = modelText || 'Model unknown';
-        this._menuModel.visible = Boolean(modelText);
-        const ctxText = contextLine(display, status, prefs);
-        this._menuContext.label.text = ctxText;
-        this._menuContext.visible = Boolean(ctxText);
-        const turnSuffix = turn ? `  ·  turn ${turn}` : '';
-        this._menuMeta.label.text = `${focus}  ·  ${hookLabel(hook)}  ·  ${formatWhen(ts)}${turnSuffix}`;
+        const turnSuffix = turn ? ` · turn ${turn}` : '';
+        const metaBits = [
+            focus,
+            hookLabel(hook),
+            formatWhen(ts),
+            extras || null,
+        ].filter(Boolean);
+        this._menuMeta.text = `${metaBits.join(' · ')}${turnSuffix}`;
 
         this._rebuildSessionMenu(visible, pinnedId);
     }

@@ -1,8 +1,10 @@
-/* Cursor Status Panel — panel + menu styling */
+/* Cursor Status Panel — Instrument (option A)
+   Amber thinking / steel working. No neon mint, no glow. */
 
 #panel .cursor-status-box {
-    spacing: 6px;
-    padding: 0 4px;
+    spacing: 5px;
+    padding: 0 6px;
+    border-radius: 999px;
 }
 
 #panel .cursor-status-icon {
@@ -13,138 +15,214 @@
 
 #panel .cursor-status-label {
     font-size: 11.5px;
-    font-weight: 600;
+    font-weight: 650;
     padding: 0;
     margin: 0;
-    max-width: 200px;
+    max-width: 180px;
 }
 
 #panel .cursor-status-ctx {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
-    padding: 0 0 0 2px;
-    margin: 0;
-    color: rgba(120, 190, 255, 0.9);
+    padding: 1px 5px;
+    margin: 0 0 0 1px;
+    border-radius: 999px;
+    background-color: rgba(142, 180, 212, 0.18);
+    color: rgba(180, 210, 232, 0.95);
 }
 
 #panel .cursor-status-panel-idle .cursor-status-icon {
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(255, 255, 255, 0.4);
 }
 
 #panel .cursor-status-panel-idle .cursor-status-label {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.48);
+}
+
+#panel .cursor-status-panel-thinking {
+    background-color: rgba(232, 163, 92, 0.14);
 }
 
 #panel .cursor-status-panel-thinking .cursor-status-icon {
-    color: #f5a962;
+    color: #e8a35c;
     animation: cursor-status-spin 1.4s linear infinite;
 }
 
 #panel .cursor-status-panel-thinking .cursor-status-label {
-    color: rgba(255, 255, 255, 0.95);
+    color: rgba(255, 245, 230, 0.96);
+}
+
+#panel .cursor-status-panel-working {
+    background-color: rgba(142, 180, 212, 0.14);
 }
 
 #panel .cursor-status-panel-working .cursor-status-icon {
-    color: #78beff;
+    color: #8eb4d4;
 }
 
 #panel .cursor-status-panel-working .cursor-status-label {
-    color: rgba(255, 255, 255, 0.92);
+    color: rgba(230, 240, 250, 0.95);
+}
+
+#panel .cursor-status-panel-error {
+    background-color: rgba(224, 137, 132, 0.16);
 }
 
 #panel .cursor-status-panel-error .cursor-status-icon {
-    color: #ff7b72;
+    color: #e08984;
 }
 
 #panel .cursor-status-panel-error .cursor-status-label {
-    color: #ff9b93;
+    color: #f0b4b0;
 }
 
-/* popup menu */
+/* —— popup —— */
+
+.cursor-status-header-item {
+    padding: 10px 12px 4px !important;
+}
+
+.cursor-status-header {
+    spacing: 8px;
+}
+
 .cursor-status-menu-title {
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.72);
-    padding: 8px 16px 4px;
+    font-weight: 650;
+    font-size: 0.82em;
+    color: rgba(255, 255, 255, 0.58);
+}
+
+.cursor-status-count-badge {
+    font-size: 0.72em;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background-color: #e8a35c;
+    color: #1a1b1e;
+}
+
+.cursor-status-card-item {
+    padding: 6px 10px 10px !important;
+}
+
+.cursor-status-card {
+    spacing: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .cursor-status-menu-state {
     font-weight: 700;
-    font-size: 1.1em;
-    padding: 2px 16px 0;
+    font-size: 1.15em;
+    padding: 0;
     margin: 0;
 }
 
 .cursor-status-menu-state-idle {
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.07);
 }
 
 .cursor-status-menu-state-thinking {
-    color: #f5a962;
+    color: #e8a35c;
+}
+
+.cursor-status-card-thinking {
+    border-color: rgba(232, 163, 92, 0.32);
 }
 
 .cursor-status-menu-state-working {
-    color: #78beff;
+    color: #8eb4d4;
+}
+
+.cursor-status-card-working {
+    border-color: rgba(142, 180, 212, 0.32);
 }
 
 .cursor-status-menu-state-error {
-    color: #ff9b93;
+    color: #e08984;
+}
+
+.cursor-status-card-error {
+    border-color: rgba(224, 137, 132, 0.38);
 }
 
 .cursor-status-menu-project {
-    color: rgba(255, 255, 255, 0.62);
-    font-size: 0.88em;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.84em;
     font-weight: 600;
-    padding: 0 16px;
+    padding: 2px 0 0;
     margin: 0;
 }
 
 .cursor-status-menu-detail {
-    color: rgba(255, 255, 255, 0.9);
-    padding: 2px 16px 4px;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.92em;
+    padding: 8px 0 0;
     margin: 0;
 }
 
-.cursor-status-menu-model {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.88em;
-    font-weight: 600;
-    padding: 0 16px 2px;
-    margin: 0;
+.cursor-status-chips {
+    spacing: 6px;
+    padding: 8px 0 0;
 }
 
-.cursor-status-menu-context {
-    color: rgba(120, 190, 255, 0.95);
-    font-size: 0.9em;
-    font-weight: 700;
-    padding: 2px 16px 4px;
-    margin: 0;
+.cursor-status-chip {
+    font-size: 0.72em;
+    font-weight: 650;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cursor-status-chip-ctx {
+    color: rgba(180, 210, 232, 0.95);
+    border-color: rgba(142, 180, 212, 0.35);
+    background-color: rgba(142, 180, 212, 0.1);
+}
+
+.cursor-status-ctx-track {
+    height: 4px;
+    margin: 10px 0 0;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.cursor-status-ctx-fill {
+    height: 4px;
+    border-radius: 999px;
+    background-color: #8eb4d4;
 }
 
 .cursor-status-menu-meta {
-    color: rgba(255, 255, 255, 0.42);
-    font-size: 0.84em;
-    padding: 0 16px 8px;
+    color: rgba(255, 255, 255, 0.38);
+    font-size: 0.78em;
+    padding: 8px 0 0;
     margin: 0;
 }
 
 .cursor-status-menu-section {
-    color: rgba(255, 255, 255, 0.42);
-    font-size: 0.78em;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    padding: 8px 16px 4px;
+    color: rgba(255, 255, 255, 0.38);
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 8px 14px 2px;
     margin: 0;
 }
 
 .cursor-status-menu-muted {
-    color: rgba(255, 255, 255, 0.45);
-    font-size: 0.9em;
-    padding: 4px 16px;
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 0.88em;
+    padding: 6px 14px;
 }
 
 .cursor-status-menu-session {
-    font-size: 0.9em;
-    padding: 5px 16px;
+    font-size: 0.88em;
+    padding: 6px 14px;
 }
 
 @keyframes cursor-status-spin {
