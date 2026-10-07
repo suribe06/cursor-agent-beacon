@@ -8,7 +8,9 @@ from cursor_agent_beacon.bridge.serial_writer import QueuedSerialWriter
 
 
 def test_queued_serial_writer_waits_for_missing_port():
-    writer = QueuedSerialWriter("/dev/serial/by-id/does-not-exist-cursor-beacon", 115200)
+    writer = QueuedSerialWriter(
+        "/dev/serial/by-id/does-not-exist-cursor-beacon", 115200
+    )
     try:
         writer.write_line("THEME|standard")
         # Give the worker a moment to enter the wait loop (not raise).
