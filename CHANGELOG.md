@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- GNOME panel visual refresh (WIP): “Instrument” status card with chips + context meter; mockups A/B/C in `gnome-extension/preview-menu.html`
+- GNOME panel visual refresh: **Instrument** status card (chips, context meter, session dots); mockups in `gnome-extension/preview-menu.html`
 
 ### Fixed
 

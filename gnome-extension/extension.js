@@ -3,6 +3,7 @@
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
+import Pango from 'gi://Pango';
 import St from 'gi://St';
 
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -405,31 +406,6 @@ function loadDisplayPrefs(...sources) {
     return { ...DEFAULT_DISPLAY_PREFS };
 }
 
-function contextLine(status, fallbackStatus = null, prefs = DEFAULT_DISPLAY_PREFS) {
-    if (!prefs.context) return '';
-    const pctRaw = pickContextField(status, fallbackStatus, 'context_usage_percent');
-    const tokens = pickContextField(status, fallbackStatus, 'context_tokens');
-    const window = pickContextField(status, fallbackStatus, 'context_window_size');
-    const pct = Number(pctRaw);
-    const hasPct = Number.isFinite(pct);
-    if (!hasPct && (tokens == null || window == null)) return '';
-
-    const approx = contextSource(status, fallbackStatus) === 'estimated';
-    const mark = approx ? '~' : '';
-    const pctText = hasPct ? `${mark}${Math.round(pct)}%` : '';
-    let tokenText = '';
-    if (tokens != null && window != null) {
-        tokenText = `${mark}${Number(tokens).toLocaleString()} / ${Number(window).toLocaleString()} tokens`;
-    } else if (tokens != null) {
-        tokenText = `${mark}${Number(tokens).toLocaleString()} tokens`;
-    }
-
-    const suffix = approx ? '  (est.)' : '';
-    if (tokenText && pctText) return `Context  ${pctText}  ·  ${tokenText}${suffix}`;
-    if (tokenText) return `Context  ${tokenText}${suffix}`;
-    return `Context  ${pctText}${suffix}`;
-}
-
 function contextBadge(status, fallbackStatus = null, prefs = DEFAULT_DISPLAY_PREFS) {
     if (!prefs.context || !prefs.panel_badge) return '';
     const pctRaw = pickContextField(status, fallbackStatus, 'context_usage_percent');
@@ -466,17 +442,16 @@ function panelLabel(status, profile, activeCount, prefs = DEFAULT_DISPLAY_PREFS)
     return text;
 }
 
-function sessionMenuLabel(session, pinnedId) {
-    const pin = session.id === pinnedId ? '◆' : '·';
-    const project = truncate(session.project || 'workspace', 18);
-    const turn = formatTurnDuration(session.started_at);
-    const turnSuffix = turn ? ` · ${turn}` : '';
-    return `${pin}  ${project}  ·  ${stateLabel(session.state)}  ·  ${formatWhen(session.updated_at)}${turnSuffix}`;
-}
-
 function contextPercent(display, status) {
     const pct = Number(pickContextField(display, status, 'context_usage_percent'));
     return Number.isFinite(pct) ? Math.min(100, Math.max(0, pct)) : null;
+}
+
+function sessionStyle(state) {
+    if (state === 'error') return 'error';
+    if (state === 'running_shell' || state === 'running_mcp') return 'working';
+    if (state === 'thinking' || state === 'waiting') return 'thinking';
+    return 'idle';
 }
 
 export default class CursorStatusPanelExtension extends Extension {
@@ -534,6 +509,7 @@ export default class CursorStatusPanelExtension extends Extension {
 
         this._followRecentItem = new PopupMenu.PopupMenuItem('Follow most recent', {
             reactive: true,
+            style_class: 'cursor-status-follow',
         });
         this._followRecentItem.connect('activate', () => {
             this._settings.set_string('pinned-conversation-id', '');
@@ -544,6 +520,7 @@ export default class CursorStatusPanelExtension extends Extension {
         this._cardItem = this._buildStatusCard();
         this._sessionsHeader = new PopupMenu.PopupMenuItem('OPEN WINDOWS', {
             reactive: false,
+            can_focus: false,
             style_class: 'cursor-status-menu-section',
         });
         this._sessionsSection = new PopupMenu.PopupMenuSection();
@@ -613,6 +590,7 @@ export default class CursorStatusPanelExtension extends Extension {
         this._chips = null;
         this._chipModel = null;
         this._chipEffort = null;
+        this._chipExtra = null;
         this._chipCtx = null;
         this._ctxTrack = null;
         this._ctxFill = null;
@@ -761,12 +739,20 @@ export default class CursorStatusPanelExtension extends Extension {
             text: 'No recent activity',
             style_class: 'cursor-status-menu-detail',
         });
-        this._chips = new St.BoxLayout({ style_class: 'cursor-status-chips' });
+        this._menuMessage.clutter_text.ellipsize = Pango.EllipsizeMode.END;
+        this._chips = new St.BoxLayout({
+            style_class: 'cursor-status-chips',
+            style: 'max-width: 280px;',
+        });
         this._chipModel = new St.Label({
             text: '',
             style_class: 'cursor-status-chip',
         });
         this._chipEffort = new St.Label({
+            text: '',
+            style_class: 'cursor-status-chip',
+        });
+        this._chipExtra = new St.Label({
             text: '',
             style_class: 'cursor-status-chip',
         });
@@ -776,17 +762,21 @@ export default class CursorStatusPanelExtension extends Extension {
         });
         this._chips.add_child(this._chipModel);
         this._chips.add_child(this._chipEffort);
+        this._chips.add_child(this._chipExtra);
         this._chips.add_child(this._chipCtx);
-        this._ctxTrack = new St.Widget({
+        this._ctxFill = new St.Widget({ style_class: 'cursor-status-ctx-fill' });
+        this._ctxTrack = new St.Bin({
             style_class: 'cursor-status-ctx-track',
             x_expand: true,
+            x_fill: false,
+            x_align: Clutter.ActorAlign.START,
+            child: this._ctxFill,
         });
-        this._ctxFill = new St.Widget({ style_class: 'cursor-status-ctx-fill' });
-        this._ctxTrack.add_child(this._ctxFill);
         this._menuMeta = new St.Label({
             text: '',
             style_class: 'cursor-status-menu-meta',
         });
+        this._menuMeta.clutter_text.ellipsize = Pango.EllipsizeMode.END;
 
         this._card.add_child(this._menuState);
         this._card.add_child(this._menuProject);
@@ -795,6 +785,56 @@ export default class CursorStatusPanelExtension extends Extension {
         this._card.add_child(this._ctxTrack);
         this._card.add_child(this._menuMeta);
         item.add_child(this._card);
+        return item;
+    }
+
+    _buildSessionItem(session, pinnedId) {
+        const item = new PopupMenu.PopupBaseMenuItem({
+            reactive: true,
+            style_class: 'cursor-status-menu-session',
+        });
+        const row = new St.BoxLayout({
+            style_class: 'cursor-status-session-row',
+            x_expand: true,
+        });
+        const style = sessionStyle(session.state);
+        const dot = new St.Widget({
+            style_class: `cursor-status-session-dot cursor-status-session-dot-${style}`,
+            y_align: Clutter.ActorAlign.CENTER,
+        });
+        const col = new St.BoxLayout({
+            vertical: true,
+            x_expand: true,
+            style_class: 'cursor-status-session-col',
+        });
+        const pinned = session.id === pinnedId;
+        const project = truncate(session.project || 'workspace', 22);
+        const title = new St.Label({
+            text: pinned ? `${project}  ·  focus` : project,
+            style_class: pinned
+                ? 'cursor-status-session-title cursor-status-session-title-focus'
+                : 'cursor-status-session-title',
+            x_expand: true,
+        });
+        const turn = formatTurnDuration(session.started_at);
+        const turnSuffix = turn ? ` · ${turn}` : '';
+        const sub = new St.Label({
+            text: `${stateLabel(session.state)} · ${formatWhen(session.updated_at)}${turnSuffix}`,
+            style_class: 'cursor-status-session-sub',
+            x_expand: true,
+        });
+        col.add_child(title);
+        col.add_child(sub);
+        row.add_child(dot);
+        row.add_child(col);
+        item.add_child(row);
+
+        const conversationId = session.id;
+        item.connect('activate', () => {
+            this._settings.set_string('pinned-conversation-id', conversationId);
+            this._menuSignature = '';
+            this._tick();
+        });
         return item;
     }
 
@@ -848,16 +888,7 @@ export default class CursorStatusPanelExtension extends Extension {
         }
 
         for (const session of visible) {
-            const item = new PopupMenu.PopupMenuItem(
-                sessionMenuLabel(session, pinnedId),
-                { reactive: true, style_class: 'cursor-status-menu-session' },
-            );
-            const conversationId = session.id;
-            item.connect('activate', () => {
-                this._settings.set_string('pinned-conversation-id', conversationId);
-                this._menuSignature = '';
-                this._tick();
-            });
+            const item = this._buildSessionItem(session, pinnedId);
             this._sessionsSection.addMenuItem(item);
             this._sessionMenuItems.push(item);
         }
@@ -925,6 +956,8 @@ export default class CursorStatusPanelExtension extends Extension {
         const focus = pinnedId ? 'Pinned' : 'Auto';
         const turn = formatTurnDuration(display?.started_at);
 
+        if (!this._menuTitle || !this._card) return;
+
         this._menuTitle.text = 'Cursor Agent';
         if (active > 0) {
             this._countBadge.text = `${active} active`;
@@ -942,7 +975,7 @@ export default class CursorStatusPanelExtension extends Extension {
         if (prefs.message) {
             this._menuMessage.text = truncate(
                 label && label !== '—' ? label : message,
-                64,
+                72,
             );
             this._menuMessage.visible = true;
         } else {
@@ -972,6 +1005,15 @@ export default class CursorStatusPanelExtension extends Extension {
             this._chipEffort.visible = false;
         }
 
+        const extras =
+            detailExtras(display, prefs) || detailExtras(status, prefs);
+        if (extras) {
+            this._chipExtra.text = truncate(extras, 24);
+            this._chipExtra.visible = true;
+        } else {
+            this._chipExtra.visible = false;
+        }
+
         const pct = prefs.context ? contextPercent(display, status) : null;
         const approx = contextSource(display, status) === 'estimated';
         if (pct != null) {
@@ -979,8 +1021,8 @@ export default class CursorStatusPanelExtension extends Extension {
             this._chipCtx.text = `${mark}${Math.round(pct)}% ctx`;
             this._chipCtx.visible = true;
             this._ctxTrack.visible = true;
-            // Track is ~240px; St width via style (allocation can lag one frame).
-            const px = Math.max(4, Math.round((pct / 100) * 240));
+            const px = Math.max(4, Math.round((pct / 100) * 248));
+            this._ctxFill.set_width(px);
             this._ctxFill.style = `width: ${px}px;`;
         } else {
             this._chipCtx.visible = false;
@@ -989,18 +1031,11 @@ export default class CursorStatusPanelExtension extends Extension {
         this._chips.visible =
             this._chipModel.visible ||
             this._chipEffort.visible ||
+            this._chipExtra.visible ||
             this._chipCtx.visible;
 
-        const extras =
-            detailExtras(display, prefs) || detailExtras(status, prefs);
         const turnSuffix = turn ? ` · turn ${turn}` : '';
-        const metaBits = [
-            focus,
-            hookLabel(hook),
-            formatWhen(ts),
-            extras || null,
-        ].filter(Boolean);
-        this._menuMeta.text = `${metaBits.join(' · ')}${turnSuffix}`;
+        this._menuMeta.text = `${focus} · ${hookLabel(hook)} · ${formatWhen(ts)}${turnSuffix}`;
 
         this._rebuildSessionMenu(visible, pinnedId);
     }
