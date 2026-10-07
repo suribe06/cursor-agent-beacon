@@ -7,14 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- GNOME panel `metadata.json` declares Shell **46–50** so the extension loads on Ubuntu 26.04 (GNOME Shell 50); previously marked OUT OF DATE when only `"46"` was listed
-- GNOME panel applies `display.toml` / `reload` prefs from `status.json` (focused session rows usually omit the `display` block); also watches `display.toml`
-- `reload` message when the bridge is down clarifies that the panel still updates; VIEWE needs the bridge + USB
+## [0.5.3] - 2026-10-07
 
 ### Changed
 
+- GNOME panel **Instrument** visual refresh: status card, chips, context meter, session status dots (mockups in `gnome-extension/preview-menu.html`)
 - **Product landing**: README leads with benefit, default robot theme demos, desktop vs desk-display paths, and PyPI-first install (no `[bridge]` required for desktop)
 - PyPI / package description aligned to the same positioning
 
@@ -22,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Hero demo GIF (`docs/images/hero-demo.gif`) and social card (`docs/images/social.png`)
 - GitHub Pages workflow for the display simulator (`https://suribe06.github.io/cursor-agent-beacon/`)
+
+### Fixed
+
+- GNOME panel declares Shell **46–50** (Ubuntu 26.04 / GNOME Shell 50); drop removed `St.Bin` `x_fill` so the extension enables on Shell 50
+- GNOME panel applies `display.toml` / `reload` prefs from `status.json` (session rows usually omit the `display` block); also watches `display.toml`
+- `reload` message when the bridge is down clarifies that the panel still updates; VIEWE needs the bridge + USB
+- Bridge keeps HTTP up when the serial port is missing (VIEWE unplugged)
 
 ## [0.5.2] - 2026-08-04
 
@@ -146,7 +150,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Browser display simulator
 - Hook simulation script and unit tests
 
-[Unreleased]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.5.2...v0.5.3
+[0.5.2]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.2.0...v0.3.0

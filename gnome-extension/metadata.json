@@ -4,6 +4,6 @@
   "description": "Cursor agent status in the GNOME top bar (via cursor-agent-beacon)",
   "shell-version": ["46", "47", "48", "49", "50"],
   "settings-schema": "org.gnome.shell.extensions.cursor-status-panel",
-  "version": 2,
+  "version": 5,
   "url": "https://github.com/suribe06/cursor-agent-beacon"
 }
