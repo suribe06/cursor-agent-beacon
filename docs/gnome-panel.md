@@ -58,6 +58,6 @@ The panel trusts Python's `focused_conversation_id` from `status.json` / `regist
 
 Extension lives in [`gnome-extension/`](../gnome-extension/).
 
-### Visual refresh (WIP)
+### Look
 
-Branch work explores a denser “Instrument” popup (status card + chips + context meter). Compare mockups in [`preview-menu.html`](../gnome-extension/preview-menu.html) (options A / B / C). After `install-gnome`, log out on Wayland (or Alt+F2 `r` on X11) to reload the extension.
+The popup uses the **Instrument** layout (status card + chips + context meter + session dots). Design options are archived in [`preview-menu.html`](../gnome-extension/preview-menu.html). After updating the extension, log out on Wayland (or Alt+F2 `r` on X11) to reload Shell JS.
