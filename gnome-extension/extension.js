@@ -38,6 +38,10 @@ const STALE_SOFT_BUSY_SEC = 60;
 const STALE_HARD_BUSY_SEC = 10 * 60;
 const CURSOR_PROC_CACHE_SEC = 10;
 const MAX_LABEL_CHARS = 24;
+/** Fixed popup geometry so the menu does not jump when fields appear/disappear. */
+const MENU_WIDTH_PX = 300;
+const CTX_BAR_WIDTH_PX = 248;
+const SESSION_SLOTS = 3;
 
 const DEFAULT_DISPLAY_PREFS = {
     model: true,
@@ -532,6 +536,8 @@ export default class CursorStatusPanelExtension extends Extension {
         this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._indicator.menu.addMenuItem(this._sessionsHeader);
         this._indicator.menu.addMenuItem(this._sessionsSection);
+        this._indicator.menu.box.width = MENU_WIDTH_PX;
+        this._indicator.menu.box.style = `min-width: ${MENU_WIDTH_PX}px; width: ${MENU_WIDTH_PX}px;`;
 
         this._positionTimers = [];
         this._pinning = false;
@@ -742,22 +748,22 @@ export default class CursorStatusPanelExtension extends Extension {
         this._menuMessage.clutter_text.ellipsize = Pango.EllipsizeMode.END;
         this._chips = new St.BoxLayout({
             style_class: 'cursor-status-chips',
-            style: 'max-width: 280px;',
+            x_expand: true,
         });
         this._chipModel = new St.Label({
-            text: '',
+            text: 'model',
             style_class: 'cursor-status-chip',
         });
         this._chipEffort = new St.Label({
-            text: '',
+            text: 'effort',
             style_class: 'cursor-status-chip',
         });
         this._chipExtra = new St.Label({
-            text: '',
+            text: 'extra',
             style_class: 'cursor-status-chip',
         });
         this._chipCtx = new St.Label({
-            text: '',
+            text: '0% ctx',
             style_class: 'cursor-status-chip cursor-status-chip-ctx',
         });
         this._chips.add_child(this._chipModel);
@@ -777,6 +783,7 @@ export default class CursorStatusPanelExtension extends Extension {
         this._menuMeta = new St.Label({
             text: '',
             style_class: 'cursor-status-menu-meta',
+            x_expand: true,
         });
         this._menuMeta.clutter_text.ellipsize = Pango.EllipsizeMode.END;
 
@@ -787,6 +794,50 @@ export default class CursorStatusPanelExtension extends Extension {
         this._card.add_child(this._ctxTrack);
         this._card.add_child(this._menuMeta);
         item.add_child(this._card);
+        return item;
+    }
+
+    _setChip(chip, text, on) {
+        if (!chip) return;
+        chip.text = on && text ? text : '\u00a0';
+        chip.opacity = on && text ? 255 : 0;
+    }
+
+    _buildPlaceholderSessionItem() {
+        const item = new PopupMenu.PopupBaseMenuItem({
+            reactive: false,
+            can_focus: false,
+            style_class: 'cursor-status-menu-session cursor-status-menu-session-empty',
+        });
+        const row = new St.BoxLayout({
+            style_class: 'cursor-status-session-row',
+            x_expand: true,
+        });
+        const dot = new St.Widget({
+            style_class: 'cursor-status-session-dot cursor-status-session-dot-idle',
+            y_align: Clutter.ActorAlign.CENTER,
+            opacity: 0,
+        });
+        const col = new St.BoxLayout({
+            vertical: true,
+            x_expand: true,
+            style_class: 'cursor-status-session-col',
+        });
+        col.add_child(
+            new St.Label({
+                text: '\u00a0',
+                style_class: 'cursor-status-session-title',
+            }),
+        );
+        col.add_child(
+            new St.Label({
+                text: '\u00a0',
+                style_class: 'cursor-status-session-sub',
+            }),
+        );
+        row.add_child(dot);
+        row.add_child(col);
+        item.add_child(row);
         return item;
     }
 
@@ -868,29 +919,24 @@ export default class CursorStatusPanelExtension extends Extension {
     }
 
     _rebuildSessionMenu(sessions, pinnedId) {
-        const signature = sessions
+        const visible = sessions
+            .filter(session => session.active !== false)
+            .slice(0, SESSION_SLOTS);
+        const signature = `${SESSION_SLOTS}|${pinnedId}|${visible
             .map(
                 session =>
-                    `${session.id}:${session.state}:${session.updated_at}:${session.active}:${session.started_at}:${pinnedId}`,
+                    `${session.id}:${session.state}:${session.updated_at}:${session.started_at}`,
             )
-            .join('|');
+            .join('|')}`;
         if (signature === this._menuSignature) return;
         this._menuSignature = signature;
 
         this._clearSessionMenuItems();
-        const visible = sessions.filter(session => session.active !== false);
-        if (!visible.length) {
-            const empty = new PopupMenu.PopupMenuItem('No sessions in open windows', {
-                reactive: false,
-                style_class: 'cursor-status-menu-muted',
-            });
-            this._sessionsSection.addMenuItem(empty);
-            this._sessionMenuItems.push(empty);
-            return;
-        }
-
-        for (const session of visible) {
-            const item = this._buildSessionItem(session, pinnedId);
+        for (let i = 0; i < SESSION_SLOTS; i++) {
+            const item =
+                i < visible.length
+                    ? this._buildSessionItem(visible[i], pinnedId)
+                    : this._buildPlaceholderSessionItem();
             this._sessionsSection.addMenuItem(item);
             this._sessionMenuItems.push(item);
         }
@@ -961,29 +1007,23 @@ export default class CursorStatusPanelExtension extends Extension {
         if (!this._menuTitle || !this._card) return;
 
         this._menuTitle.text = 'Cursor Agent';
-        if (active > 0) {
-            this._countBadge.text = `${active} active`;
-            this._countBadge.visible = true;
-        } else {
-            this._countBadge.visible = false;
-        }
+        this._countBadge.text = active > 0 ? `${active} active` : '0 active';
+        this._countBadge.opacity = active > 0 ? 255 : 0;
         this._followRecentItem.label.text = pinnedId
             ? 'Unpin · follow most recent'
             : 'Follow most recent';
         this._menuState.text = stateLabel(state);
         this._setMenuStateStyle(state);
-        this._menuProject.text = project;
-        this._menuProject.visible = Boolean(project && project !== 'workspace');
+        this._menuProject.text =
+            project && project !== 'workspace' ? project : 'workspace';
+        this._menuProject.opacity =
+            project && project !== 'workspace' ? 255 : 120;
+
+        let detail = '—';
         if (prefs.message) {
-            this._menuMessage.text = truncate(
-                label && label !== '—' ? label : message,
-                72,
-            );
-            this._menuMessage.visible = true;
-        } else {
-            this._menuMessage.text = '';
-            this._menuMessage.visible = false;
+            detail = truncate(label && label !== '—' ? label : message, 72) || '—';
         }
+        this._menuMessage.text = detail;
 
         const modelId = (display?.model_id || status?.model_id || '').trim();
         const modelName = (display?.model || status?.model || '').trim();
@@ -994,47 +1034,39 @@ export default class CursorStatusPanelExtension extends Extension {
                   ? modelName
                   : '';
         const effort = (display?.effort || status?.effort || '').trim();
-        if (prefs.model && slug) {
-            this._chipModel.text = truncate(slug, 28);
-            this._chipModel.visible = true;
-        } else {
-            this._chipModel.visible = false;
-        }
-        if (prefs.effort && effort) {
-            this._chipEffort.text = effort;
-            this._chipEffort.visible = true;
-        } else {
-            this._chipEffort.visible = false;
-        }
-
         const extras =
             detailExtras(display, prefs) || detailExtras(status, prefs);
-        if (extras) {
-            this._chipExtra.text = truncate(extras, 24);
-            this._chipExtra.visible = true;
-        } else {
-            this._chipExtra.visible = false;
-        }
+        this._setChip(
+            this._chipModel,
+            truncate(slug, 28),
+            Boolean(prefs.model && slug),
+        );
+        this._setChip(this._chipEffort, effort, Boolean(prefs.effort && effort));
+        this._setChip(
+            this._chipExtra,
+            truncate(extras, 24),
+            Boolean(extras),
+        );
 
         const pct = prefs.context ? contextPercent(display, status) : null;
         const approx = contextSource(display, status) === 'estimated';
         if (pct != null) {
             const mark = approx ? '~' : '';
-            this._chipCtx.text = `${mark}${Math.round(pct)}% ctx`;
-            this._chipCtx.visible = true;
-            this._ctxTrack.visible = true;
-            const px = Math.max(4, Math.round((pct / 100) * 248));
+            this._setChip(
+                this._chipCtx,
+                `${mark}${Math.round(pct)}% ctx`,
+                true,
+            );
+            const px = Math.max(4, Math.round((pct / 100) * CTX_BAR_WIDTH_PX));
             this._ctxFill.set_width(px);
             this._ctxFill.style = `width: ${px}px;`;
+            this._ctxFill.opacity = 255;
         } else {
-            this._chipCtx.visible = false;
-            this._ctxTrack.visible = false;
+            this._setChip(this._chipCtx, '0% ctx', false);
+            this._ctxFill.set_width(4);
+            this._ctxFill.style = 'width: 4px;';
+            this._ctxFill.opacity = 0;
         }
-        this._chips.visible =
-            this._chipModel.visible ||
-            this._chipEffort.visible ||
-            this._chipExtra.visible ||
-            this._chipCtx.visible;
 
         const turnSuffix = turn ? ` · turn ${turn}` : '';
         this._menuMeta.text = `${focus} · ${hookLabel(hook)} · ${formatWhen(ts)}${turnSuffix}`;

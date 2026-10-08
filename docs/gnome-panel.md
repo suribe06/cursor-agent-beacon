@@ -60,4 +60,4 @@ Extension lives in [`gnome-extension/`](../gnome-extension/).
 
 ### Look
 
-The popup uses the **Instrument** layout (status card + chips + context meter + session dots). Design options are archived in [`preview-menu.html`](../gnome-extension/preview-menu.html). After updating the extension, log out on Wayland (or Alt+F2 `r` on X11) to reload Shell JS.
+The popup uses the **Instrument** layout (status card + chips + context meter + session dots) with a **fixed menu size** so rows don’t jump when fields appear or disappear. Design options are archived in [`preview-menu.html`](../gnome-extension/preview-menu.html). Regenerated docs shots: `python3 scripts/build_gnome_panel_shots.py`. After updating the extension, log out on Wayland (or Alt+F2 `r` on X11) to reload Shell JS.

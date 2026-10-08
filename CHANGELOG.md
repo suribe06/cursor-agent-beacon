@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- GNOME panel popup uses a fixed width and reserved slots (chips / context bar / 3 session rows) so the menu no longer resizes as fields appear
+- README / docs GNOME screenshots are synthetic Instrument-style renders (`scripts/build_gnome_panel_shots.py`) with demo data only
+
 ## [0.5.3] - 2026-10-07
 
 ### Changed
