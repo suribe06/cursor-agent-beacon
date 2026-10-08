@@ -527,6 +527,7 @@ export default class CursorStatusPanelExtension extends Extension {
             reactive: true,
             style_class: 'cursor-status-follow',
         });
+        this._followRecentItem.setOrnament(PopupMenu.Ornament.HIDDEN);
         this._followRecentItem.connect('activate', () => {
             this._settings.set_string('pinned-conversation-id', '');
             this._tick();
@@ -539,6 +540,7 @@ export default class CursorStatusPanelExtension extends Extension {
             can_focus: false,
             style_class: 'cursor-status-menu-section',
         });
+        this._sessionsHeader.setOrnament(PopupMenu.Ornament.HIDDEN);
         this._sessionsSection = new PopupMenu.PopupMenuSection();
 
         this._indicator.menu.addMenuItem(this._headerItem);
@@ -718,18 +720,18 @@ export default class CursorStatusPanelExtension extends Extension {
     }
 
     _applyMenuGeometry() {
+        // Constrain the popup shell only. The card must x_expand inside the
+        // menu item — setting an explicit card width overflows (item padding +
+        // ornament column), especially when the menu opens on the right.
         const menuW = menuWidthPx();
-        const cardW = Math.max(240, menuW - 32);
-        const barW = Math.max(200, cardW - 24);
         this._menuWidthPx = menuW;
-        this._ctxBarWidthPx = barW;
+        this._ctxBarWidthPx = Math.max(160, menuW - 72);
         if (this._indicator?.menu?.box) {
-            this._indicator.menu.box.width = menuW;
-            this._indicator.menu.box.style = `min-width: ${menuW}px; width: ${menuW}px;`;
+            this._indicator.menu.box.style =
+                `min-width: ${menuW}px; max-width: ${menuW}px;`;
         }
-        if (this._card)
-            this._card.style = `min-width: ${cardW}px; width: ${cardW}px;`;
-        if (this._ctxTrack) this._ctxTrack.style = `width: ${barW}px;`;
+        if (this._card) this._card.style = '';
+        if (this._ctxTrack) this._ctxTrack.style = '';
     }
 
     _buildHeaderItem() {
@@ -738,6 +740,7 @@ export default class CursorStatusPanelExtension extends Extension {
             can_focus: false,
             style_class: 'cursor-status-header-item',
         });
+        item.setOrnament(PopupMenu.Ornament.HIDDEN);
         const row = new St.BoxLayout({
             style_class: 'cursor-status-header',
             x_expand: true,
@@ -766,22 +769,27 @@ export default class CursorStatusPanelExtension extends Extension {
             can_focus: false,
             style_class: 'cursor-status-card-item',
         });
+        item.setOrnament(PopupMenu.Ornament.HIDDEN);
         this._card = new St.BoxLayout({
             vertical: true,
             style_class: 'cursor-status-card',
             x_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
         });
         this._menuState = new St.Label({
             text: 'Idle',
             style_class: 'cursor-status-menu-state',
+            x_expand: true,
         });
         this._menuProject = new St.Label({
             text: '',
             style_class: 'cursor-status-menu-project',
+            x_expand: true,
         });
         this._menuMessage = new St.Label({
             text: 'No recent activity',
             style_class: 'cursor-status-menu-detail',
+            x_expand: true,
         });
         this._menuMessage.clutter_text.ellipsize = Pango.EllipsizeMode.END;
         this._chips = new St.BoxLayout({
@@ -816,6 +824,7 @@ export default class CursorStatusPanelExtension extends Extension {
         this._ctxTrack = new St.Bin({
             style_class: 'cursor-status-ctx-track',
             x_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
             child: this._ctxFill,
         });
         this._menuMeta = new St.Label({
@@ -847,6 +856,7 @@ export default class CursorStatusPanelExtension extends Extension {
             can_focus: false,
             style_class: 'cursor-status-menu-session cursor-status-menu-session-empty',
         });
+        item.setOrnament(PopupMenu.Ornament.HIDDEN);
         const row = new St.BoxLayout({
             style_class: 'cursor-status-session-row',
             x_expand: true,
@@ -884,6 +894,7 @@ export default class CursorStatusPanelExtension extends Extension {
             reactive: true,
             style_class: 'cursor-status-menu-session',
         });
+        item.setOrnament(PopupMenu.Ornament.HIDDEN);
         const row = new St.BoxLayout({
             style_class: 'cursor-status-session-row',
             x_expand: true,
@@ -1095,15 +1106,13 @@ export default class CursorStatusPanelExtension extends Extension {
                 `${mark}${Math.round(pct)}% ctx`,
                 true,
             );
-            const barW = this._ctxBarWidthPx || 248;
-            const px = Math.max(4, Math.round((pct / 100) * barW));
-            this._ctxFill.set_width(px);
-            this._ctxFill.style = `width: ${px}px;`;
+            // Prefer % of the track allocation so the bar never forces overflow.
+            const rounded = Math.max(2, Math.min(100, Math.round(pct)));
+            this._ctxFill.style = `width: ${rounded}%;`;
             this._ctxFill.opacity = 255;
         } else {
             this._setChip(this._chipCtx, '0% ctx', false);
-            this._ctxFill.set_width(4);
-            this._ctxFill.style = 'width: 4px;';
+            this._ctxFill.style = 'width: 0%;';
             this._ctxFill.opacity = 0;
         }
 

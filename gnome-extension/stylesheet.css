@@ -80,7 +80,7 @@
 /* —— popup —— */
 
 .cursor-status-header-item {
-    padding: 10px 12px 2px !important;
+    padding: 10px 14px 2px !important;
 }
 
 .cursor-status-header {
@@ -109,7 +109,8 @@
 }
 
 .cursor-status-card-item {
-    padding: 4px 10px 8px !important;
+    /* Symmetric inset so the card sits inside the popup on left and right. */
+    padding: 4px 14px 8px !important;
 }
 
 .cursor-status-card {
@@ -118,8 +119,7 @@
     border-radius: 10px;
     background-color: rgba(0, 0, 0, 0.24);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    /* width set in JS from primary monitor (clamp 280–360) */
-    /* state + project + message + 2 chip rows + meter + meta */
+    /* Fills the menu item; do not set an explicit width (overflows on the right). */
     min-height: 176px;
 }
 
@@ -206,7 +206,6 @@
     margin: 10px 0 0;
     border-radius: 999px;
     background-color: rgba(255, 255, 255, 0.08);
-    /* width set in JS with the menu geometry */
 }
 
 .cursor-status-ctx-fill {
