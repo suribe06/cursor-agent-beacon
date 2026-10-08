@@ -38,7 +38,7 @@ const STALE_SOFT_BUSY_SEC = 60;
 const STALE_HARD_BUSY_SEC = 10 * 60;
 const CURSOR_PROC_CACHE_SEC = 10;
 const MAX_LABEL_CHARS = 24;
-/** Stable popup height (reserved slots); width scales with the primary monitor. */
+/** Popup width scales with the primary monitor; height follows content. */
 const MENU_WIDTH_MIN = 280;
 const MENU_WIDTH_MAX = 360;
 const MENU_WIDTH_FRAC = 0.18;
@@ -535,6 +535,7 @@ export default class CursorStatusPanelExtension extends Extension {
 
         this._headerItem = this._buildHeaderItem();
         this._cardItem = this._buildStatusCard();
+        this._sessionsSep = new PopupMenu.PopupSeparatorMenuItem();
         this._sessionsHeader = new PopupMenu.PopupMenuItem('OPEN WINDOWS', {
             reactive: false,
             can_focus: false,
@@ -547,7 +548,7 @@ export default class CursorStatusPanelExtension extends Extension {
         this._indicator.menu.addMenuItem(this._followRecentItem);
         this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._indicator.menu.addMenuItem(this._cardItem);
-        this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this._indicator.menu.addMenuItem(this._sessionsSep);
         this._indicator.menu.addMenuItem(this._sessionsHeader);
         this._indicator.menu.addMenuItem(this._sessionsSection);
         this._menuWidthPx = MENU_WIDTH_MIN;
@@ -626,6 +627,7 @@ export default class CursorStatusPanelExtension extends Extension {
         this._ctxTrack = null;
         this._ctxFill = null;
         this._menuMeta = null;
+        this._sessionsSep = null;
         this._sessionsHeader = null;
         this._sessionsSection = null;
         this._iconName = null;
@@ -795,22 +797,31 @@ export default class CursorStatusPanelExtension extends Extension {
         this._chips = new St.BoxLayout({
             style_class: 'cursor-status-chips',
             x_expand: true,
+            y_expand: false,
         });
+        const chipAlign = {
+            y_align: Clutter.ActorAlign.CENTER,
+            y_expand: false,
+        };
         this._chipModel = new St.Label({
             text: 'model',
             style_class: 'cursor-status-chip',
+            ...chipAlign,
         });
         this._chipEffort = new St.Label({
             text: 'effort',
             style_class: 'cursor-status-chip',
+            ...chipAlign,
         });
         this._chipExtra = new St.Label({
             text: 'extra',
             style_class: 'cursor-status-chip',
+            ...chipAlign,
         });
         this._chipCtx = new St.Label({
             text: '0% ctx',
             style_class: 'cursor-status-chip cursor-status-chip-ctx',
+            ...chipAlign,
         });
         this._chips.add_child(this._chipModel);
         this._chips.add_child(this._chipEffort);
@@ -846,47 +857,9 @@ export default class CursorStatusPanelExtension extends Extension {
 
     _setChip(chip, text, on) {
         if (!chip) return;
-        chip.text = on && text ? text : '\u00a0';
-        chip.opacity = on && text ? 255 : 0;
-    }
-
-    _buildPlaceholderSessionItem() {
-        const item = new PopupMenu.PopupBaseMenuItem({
-            reactive: false,
-            can_focus: false,
-            style_class: 'cursor-status-menu-session cursor-status-menu-session-empty',
-        });
-        item.setOrnament(PopupMenu.Ornament.HIDDEN);
-        const row = new St.BoxLayout({
-            style_class: 'cursor-status-session-row',
-            x_expand: true,
-        });
-        const dot = new St.Widget({
-            style_class: 'cursor-status-session-dot cursor-status-session-dot-idle',
-            y_align: Clutter.ActorAlign.CENTER,
-            opacity: 0,
-        });
-        const col = new St.BoxLayout({
-            vertical: true,
-            x_expand: true,
-            style_class: 'cursor-status-session-col',
-        });
-        col.add_child(
-            new St.Label({
-                text: '\u00a0',
-                style_class: 'cursor-status-session-title',
-            }),
-        );
-        col.add_child(
-            new St.Label({
-                text: '\u00a0',
-                style_class: 'cursor-status-session-sub',
-            }),
-        );
-        row.add_child(dot);
-        row.add_child(col);
-        item.add_child(row);
-        return item;
+        const show = Boolean(on && text);
+        chip.text = show ? text : '';
+        chip.visible = show;
     }
 
     _buildSessionItem(session, pinnedId) {
@@ -971,7 +944,7 @@ export default class CursorStatusPanelExtension extends Extension {
         const visible = sessions
             .filter(session => session.active !== false)
             .slice(0, SESSION_SLOTS);
-        const signature = `${SESSION_SLOTS}|${pinnedId}|${visible
+        const signature = `${visible.length}|${pinnedId}|${visible
             .map(
                 session =>
                     `${session.id}:${session.state}:${session.updated_at}:${session.started_at}`,
@@ -981,11 +954,11 @@ export default class CursorStatusPanelExtension extends Extension {
         this._menuSignature = signature;
 
         this._clearSessionMenuItems();
-        for (let i = 0; i < SESSION_SLOTS; i++) {
-            const item =
-                i < visible.length
-                    ? this._buildSessionItem(visible[i], pinnedId)
-                    : this._buildPlaceholderSessionItem();
+        const hasSessions = visible.length > 0;
+        if (this._sessionsSep) this._sessionsSep.visible = hasSessions;
+        if (this._sessionsHeader) this._sessionsHeader.visible = hasSessions;
+        for (const session of visible) {
+            const item = this._buildSessionItem(session, pinnedId);
             this._sessionsSection.addMenuItem(item);
             this._sessionMenuItems.push(item);
         }

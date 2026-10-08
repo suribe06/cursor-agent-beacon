@@ -120,7 +120,6 @@
     background-color: rgba(0, 0, 0, 0.24);
     border: 1px solid rgba(255, 255, 255, 0.08);
     /* Fills the menu item; do not set an explicit width (overflows on the right). */
-    min-height: 176px;
 }
 
 .cursor-status-menu-state {
@@ -178,16 +177,12 @@
 .cursor-status-chips {
     spacing: 6px;
     padding: 9px 0 0;
-    /* Reserve two chip rows so wrap does not resize the card. */
-    min-height: 48px;
-    max-height: 48px;
-    overflow: hidden;
 }
 
 .cursor-status-chip {
     font-size: 0.72em;
     font-weight: 650;
-    padding: 3px 8px;
+    padding: 4px 8px;
     border-radius: 6px;
     background-color: rgba(255, 255, 255, 0.06);
     color: rgba(255, 255, 255, 0.72);
@@ -241,10 +236,6 @@
 .cursor-status-menu-session {
     padding: 4px 10px !important;
     min-height: 40px;
-}
-
-.cursor-status-menu-session-empty {
-    opacity: 0;
 }
 
 .cursor-status-session-row {
