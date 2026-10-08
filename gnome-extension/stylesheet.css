@@ -118,8 +118,7 @@
     border-radius: 10px;
     background-color: rgba(0, 0, 0, 0.24);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    min-width: 268px;
-    width: 268px;
+    /* width set in JS from primary monitor (clamp 280–360) */
     /* state + project + message + 2 chip rows + meter + meta */
     min-height: 176px;
 }
@@ -207,7 +206,7 @@
     margin: 10px 0 0;
     border-radius: 999px;
     background-color: rgba(255, 255, 255, 0.08);
-    width: 248px;
+    /* width set in JS with the menu geometry */
 }
 
 .cursor-status-ctx-fill {

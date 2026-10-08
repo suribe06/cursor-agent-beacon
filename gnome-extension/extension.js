@@ -38,10 +38,22 @@ const STALE_SOFT_BUSY_SEC = 60;
 const STALE_HARD_BUSY_SEC = 10 * 60;
 const CURSOR_PROC_CACHE_SEC = 10;
 const MAX_LABEL_CHARS = 24;
-/** Fixed popup geometry so the menu does not jump when fields appear/disappear. */
-const MENU_WIDTH_PX = 300;
-const CTX_BAR_WIDTH_PX = 248;
+/** Stable popup height (reserved slots); width scales with the primary monitor. */
+const MENU_WIDTH_MIN = 280;
+const MENU_WIDTH_MAX = 360;
+const MENU_WIDTH_FRAC = 0.18;
 const SESSION_SLOTS = 3;
+
+function menuWidthPx() {
+    const monitor = Main.layoutManager.primaryMonitor;
+    const screenW = monitor?.width || 1920;
+    return Math.round(
+        Math.min(
+            MENU_WIDTH_MAX,
+            Math.max(MENU_WIDTH_MIN, screenW * MENU_WIDTH_FRAC),
+        ),
+    );
+}
 
 const DEFAULT_DISPLAY_PREFS = {
     model: true,
@@ -536,8 +548,15 @@ export default class CursorStatusPanelExtension extends Extension {
         this._indicator.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._indicator.menu.addMenuItem(this._sessionsHeader);
         this._indicator.menu.addMenuItem(this._sessionsSection);
-        this._indicator.menu.box.width = MENU_WIDTH_PX;
-        this._indicator.menu.box.style = `min-width: ${MENU_WIDTH_PX}px; width: ${MENU_WIDTH_PX}px;`;
+        this._menuWidthPx = MENU_WIDTH_MIN;
+        this._ctxBarWidthPx = 248;
+        this._applyMenuGeometry();
+        this._menuOpenId = this._indicator.menu.connect(
+            'open-state-changed',
+            (_menu, open) => {
+                if (open) this._applyMenuGeometry();
+            },
+        );
 
         this._positionTimers = [];
         this._pinning = false;
@@ -568,6 +587,10 @@ export default class CursorStatusPanelExtension extends Extension {
         this._clearTimer();
         this._teardownFileWatchers();
         this._teardownPositionGuard();
+        if (this._menuOpenId && this._indicator?.menu) {
+            this._indicator.menu.disconnect(this._menuOpenId);
+            this._menuOpenId = 0;
+        }
 
         if (this._stylesheet) {
             St.ThemeContext.get_for_stage(global.stage)
@@ -692,6 +715,21 @@ export default class CursorStatusPanelExtension extends Extension {
             GLib.source_remove(this._timer);
             this._timer = null;
         }
+    }
+
+    _applyMenuGeometry() {
+        const menuW = menuWidthPx();
+        const cardW = Math.max(240, menuW - 32);
+        const barW = Math.max(200, cardW - 24);
+        this._menuWidthPx = menuW;
+        this._ctxBarWidthPx = barW;
+        if (this._indicator?.menu?.box) {
+            this._indicator.menu.box.width = menuW;
+            this._indicator.menu.box.style = `min-width: ${menuW}px; width: ${menuW}px;`;
+        }
+        if (this._card)
+            this._card.style = `min-width: ${cardW}px; width: ${cardW}px;`;
+        if (this._ctxTrack) this._ctxTrack.style = `width: ${barW}px;`;
     }
 
     _buildHeaderItem() {
@@ -1057,7 +1095,8 @@ export default class CursorStatusPanelExtension extends Extension {
                 `${mark}${Math.round(pct)}% ctx`,
                 true,
             );
-            const px = Math.max(4, Math.round((pct / 100) * CTX_BAR_WIDTH_PX));
+            const barW = this._ctxBarWidthPx || 248;
+            const px = Math.max(4, Math.round((pct / 100) * barW));
             this._ctxFill.set_width(px);
             this._ctxFill.style = `width: ${px}px;`;
             this._ctxFill.opacity = 255;
