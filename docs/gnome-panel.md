@@ -60,4 +60,14 @@ Extension lives in [`gnome-extension/`](../gnome-extension/).
 
 ### Look
 
-The popup uses the **Instrument** layout (status card + chips + context meter + session dots). Design options are archived in [`preview-menu.html`](../gnome-extension/preview-menu.html). After updating the extension, log out on Wayland (or Alt+F2 `r` on X11) to reload Shell JS.
+The popup uses the **Instrument** layout (status card + chips + context meter + session dots). **Width** scales with the primary monitor (`clamp(280px, 18vw, 360px)`); **height** stays stable via reserved slots so the menu doesn’t jump. Design options: [`preview-menu.html`](../gnome-extension/preview-menu.html). Docs shots: `python3 scripts/build_gnome_panel_shots.py`.
+
+### Reloading after code changes
+
+GNOME caches extension JS for the life of the Shell process. `disable`/`enable` is **not** enough.
+
+| Session | How to reload |
+| --- | --- |
+| **X11** | `Alt+F2` → `r` → Enter |
+| **Wayland (dev)** | `./scripts/dev-gnome-panel.sh` → nested Shell (`--devkit`); enable the extension inside that window. Needs `mutter-dev-bin` on Ubuntu. |
+| **Wayland (host)** | Log out / log in (only way to refresh the live session) |

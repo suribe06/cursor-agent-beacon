@@ -97,6 +97,7 @@
     font-size: 0.72em;
     font-weight: 700;
     padding: 2px 7px;
+    min-width: 58px;
     border-radius: 999px;
     background-color: #e8a35c;
     color: #1a1b1e;
@@ -117,6 +118,9 @@
     border-radius: 10px;
     background-color: rgba(0, 0, 0, 0.24);
     border: 1px solid rgba(255, 255, 255, 0.08);
+    /* width set in JS from primary monitor (clamp 280–360) */
+    /* state + project + message + 2 chip rows + meter + meta */
+    min-height: 176px;
 }
 
 .cursor-status-menu-state {
@@ -160,6 +164,7 @@
     font-weight: 600;
     padding: 2px 0 0;
     margin: 0;
+    min-height: 1.1em;
 }
 
 .cursor-status-menu-detail {
@@ -167,11 +172,16 @@
     font-size: 0.92em;
     padding: 8px 0 0;
     margin: 0;
+    min-height: 1.2em;
 }
 
 .cursor-status-chips {
     spacing: 6px;
     padding: 9px 0 0;
+    /* Reserve two chip rows so wrap does not resize the card. */
+    min-height: 48px;
+    max-height: 48px;
+    overflow: hidden;
 }
 
 .cursor-status-chip {
@@ -196,6 +206,7 @@
     margin: 10px 0 0;
     border-radius: 999px;
     background-color: rgba(255, 255, 255, 0.08);
+    /* width set in JS with the menu geometry */
 }
 
 .cursor-status-ctx-fill {
@@ -210,6 +221,7 @@
     font-size: 0.78em;
     padding: 8px 0 0;
     margin: 0;
+    min-height: 1em;
 }
 
 .cursor-status-menu-section {
@@ -229,11 +241,17 @@
 
 .cursor-status-menu-session {
     padding: 4px 10px !important;
+    min-height: 40px;
+}
+
+.cursor-status-menu-session-empty {
+    opacity: 0;
 }
 
 .cursor-status-session-row {
     spacing: 10px;
     padding: 4px 4px;
+    min-height: 32px;
 }
 
 .cursor-status-session-col {
