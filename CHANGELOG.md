@@ -7,11 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-10-08
+
 ### Changed
 
-- GNOME panel popup width scales with the primary monitor (`clamp(280px, 18vw, 360px)`); height stays stable via reserved slots (chips / context bar / 3 session rows)
-- GNOME status card no longer overflows the popup (fills the menu item instead of a too-wide fixed width)
+- GNOME panel popup width scales with the primary monitor (`clamp(280px, 18vw, 360px)`); height follows content
 - README / docs GNOME screenshots are synthetic Instrument-style renders (`scripts/build_gnome_panel_shots.py`) with demo data only
+
+### Fixed
+
+- GNOME status card no longer overflows the popup (especially when opened on the right)
+- Hide OPEN WINDOWS (and its separator) when there are no sessions — no empty reserved slots
+- Status chips use natural height and centered text (no tall asymmetric “high” pill)
+
+### Added
+
+- Nested GNOME Shell (`--devkit`) workflow docs to preview the panel without logging out
 
 ## [0.5.3] - 2026-10-07
 
@@ -156,7 +167,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Browser display simulator
 - Hook simulation script and unit tests
 
-[Unreleased]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.5.4...HEAD
+[0.5.4]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/suribe06/cursor-agent-beacon/compare/v0.5.0...v0.5.1
