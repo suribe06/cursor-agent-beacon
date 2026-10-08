@@ -112,8 +112,16 @@ body {
 """
 
 
-def page(state: str, state_label: str, project: str, message: str, chips: list[str],
-         ctx_pct: int, meta: str, sessions: list[tuple[str, str, str]]) -> str:
+def page(
+    state: str,
+    state_label: str,
+    project: str,
+    message: str,
+    chips: list[str],
+    ctx_pct: int,
+    meta: str,
+    sessions: list[tuple[str, str, str]],
+) -> str:
     chip_html = "".join(
         f'<span class="chip{" ctx" if "ctx" in c else ""}">{c}</span>' for c in chips
     )
@@ -121,13 +129,16 @@ def page(state: str, state_label: str, project: str, message: str, chips: list[s
     for style, title, sub in sessions:
         sess_html += (
             f'<div class="session"><span class="dot {style}"></span>'
-            f'<div><div class="title">{title}</div><div class="sub">{sub}</div></div></div>'
+            f'<div><div class="title">{title}</div>'
+            f'<div class="sub">{sub}</div></div></div>'
         )
     # Pad to 3 fixed slots (matches SESSION_SLOTS in the extension).
     for _ in range(max(0, 3 - len(sessions))):
         sess_html += (
-            '<div class="session" style="opacity:0"><span class="dot idle"></span>'
-            '<div><div class="title">&nbsp;</div><div class="sub">&nbsp;</div></div></div>'
+            '<div class="session" style="opacity:0">'
+            '<span class="dot idle"></span>'
+            '<div><div class="title">&nbsp;</div>'
+            '<div class="sub">&nbsp;</div></div></div>'
         )
 
     return f"""<!DOCTYPE html>
@@ -135,14 +146,19 @@ def page(state: str, state_label: str, project: str, message: str, chips: list[s
 <body>
   <div class="menu" id="shot">
     <div class="pad">
-      <div class="row"><span class="brand">Cursor Agent</span><span class="count">1 active</span></div>
+      <div class="row">
+        <span class="brand">Cursor Agent</span>
+        <span class="count">1 active</span>
+      </div>
       <div class="follow">Follow most recent</div>
       <div class="hero {state}">
         <div class="state {state}">{state_label}</div>
         <div class="project">{project}</div>
         <div class="msg">{message}</div>
         <div class="chips">{chip_html}</div>
-        <div class="track"><div class="fill" style="width:{ctx_pct}%"></div></div>
+        <div class="track">
+          <div class="fill" style="width:{ctx_pct}%"></div>
+        </div>
         <div class="meta">{meta}</div>
       </div>
     </div>
@@ -187,7 +203,12 @@ SHOTS = {
 
 
 def find_chrome() -> str:
-    for name in ("google-chrome", "chromium", "chromium-browser", "google-chrome-stable"):
+    for name in (
+        "google-chrome",
+        "chromium",
+        "chromium-browser",
+        "google-chrome-stable",
+    ):
         path = shutil.which(name)
         if path:
             return path
@@ -222,7 +243,11 @@ def render(chrome: str, html: str, dest: Path) -> None:
         img = Image.open(raw).convert("RGBA")
         # Chrome may pad; crop/resize to a stable docs size.
         dest.parent.mkdir(parents=True, exist_ok=True)
-        out = img.resize((336, 520), Image.Resampling.LANCZOS) if img.size != (336, 520) else img
+        out = (
+            img.resize((336, 520), Image.Resampling.LANCZOS)
+            if img.size != (336, 520)
+            else img
+        )
         out.save(dest, optimize=True)
         print(f"wrote {dest.relative_to(ROOT)} ({out.size[0]}×{out.size[1]})")
 
