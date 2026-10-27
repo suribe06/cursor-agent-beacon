@@ -64,6 +64,7 @@ Target: **VIEWE UEDX48480021-MD80ET** (480×480, ST7701S). Docs: [`hardware-view
 - [x] Systemd user bridge (`scripts/install-bridge-service.sh`)
 - [x] Parametric stand SCAD (`hardware/case/viewe-2.1/`)
 - [ ] Knob/button → `EVENT|...` serial lines → [Future work](#future-work)
+- [ ] Touch page: character ↔ Obsidian vault graph → [Future work](#future-work)
 - [ ] FFat theme swap without reflash → [Future work](#future-work)
 
 Assets: [`themes/standard/ASSETS.md`](../themes/standard/ASSETS.md) · embed with `scripts/embed_theme_gifs.py`
@@ -104,6 +105,7 @@ Open directions — not committed for a near release. Order is preference, not s
 
 ### Hardware (VIEWE)
 
+- **Vault page** — second screen on the MD80ET (touch already on the board; firmware ignores taps). PC reads an Obsidian vault, lays out at most 150 notes / 400 links, and sends one graph message when the vault changes (`STATUS|` stays for the agent). Firmware draws dots and lines on a single PSRAM canvas and labels only the busiest nodes. A tap switches between the character and this page. Note bodies stay on the PC.
 - Knob / button → `EVENT|...` serial lines (ack, pin session, mute).
 - FFat / SD theme swap without reflash.
 - Arc or radial context meter (round-native Meter Band variant).

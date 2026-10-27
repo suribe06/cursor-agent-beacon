@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Photo → pixel-art desk character: `scripts/pixelate_reference.py`, `scripts/pack_character_theme.py`, skill `character-from-photo` (custom theme; default robot stays)
+
 ## [0.5.4] - 2026-10-08
 
 ### Changed
