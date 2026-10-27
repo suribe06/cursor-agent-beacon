@@ -4,6 +4,10 @@ The default face is the bundled pixel robot (`themes/standard/`). Use this folde
 
 Everything under `custom/` is **gitignored** except this README and the `example/` template.
 
+## From a photo
+
+Ask the agent for a character from a picture (skill `character-from-photo`). It writes a new theme here and leaves the default robot in `themes/standard/`. The VIEWE shows that art only after `python3 scripts/embed_theme_gifs.py --theme <id>` and a flash.
+
 ## Quick setup
 
 ```bash
