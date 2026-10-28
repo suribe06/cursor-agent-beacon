@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from cadgen import export
-
 from case import fit_check, lid, stand
 
 ROOT = Path(__file__).resolve().parent.parent

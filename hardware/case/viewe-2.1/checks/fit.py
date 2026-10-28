@@ -1,4 +1,7 @@
-"""Fit check: dummy display/adapter/lid vs the stand. Run: cadgen +0.8.1 run checks/fit.py"""
+"""Fit check: dummy display/adapter/lid vs the stand.
+
+Run: cadgen +0.8.1 run checks/fit.py
+"""
 
 import sys
 from pathlib import Path
@@ -40,6 +43,7 @@ ok &= d < 1e-3
 
 usb = find_part(tree, "usb_c")
 gap = closest_points(stand, usb).distance
-print(f"usb-c receptacle to rear wall: {gap:.3f} mm; rear opening {USB_HOLE_Z} tall x {USB_HOLE_X} wide")
+print(f"usb-c receptacle to nearest stand wall: {gap:.3f} mm")
+print(f"rear opening: {USB_HOLE_Z} tall x {USB_HOLE_X} wide")
 print("PASS" if ok else "FAIL")
 sys.exit(0 if ok else 1)
