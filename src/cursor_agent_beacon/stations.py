@@ -2,6 +2,16 @@
 
 from __future__ import annotations
 
+STATION_ORDER = (
+    "you",
+    "model",
+    "files",
+    "shell",
+    "network",
+    "agents",
+    "hooks",
+)
+
 _FILE_WORDS = frozenset(
     {
         "cat",

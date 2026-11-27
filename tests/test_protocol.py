@@ -2,6 +2,7 @@
 
 from cursor_agent_beacon.protocol import (
     EventLine,
+    MapCommand,
     StatusCommand,
     ThemeCommand,
     parse_line,
@@ -59,6 +60,12 @@ def test_status_strips_unicode_separators():
     assert isinstance(parsed, StatusCommand)
     assert "·" not in parsed.message
     assert "·" not in parsed.model
+
+
+def test_map_round_trip():
+    cmd = MapCommand(flags="0010000", label="grep")
+    assert cmd.serial_line() == "MAP|0010000|grep"
+    assert parse_line(cmd.serial_line()) == cmd
 
 
 def test_ignores_blank_and_comments():

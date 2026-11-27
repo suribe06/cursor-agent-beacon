@@ -1,6 +1,6 @@
 # Activity Map Plan
 
-Milestone 1 (event log and station classifier) is started on `feat/activity-map`. Milestones 2–4 are not started. This document is still the plan.
+Milestone 1 (event log and station classifier) is on `feat/activity-map`. The GNOME popup and the VIEWE status screen both read `events/<id>.summary.json` (seven station dots). The browser map CLI and Hermes are not started.
 
 Proposed feature: a live activity map of what the Cursor agent is doing — tool calls, files, shell, MCP, and subagents — in an on-demand local view.
 
@@ -200,13 +200,17 @@ Out of scope for the Cursor MVP. Design constraint for later (milestone 4):
 - Do not print or copy secrets, profile `.env` files, or credential stores. If the DB is locked or missing, the UI shows “Hermes unavailable” and keeps serving Cursor events.
 - `hermes-activity` remains the usage-analytics tool; this adapter is live activity only.
 
+### Station row on the panel and the desk display
+
+The hook writes `events/<conversation_id>.summary.json` (`flags` is seven characters: you, model, files, shell, network, agents, hooks; `0` idle, `1` hot, `2` error). The GNOME card draws those dots. The bridge sends `MAP|<flags>|<label>` after `STATUS` when the summary changes. Firmware lights the same seven dots on the status screen (`Y M F S N A H`). The browser map CLI is still not built. Hermes is still out.
+
 ### Optional VIEWE frame
 
-Out of scope for the MVP. The bridge already sends `GRAPH|…` for the Obsidian vault page (see [Hardware — VIEWE setup](hardware-viewe.md) and unreleased work on `feat/obsidian-vault-page`). A later frame could send a compact station summary (which spokes are hot, a short label) over the existing serial protocol. That needs a firmware page and must stay ASCII-safe, like other VIEWE captions. Do not block the map CLI on hardware.
+The compact station row above is on the status screen. A separate map page is not.
 
 ## Milestones
 
-Work is not started. When it is, implement in this order. Efforts are rough, assuming one familiar contributor and tests included.
+Milestone 1 is done on this branch. The station row (popup and desk display) is in. The browser map and Hermes are not started.
 
 ### 1. Event log and stations — about 1–2 days
 
@@ -243,7 +247,7 @@ Work is not started. When it is, implement in this order. Efforts are rough, ass
 
 **Acceptance**
 
-- The extension still works when the map CLI is not running (status card unchanged).
+- The station dots read the summary file. They stay idle when that file is missing, and they do not need the map CLI.
 - Opening the action launches the CLI or the local URL for the focused `conversation_id`.
 - No new background GNOME process after the popup is closed (aside from the existing file polling).
 

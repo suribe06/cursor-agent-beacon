@@ -6,6 +6,7 @@
  *   STATUS|state|message|model
  *   STATUS|state|message|model|ctx_pct
  *   THEME|theme_id   (logged only; GIFs are embedded standard theme)
+ *   MAP|0120010|label  (seven station dots: you model files shell net agents hooks)
  *
  * Board: BOARD_VIEWE_UEDX48480021_MD80ET (see esp_panel_board_supported_conf.h)
  * Serial: USB CDC 115200 — same port used by `cursor-agent-beacon bridge`
@@ -55,6 +56,8 @@ static lv_obj_t *g_message_label = nullptr;
 static lv_obj_t *g_model_label = nullptr;
 static lv_obj_t *g_ctx_bar = nullptr;
 static lv_obj_t *g_ctx_pct_label = nullptr;
+static lv_obj_t *g_map_row = nullptr;
+static lv_obj_t *g_map_dots[7] = {};
 static lv_obj_t *g_graph_canvas = nullptr;
 static lv_obj_t *g_tap = nullptr;
 static bool g_show_graph = false;
@@ -112,6 +115,7 @@ static StateStyle style_for_state(const char *state) {
 static void set_agent_widgets(bool visible) {
     lv_obj_t *widgets[] = {
         g_gif, g_state_label, g_message_label, g_model_label, g_ctx_bar, g_ctx_pct_label,
+        g_map_row,
     };
     for (lv_obj_t *widget : widgets) {
         if (!widget) {
@@ -293,7 +297,8 @@ static bool looks_like_protocol_noise(const char *text) {
     if (strstr(text, "STATUS|") != nullptr) {
         return true;
     }
-    if (strstr(text, "THEME|") != nullptr || strstr(text, "GRAPH|") != nullptr) {
+    if (strstr(text, "THEME|") != nullptr || strstr(text, "GRAPH|") != nullptr ||
+        strstr(text, "MAP|") != nullptr) {
         return true;
     }
     return false;
@@ -365,6 +370,25 @@ static void apply_status_ui(const BeaconStatus &status) {
     lvgl_port_unlock();
 }
 
+static void apply_map_ui(const char *flags) {
+    if (!g_map_row || !flags) {
+        return;
+    }
+    if (!lvgl_port_lock(-1)) {
+        return;
+    }
+    for (int i = 0; i < 7; i++) {
+        uint32_t hex = 0x334155;
+        if (flags[i] == '1') {
+            hex = 0x38BDF8;
+        } else if (flags[i] == '2') {
+            hex = 0xF87171;
+        }
+        lv_obj_set_style_bg_color(g_map_dots[i], lv_color_hex(hex), 0);
+    }
+    lvgl_port_unlock();
+}
+
 static void on_status_received(const BeaconStatus &status) {
     // ponytail: do not Serial.print here — USB-CDC TX can echo into RX and
     // corrupt the STATUS line buffer (shows as "defSTATUS|..." garbage).
@@ -373,7 +397,7 @@ static void on_status_received(const BeaconStatus &status) {
 
 static const char *find_protocol_start(const char *line) {
     const char *best = nullptr;
-    const char *marks[] = {"STATUS|", "THEME|", "GRAPH|", "PAGE|"};
+    const char *marks[] = {"STATUS|", "THEME|", "GRAPH|", "PAGE|", "MAP|"};
     for (const char *mark : marks) {
         const char *found = strstr(line, mark);
         if (found && (!best || found < best)) {
@@ -409,6 +433,14 @@ static void handle_line(const char *line) {
             apply_page();
             lvgl_port_unlock();
         }
+        return;
+    }
+
+    char map_flags[8] = {};
+    char map_label[33] = {};
+    if (beacon_parse_map_line(framed, map_flags, map_label, sizeof(map_label))) {
+        (void)map_label;
+        apply_map_ui(map_flags);
         return;
     }
 
@@ -455,6 +487,43 @@ static void create_status_ui() {
     lv_obj_set_style_text_font(g_state_label, &lv_font_montserrat_20, 0);
     lv_obj_set_style_text_color(g_state_label, lv_color_hex(0x94A3B8), 0);
     lv_obj_align(g_state_label, LV_ALIGN_BOTTOM_MID, 0, kStateOffsetY);
+
+    // Letters: You Model Files Shell Net Agents Hooks.
+    g_map_row = lv_obj_create(g_screen);
+    lv_obj_set_size(g_map_row, 252, 36);
+    lv_obj_set_style_bg_opa(g_map_row, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(g_map_row, 0, 0);
+    lv_obj_set_style_pad_all(g_map_row, 0, 0);
+    lv_obj_set_style_pad_column(g_map_row, 2, 0);
+    lv_obj_clear_flag(g_map_row, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_flex_flow(g_map_row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(
+        g_map_row, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_align(g_map_row, LV_ALIGN_BOTTOM_MID, 0, kStateOffsetY - 40);
+    static const char kMapLetters[] = "YMFSNAH";
+    for (int i = 0; i < 7; i++) {
+        lv_obj_t *col = lv_obj_create(g_map_row);
+        lv_obj_set_size(col, 32, 34);
+        lv_obj_set_style_bg_opa(col, LV_OPA_TRANSP, 0);
+        lv_obj_set_style_border_width(col, 0, 0);
+        lv_obj_set_style_pad_all(col, 0, 0);
+        lv_obj_set_style_pad_row(col, 2, 0);
+        lv_obj_clear_flag(col, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_flex_flow(col, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_flex_align(
+            col, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        g_map_dots[i] = lv_obj_create(col);
+        lv_obj_set_size(g_map_dots[i], 10, 10);
+        lv_obj_set_style_radius(g_map_dots[i], LV_RADIUS_CIRCLE, 0);
+        lv_obj_set_style_border_width(g_map_dots[i], 0, 0);
+        lv_obj_set_style_bg_color(g_map_dots[i], lv_color_hex(0x334155), 0);
+        lv_obj_clear_flag(g_map_dots[i], LV_OBJ_FLAG_SCROLLABLE);
+        char letter[2] = {kMapLetters[i], '\0'};
+        lv_obj_t *caption = lv_label_create(col);
+        lv_label_set_text(caption, letter);
+        lv_obj_set_style_text_font(caption, &lv_font_montserrat_12, 0);
+        lv_obj_set_style_text_color(caption, lv_color_hex(0x94A3B8), 0);
+    }
 
     g_message_label = lv_label_create(g_screen);
     lv_label_set_long_mode(g_message_label, LV_LABEL_LONG_DOT);

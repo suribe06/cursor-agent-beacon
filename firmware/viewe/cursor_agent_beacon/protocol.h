@@ -40,3 +40,6 @@ struct BeaconGraphLine {
 
 /// GRAPH|BEGIN|n|e  GRAPH|N|i|x|y|deg|RRGGBB|label  GRAPH|E|a|b  GRAPH|END
 bool beacon_parse_graph_line(const char *line, BeaconGraphLine *out);
+
+/// MAP|0120010|label — seven flags: 0 idle, 1 hot, 2 error
+bool beacon_parse_map_line(const char *line, char *flags_out, char *label_out, size_t label_len);

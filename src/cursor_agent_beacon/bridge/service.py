@@ -12,7 +12,8 @@ from cursor_agent_beacon.bridge.config import BridgeConfig
 from cursor_agent_beacon.bridge.serial_writer import SerialWriter, build_serial_writer
 from cursor_agent_beacon.models import AgentStatus
 from cursor_agent_beacon.obsidian_graph import build_vault_graph, fingerprint
-from cursor_agent_beacon.session_registry import SessionRegistry
+from cursor_agent_beacon.protocol import MapCommand
+from cursor_agent_beacon.session_registry import SessionRegistry, safe_conversation_id
 from cursor_agent_beacon.theme import ThemePack, load_theme
 
 _RECONCILE_SEC = 5.0
@@ -55,6 +56,7 @@ class BridgeService:
         )
         self._reconcile_thread.start()
         self._graph_stamp: tuple | None = None
+        self._last_map: str | None = None
         if config.obsidian_vault is not None:
             graph_thread = threading.Thread(
                 target=self._graph_loop,
@@ -91,6 +93,10 @@ class BridgeService:
 
         serial_line = status.serial_line()
         self._serial.write_line(serial_line)
+        map_line = self._map_line(status)
+        if map_line and map_line != self._last_map:
+            self._serial.write_line(map_line)
+            self._last_map = map_line
 
         with self._lock:
             self._latest = status
@@ -112,6 +118,20 @@ class BridgeService:
             "caption": animation.caption if animation else None,
             "loop": animation.loop if animation else None,
         }
+
+    def _map_line(self, status: AgentStatus) -> str | None:
+        cid = safe_conversation_id(status.conversation_id)
+        if not cid:
+            return None
+        path = self._registry.status_path.parent / "events" / f"{cid}.summary.json"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        flags = str(data.get("flags") or "")
+        if len(flags) != 7 or any(ch not in "012" for ch in flags):
+            return None
+        return MapCommand(flags=flags, label=str(data.get("label") or "")).serial_line()
 
     def _reconcile_loop(self) -> None:
         """Decay stale thinking/waiting; push Ready without new hooks."""

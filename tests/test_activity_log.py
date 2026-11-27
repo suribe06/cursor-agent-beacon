@@ -145,3 +145,39 @@ def test_prune_drops_stale_conversation_files(tmp_path: Path):
     append_activity(event, map_hook_event(event), root=tmp_path)
     assert not old.exists()
     assert fresh.exists()
+
+
+def test_summary_flags_follow_the_station(tmp_path: Path):
+    from cursor_agent_beacon.mapper import map_hook_event
+
+    start = _event(
+        {
+            "hook_event_name": "beforeShellExecution",
+            "conversation_id": "demo",
+            "command": "npm test",
+        }
+    )
+    append_activity(start, map_hook_event(start), root=tmp_path)
+    summary_path = tmp_path / "events" / "demo.summary.json"
+    assert json.loads(summary_path.read_text(encoding="utf-8"))["flags"] == "0001000"
+
+    end = _event(
+        {
+            "hook_event_name": "afterShellExecution",
+            "conversation_id": "demo",
+            "command": "npm test",
+        }
+    )
+    append_activity(end, map_hook_event(end), root=tmp_path)
+    assert json.loads(summary_path.read_text(encoding="utf-8"))["flags"] == "0000000"
+
+    denied = _event(
+        {
+            "hook_event_name": "postToolUseFailure",
+            "conversation_id": "demo",
+            "tool_name": "read",
+            "failure_type": "permission_denied",
+        }
+    )
+    append_activity(denied, map_hook_event(denied), root=tmp_path)
+    assert json.loads(summary_path.read_text(encoding="utf-8"))["flags"] == "0000002"

@@ -14,7 +14,7 @@ from typing import Any
 
 from cursor_agent_beacon.models import AgentStatus, HookEvent
 from cursor_agent_beacon.session_registry import safe_conversation_id
-from cursor_agent_beacon.stations import classify, phase_of
+from cursor_agent_beacon.stations import STATION_ORDER, classify, phase_of
 
 MAX_LINES = 5000
 MAX_BYTES = 2 * 1024 * 1024
@@ -60,6 +60,7 @@ def append_activity(
         with path.open("a", encoding="utf-8") as handle:
             handle.write(line + "\n")
         _trim(path, max_lines=max_lines, max_bytes=max_bytes)
+        _write_summary(root, json.loads(line))
         _prune(root)
     except Exception as exc:  # noqa: BLE001 - hooks must fail open
         print(
@@ -67,6 +68,45 @@ def append_activity(
             file=sys.stderr,
             flush=True,
         )
+
+
+def _flag(record: dict[str, Any]) -> str:
+    detail = record.get("detail") or {}
+    failed = (
+        record.get("state") == "error"
+        or detail.get("denied") is True
+        or record.get("station") == "hooks"
+    )
+    if record.get("phase") == "end" and not failed:
+        return "0"
+    return "2" if failed else "1"
+
+
+def _write_summary(root: Path, record: dict[str, Any]) -> None:
+    """Cache the panel and the desk display both read. Not a second log."""
+    cid = record.get("conversation_id") or "unknown"
+    path = root / "events" / f"{cid}.summary.json"
+    stations = {name: "0" for name in STATION_ORDER}
+    if path.is_file():
+        try:
+            saved = json.loads(path.read_text(encoding="utf-8")).get("stations") or {}
+        except (OSError, json.JSONDecodeError):
+            saved = {}
+        for name in STATION_ORDER:
+            value = str(saved.get(name, "0"))
+            if value in {"0", "1", "2"}:
+                stations[name] = value
+    station = str(record.get("station") or "")
+    if station in stations:
+        stations[station] = _flag(record)
+    flags = "".join(stations[name] for name in STATION_ORDER)
+    payload = {
+        "conversation_id": cid,
+        "label": str(record.get("label") or "")[:32],
+        "flags": flags,
+        "stations": stations,
+    }
+    path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
 
 
 def _path_for(root: Path, conversation_id: str | None) -> Path:

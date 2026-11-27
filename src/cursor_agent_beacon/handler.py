@@ -29,11 +29,12 @@ def handle_hook_event(
 ) -> dict[str, Any]:
     """Map the event, publish status, and return the Cursor hook response."""
     status = map_hook_event(event)
+    # Log first so the bridge can send the new station summary with this status.
+    if events_root is not None:
+        append_activity(event, status, root=events_root, redact=redact)
     if status is not None:
         active_sink = sink or build_sinks()
         active_sink.publish(status)
-    if events_root is not None:
-        append_activity(event, status, root=events_root, redact=redact)
     return build_hook_response(event)
 
 

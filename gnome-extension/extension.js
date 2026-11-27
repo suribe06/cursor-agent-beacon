@@ -11,6 +11,8 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
+const MAP_STATIONS = ['You', 'Model', 'Files', 'Shell', 'Net', 'Agents', 'Hooks'];
+
 const BEACON_DIR = GLib.build_filenamev([
     GLib.get_home_dir(),
     '.local',
@@ -113,6 +115,12 @@ const PROFILES = {
 };
 
 let _cursorRunningCache = { value: false, checkedAt: 0 };
+
+function safeConversationId(id) {
+    if (!id) return null;
+    const cleaned = String(id).replace(/[^A-Za-z0-9_.-]/g, '').slice(0, 64);
+    return cleaned || null;
+}
 
 function readJson(path) {
     try {
@@ -794,6 +802,30 @@ export default class CursorStatusPanelExtension extends Extension {
             x_expand: true,
         });
         this._menuMessage.clutter_text.ellipsize = Pango.EllipsizeMode.END;
+        this._mapRow = new St.BoxLayout({
+            style_class: 'cursor-status-map',
+            x_expand: true,
+        });
+        this._mapDots = MAP_STATIONS.map(title => {
+            const col = new St.BoxLayout({
+                vertical: true,
+                x_expand: true,
+                style_class: 'cursor-status-map-col',
+            });
+            const dot = new St.Widget({
+                style_class: 'cursor-status-map-dot',
+                x_align: Clutter.ActorAlign.CENTER,
+            });
+            const name = new St.Label({
+                text: title,
+                style_class: 'cursor-status-map-name',
+                x_align: Clutter.ActorAlign.CENTER,
+            });
+            col.add_child(dot);
+            col.add_child(name);
+            this._mapRow.add_child(col);
+            return dot;
+        });
         this._chips = new St.BoxLayout({
             style_class: 'cursor-status-chips',
             x_expand: true,
@@ -848,6 +880,7 @@ export default class CursorStatusPanelExtension extends Extension {
         this._card.add_child(this._menuState);
         this._card.add_child(this._menuProject);
         this._card.add_child(this._menuMessage);
+        this._card.add_child(this._mapRow);
         this._card.add_child(this._chips);
         this._card.add_child(this._ctxTrack);
         this._card.add_child(this._menuMeta);
@@ -1046,6 +1079,7 @@ export default class CursorStatusPanelExtension extends Extension {
             detail = truncate(label && label !== '—' ? label : message, 72) || '—';
         }
         this._menuMessage.text = detail;
+        this._applyMap(display, status);
 
         const modelId = (display?.model_id || status?.model_id || '').trim();
         const modelName = (display?.model || status?.model || '').trim();
@@ -1093,5 +1127,31 @@ export default class CursorStatusPanelExtension extends Extension {
         this._menuMeta.text = `${focus} · ${hookLabel(hook)} · ${formatWhen(ts)}${turnSuffix}`;
 
         this._rebuildSessionMenu(visible, pinnedId);
+    }
+
+    _applyMap(display, status) {
+        const focusId = safeConversationId(
+            display?.id || display?.conversation_id || status?.conversation_id,
+        );
+        const summary = focusId
+            ? readJson(
+                  GLib.build_filenamev([
+                      BEACON_DIR,
+                      'events',
+                      `${focusId}.summary.json`,
+                  ]),
+              )
+            : null;
+        const flags = summary?.flags || '0000000';
+        (this._mapDots || []).forEach((dot, index) => {
+            dot.remove_style_class_name('cursor-status-map-dot-hot');
+            dot.remove_style_class_name('cursor-status-map-dot-error');
+            const flag = flags[index] || '0';
+            if (flag === '1') {
+                dot.add_style_class_name('cursor-status-map-dot-hot');
+            } else if (flag === '2') {
+                dot.add_style_class_name('cursor-status-map-dot-error');
+            }
+        });
     }
 }

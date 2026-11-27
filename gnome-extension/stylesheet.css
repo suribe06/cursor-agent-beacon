@@ -255,6 +255,36 @@
     background-color: rgba(255, 255, 255, 0.28);
 }
 
+.cursor-status-map {
+    spacing: 2px;
+    padding-top: 8px;
+}
+
+.cursor-status-map-col {
+    spacing: 3px;
+}
+
+.cursor-status-map-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 99px;
+    background-color: rgba(255, 255, 255, 0.22);
+}
+
+.cursor-status-map-dot-hot {
+    background-color: #38bdf8;
+}
+
+.cursor-status-map-dot-error {
+    background-color: #f87171;
+}
+
+.cursor-status-map-name {
+    font-size: 0.62em;
+    color: rgba(255, 255, 255, 0.45);
+    text-align: center;
+}
+
 .cursor-status-session-dot-thinking {
     background-color: #e8a35c;
 }

@@ -148,3 +148,23 @@ bool beacon_parse_graph_line(const char *line, BeaconGraphLine *out) {
     }
     return false;
 }
+
+bool beacon_parse_map_line(
+    const char *line, char *flags_out, char *label_out, size_t label_len) {
+    if (!line || !flags_out || !label_out || label_len == 0 || !starts_with(line, "MAP|")) {
+        return false;
+    }
+    const char *rest = line + strlen("MAP|");
+    if (strlen(rest) < 8 || rest[7] != '|') {
+        return false;
+    }
+    for (int i = 0; i < 7; i++) {
+        if (rest[i] != '0' && rest[i] != '1' && rest[i] != '2') {
+            return false;
+        }
+        flags_out[i] = rest[i];
+    }
+    flags_out[7] = '\0';
+    copy_token(rest + 8, label_out, label_len);
+    return true;
+}

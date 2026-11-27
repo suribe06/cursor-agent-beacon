@@ -144,7 +144,10 @@ THEME|standard
 STATUS|thinking|Thinking (4200ms)
 STATUS|running_shell|npm test
 STATUS|success|Ready
+MAP|0010000|grep
 ```
+
+`MAP` is seven station flags in order: you, model, files, shell, network, agents, hooks. `0` idle, `1` hot, `2` error. The panel draws one dot and a letter (`Y M F S N A H`) for each.
 
 ## Software layers (already in repo)
 

@@ -11,6 +11,7 @@ class LineKind(StrEnum):
     STATUS = "STATUS"
     THEME = "THEME"
     EVENT = "EVENT"
+    MAP = "MAP"
 
 
 def _ascii_field(text: str, limit: int) -> str:
@@ -57,7 +58,26 @@ class EventLine:
         return f"EVENT|{self.event_type}"
 
 
-def parse_line(raw: str) -> StatusCommand | ThemeCommand | EventLine | None:
+@dataclass(frozen=True, slots=True)
+class MapCommand:
+    """Seven station flags (you, model, files, shell, network, agents, hooks).
+
+    Each flag is 0 idle, 1 hot, or 2 error.
+    """
+
+    flags: str
+    label: str = ""
+
+    def serial_line(self) -> str:
+        flags = "".join(ch if ch in "012" else "0" for ch in self.flags)
+        flags = (flags + "0000000")[:7]
+        return f"MAP|{flags}|{_ascii_field(self.label, 32)}"
+
+
+ProtocolLine = StatusCommand | ThemeCommand | EventLine | MapCommand
+
+
+def parse_line(raw: str) -> ProtocolLine | None:
     """Parse one protocol line. Returns None for empty or unknown input."""
     line = raw.strip()
     if not line or line.startswith("#"):
@@ -91,4 +111,7 @@ def parse_line(raw: str) -> StatusCommand | ThemeCommand | EventLine | None:
         return ThemeCommand(theme_id=parts[1])
     if kind == LineKind.EVENT and len(parts) >= 2:
         return EventLine(event_type=parts[1])
+    if kind == LineKind.MAP and len(parts) >= 3 and len(parts[1]) == 7:
+        if all(ch in "012" for ch in parts[1]):
+            return MapCommand(flags=parts[1], label=parts[2])
     return None

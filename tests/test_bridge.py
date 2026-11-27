@@ -83,6 +83,38 @@ def test_bridge_service_resolves_gif_and_serial(tmp_path: Path):
     service.close()
 
 
+def test_bridge_sends_map_when_summary_changes(tmp_path: Path):
+    themes_root = _write_theme(tmp_path)
+    data = tmp_path / "data"
+    (data / "events").mkdir(parents=True)
+    (data / "events" / "demo.summary.json").write_text(
+        json.dumps({"flags": "0010000", "label": "grep"}),
+        encoding="utf-8",
+    )
+    config = BridgeConfig(theme_id="standard", themes_dir=themes_root)
+    serial = DryRunSerialWriter()
+    stderr = StringIO()
+    serial.write_line = lambda line: stderr.write(f"{line}\n")  # type: ignore[method-assign]
+    service = BridgeService(
+        config,
+        theme=load_theme("standard", themes_root),
+        serial_writer=serial,
+        status_file=data / "status.json",
+    )
+    payload = {
+        "state": "running_shell",
+        "message": "grep",
+        "hook_event_name": "beforeShellExecution",
+        "conversation_id": "demo",
+    }
+    service.handle_status(payload)
+    service.handle_status(payload)
+    text = stderr.getvalue()
+    assert text.count("MAP|0010000|grep") == 1
+    assert "STATUS|running_shell|grep" in text
+    service.close()
+
+
 def test_bridge_service_rejects_unknown_state(tmp_path: Path):
     themes_root = _write_theme(tmp_path)
     config = BridgeConfig(theme_id="standard", themes_dir=themes_root)
