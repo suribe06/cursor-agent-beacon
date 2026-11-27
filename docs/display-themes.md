@@ -4,18 +4,18 @@ Each theme is a folder with `manifest.json` + `assets/*.gif` (**480×480** for t
 
 ## Standard theme (default, in repo)
 
-Bundled **pixel-robot** GIFs (the default product face) generated from `scripts/build_character_sprites.py`:
+Bundled **eye** GIFs (the default face) generated from `scripts/build_character_sprites.py`:
 
 | Agent state | GIF | Animation |
 |---|---|---|
-| `idle` | `sleeping.gif` | Slow breath + Zzz |
-| `waiting` | `waiting.gif` | Awake blink + antenna pulse + glance |
-| `thinking` | `thinking.gif` | Sky-blue thought dots |
-| `running_shell` | `running_shell.gif` | Walk + speed lines |
-| `running_mcp` | `running_mcp.gif` | Cyan tool link |
-| `success` | `success.gif` | Soft cyan smile pulse |
-| `error` | `error.gif` | Shake then hold |
-| `stop` | `stop.gif` | Wave + confetti |
+| `idle` | `sleeping.gif` | Eyes drift shut |
+| `waiting` | `waiting.gif` | Happy eyes, glance, blink |
+| `thinking` | `thinking.gif` | Eyes look up and around |
+| `running_shell` | `running_shell.gif` | Narrow eyes scanning |
+| `running_mcp` | `running_mcp.gif` | Steady eyes, green spark |
+| `success` | `success.gif` | Smile that pulses |
+| `error` | `error.gif` | Shock, then a sweat drop |
+| `stop` | `stop.gif` | Laughing eyes |
 
 Regenerate:
 
@@ -30,7 +30,7 @@ Preview:
 xdg-open preview/display-simulator.html
 ```
 
-Toggle **Show exported GIF** to see the files from `themes/standard/assets/`.
+The simulator plays the GIFs from `themes/standard/assets/`.
 
 ## Custom themes (your own GIFs)
 

@@ -2,16 +2,15 @@
 
 Visual GIF themes for the agent status display (desk panel + simulator).
 
-The **standard** pixel-robot pack is the default face of Beacon. Custom packs let you swap in your own art (radars, game sprites, whatever) without changing the product.
+The **standard** eye pack is the default face of Beacon. Custom packs let you swap in your own art (radars, game sprites, whatever) without changing the product.
 
 ## Standard theme (default, bundled in repo)
 
-Pre-built pixel robot GIFs — one character, animated per agent state. This is what the README demos.
+Pre-built eye GIFs — one face, animated per agent state. This is what the README demos.
 
 ```text
 themes/standard/
   manifest.json
-  pixel-faces.json      # sprite source data
   assets/
     sleeping.gif        # idle
     waiting.gif

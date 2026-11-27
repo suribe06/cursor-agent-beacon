@@ -14,7 +14,7 @@ Cursor hooks fire during the agent lifecycle. They do not depend on the model ch
 | Status sinks (log, file, HTTP) | ✅ Shipped |
 | One-shot setup (`./setup.sh`) | ✅ Shipped |
 | `doctor` / `status` / `uninstall` CLI | ✅ Shipped |
-| Standard GIF theme (pixel robot, 480×480) | ✅ Bundled in repo |
+| Standard GIF theme (eyes, 480×480) | ✅ Bundled in repo |
 | Custom theme packs | ✅ Layout + loader |
 | Local bridge service | ✅ Shipped |
 | Multi-session registry + GNOME panel | ✅ Usable (polishing) |

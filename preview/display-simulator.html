@@ -116,10 +116,8 @@
 
     .bezel.round { border-radius: 999px; padding: 18px; }
 
-    canvas#screen, img#gif-screen {
+    img#gif-screen {
       display: block;
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
       border-radius: 12px;
       background: var(--display-bg);
       width: 480px;
@@ -127,7 +125,6 @@
       max-width: min(480px, 100%);
     }
 
-    .bezel.round canvas#screen,
     .bezel.round img#gif-screen { border-radius: 50%; }
 
     .meta { text-align: center; }
@@ -149,8 +146,7 @@
     <section class="panel">
       <h1>Display Simulator</h1>
       <p class="subtitle">
-        Full-body pixel robot with animated face, arms, legs, and effects.
-        Every state has a 4-frame loop.
+        Expressive eyes for each agent state. The GIF is the face on the panel.
       </p>
       <div class="states" id="state-buttons"></div>
       <div class="controls">
@@ -158,18 +154,16 @@
         <button id="next-btn" type="button">Next</button>
         <button id="auto-btn" type="button">Auto cycle: OFF</button>
         <label><input id="round-toggle" type="checkbox" checked /> Round display</label>
-        <label><input id="gif-toggle" type="checkbox" checked /> Show exported GIF</label>
       </div>
       <div class="legend">
-        <strong>Tip:</strong> Edit sprites in <code>scripts/build_character_sprites.py</code>, then run
+        <strong>Tip:</strong> Edit the eyes in <code>scripts/build_character_sprites.py</code>, then run
         <code>python3 scripts/export_standard_gifs.py</code>
       </div>
     </section>
 
     <section class="panel display-wrap">
       <div class="bezel round" id="bezel">
-        <canvas id="screen" width="480" height="480"></canvas>
-        <img id="gif-screen" alt="Exported theme GIF" hidden />
+        <img id="gif-screen" alt="Theme eyes" width="480" height="480" />
       </div>
       <div class="meta">
         <div class="state-name" id="state-name">Sleeping</div>
@@ -191,57 +185,18 @@
       "stop",
     ];
 
-    const { palette: PALETTE_RAW, grid_size: GRID, faces: FACES } = window.BEACON_SPRITES;
-    const PALETTE = Object.fromEntries(
-      Object.entries(PALETTE_RAW).map(([k, v]) => [k, v === "transparent" ? null : v])
-    );
+    const { faces: FACES } = window.BEACON_SPRITES;
 
-    const canvas = document.getElementById("screen");
     const gifScreen = document.getElementById("gif-screen");
-    const ctx = canvas.getContext("2d");
-    const SCALE = canvas.width / GRID;
     const GIF_BASE = "../themes/standard/assets/";
 
     let currentState = "sleeping";
-    let frameIndex = 0;
     let autoCycle = false;
     let autoTimer = null;
-    let showGif = true;
-
-    function parseFrame(text) {
-      return text.split("\n");
-    }
-
-    function drawCharacter(grid) {
-      ctx.fillStyle = "#071020";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      for (let y = 0; y < GRID; y++) {
-        const row = grid[y] || "";
-        for (let x = 0; x < GRID; x++) {
-          const ch = row[x] || ".";
-          const color = PALETTE[ch];
-          if (!color) continue;
-          ctx.fillStyle = color;
-          ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
-        }
-      }
-    }
 
     function render() {
       const face = FACES[currentState];
-
-      if (showGif) {
-        canvas.hidden = true;
-        gifScreen.hidden = false;
-        gifScreen.src = `${GIF_BASE}${currentState}.gif?${Date.now()}`;
-      } else {
-        gifScreen.hidden = true;
-        canvas.hidden = false;
-        const frames = face.frames.map(parseFrame);
-        const grid = frames[frameIndex % frames.length];
-        drawCharacter(grid);
-      }
+      gifScreen.src = `${GIF_BASE}${currentState}.gif?${Date.now()}`;
 
       document.getElementById("state-name").textContent = face.label;
       document.getElementById("state-caption").textContent = face.caption;
@@ -253,7 +208,6 @@
 
     function setState(state) {
       currentState = state;
-      frameIndex = 0;
       render();
     }
 
@@ -265,13 +219,6 @@
     function prevState() {
       const idx = STATE_ORDER.indexOf(currentState);
       setState(STATE_ORDER[(idx - 1 + STATE_ORDER.length) % STATE_ORDER.length]);
-    }
-
-    function tickAnimation() {
-      if (showGif) return;
-      const face = FACES[currentState];
-      frameIndex = (frameIndex + 1) % face.frames.length;
-      render();
     }
 
     const buttons = document.getElementById("state-buttons");
@@ -303,13 +250,6 @@
       document.getElementById("bezel").classList.toggle("round", e.target.checked);
     });
 
-    document.getElementById("gif-toggle").addEventListener("change", (e) => {
-      showGif = e.target.checked;
-      frameIndex = 0;
-      render();
-    });
-
-    setInterval(tickAnimation, 380);
     render();
   </script>
 </body>

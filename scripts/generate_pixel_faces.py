@@ -57,6 +57,14 @@ def main() -> int:
     parser.add_argument("--scale", type=int, default=10, help="Pixels per grid cell")
     args = parser.parse_args()
 
+    if not args.faces.is_file():
+        print(
+            "No pixel-face grid. The standard theme is drawn by "
+            "scripts/build_character_sprites.py",
+            file=sys.stderr,
+        )
+        return 1
+
     data = load_faces(args.faces)
     palette = data["palette"]
     args.output.mkdir(parents=True, exist_ok=True)

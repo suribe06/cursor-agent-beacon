@@ -39,7 +39,7 @@ def load_loops(name: str, loops: int) -> tuple[list[Image.Image], list[int]]:
         rgba = frame.convert("RGBA")
         base = Image.new("RGBA", rgba.size, BG)
         composed = Image.alpha_composite(base, rgba).convert("RGB")
-        frames.append(composed.resize(SIZE, Image.Resampling.NEAREST))
+        frames.append(composed.resize(SIZE, Image.Resampling.LANCZOS))
         durations.append(int(frame.info.get("duration", 120) or 120))
     out_f: list[Image.Image] = []
     out_d: list[int] = []

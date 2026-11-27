@@ -1,6 +1,6 @@
 # Standard theme assets
 
-The **standard** theme ships **bundled pixel-robot GIFs** generated from this repository. You do not need to download third-party sprite packs to use the default theme.
+The **standard** theme ships **bundled eye GIFs** generated from this repository. You do not need to download third-party sprite packs to use the default theme.
 
 ## Bundled files
 
@@ -16,7 +16,7 @@ themes/standard/assets/
   stop.gif
 ```
 
-Mapping is defined in [`manifest.json`](manifest.json). Sprite source grids live in [`pixel-faces.json`](pixel-faces.json).
+Mapping is defined in [`manifest.json`](manifest.json). The drawing code is [`scripts/build_character_sprites.py`](../../scripts/build_character_sprites.py).
 
 ## Regenerate GIFs
 
@@ -31,7 +31,6 @@ This updates:
 
 - `themes/standard/assets/*.gif`
 - `themes/standard/manifest.json`
-- `themes/standard/pixel-faces.json`
 - `preview/beacon-sprites.js` (browser preview)
 
 Preview:
@@ -44,14 +43,14 @@ xdg-open preview/display-simulator.html
 
 | Agent state | GIF | Behavior |
 |---|---|---|
-| `idle` | `sleeping.gif` | Slow breath + floating Zzz |
-| `waiting` | `waiting.gif` | Awake blink, antenna pulse, glance |
-| `thinking` | `thinking.gif` | Sky-blue thought dots |
-| `running_shell` | `running_shell.gif` | Walk cycle + speed lines |
-| `running_mcp` | `running_mcp.gif` | Cyan tool link (distinct from thinking) |
-| `success` | `success.gif` | Soft cyan smile pulse |
-| `error` | `error.gif` | Shake, then hold |
-| `stop` | `stop.gif` | Wave + confetti |
+| `idle` | `sleeping.gif` | Eyes drift shut |
+| `waiting` | `waiting.gif` | Happy eyes, glance, blink |
+| `thinking` | `thinking.gif` | Eyes look up and around |
+| `running_shell` | `running_shell.gif` | Narrow eyes scanning |
+| `running_mcp` | `running_mcp.gif` | Steady eyes, green spark |
+| `success` | `success.gif` | Smile that pulses |
+| `error` | `error.gif` | Shock, then a sweat drop |
+| `stop` | `stop.gif` | Laughing eyes |
 
 ## Custom themes (replace with your own GIFs)
 

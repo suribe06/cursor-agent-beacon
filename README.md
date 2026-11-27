@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>See what your Cursor agent is doing without watching the chat.</strong><br>
-  Top-bar status on Ubuntu/GNOME — and optionally a desk display with a pixel-robot status face.
+  Top-bar status on Ubuntu/GNOME — and optionally a desk display with an eye status face.
 </p>
 
 [![CI](https://github.com/suribe06/cursor-agent-beacon/actions/workflows/ci.yml/badge.svg)](https://github.com/suribe06/cursor-agent-beacon/actions/workflows/ci.yml)
@@ -81,12 +81,12 @@ The desk display ships firmware and flash notes for the **VIEWE** 480×480 panel
 - Glanceable agent states: `idle`, `waiting`, `thinking`, `running_shell`, `running_mcp`, `success`, `error`
 - Multi-session GNOME panel (focused session + open workspaces)
 - One-shot setup / uninstall; fail-open hooks (never block Cursor)
-- Default pixel-robot theme + **custom GIF themes** (`themes/custom/`)
+- Default eye theme + **custom GIF themes** (`themes/custom/`)
 - Optional HTTP → serial bridge for a desk panel
 
 ## Custom themes
 
-Drop your own 480×480 GIFs under `themes/custom/<name>/` — Pathfinder sprites, radars, whatever fits your desk. The robot is just the default face.
+Drop your own 480×480 GIFs under `themes/custom/<name>/` — Pathfinder sprites, radars, whatever fits your desk. The eyes are the default face.
 
 ```bash
 export CURSOR_AGENT_BEACON_THEME=your-theme
