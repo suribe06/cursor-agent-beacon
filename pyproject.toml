@@ -54,6 +54,9 @@ markers = [
     "smoke: end-to-end install smoke tests (runs pip install via setup.sh)",
 ]
 
+[tool.pylint.main]
+init-hook = "import sys; sys.path.insert(0, 'src')"
+
 [tool.coverage.run]
 source = ["cursor_agent_beacon"]
 

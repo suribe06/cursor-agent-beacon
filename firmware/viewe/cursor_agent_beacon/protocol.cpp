@@ -126,6 +126,7 @@ bool beacon_parse_graph_line(const char *line, BeaconGraphLine *out) {
         int x = 0;
         int y = 0;
         int deg = 0;
+        char hex[8] = "94A3B8";
         const char *label = body;
         for (int field = 0; field < 5; field++) {
             const char *sep = strchr(label, '|');
@@ -134,13 +135,14 @@ bool beacon_parse_graph_line(const char *line, BeaconGraphLine *out) {
             }
             label = sep + 1;
         }
-        if (sscanf(body, "%d|%d|%d|%d|", &index, &x, &y, &deg) != 4) {
+        if (sscanf(body, "%d|%d|%d|%d|%6[^|]|", &index, &x, &y, &deg, hex) != 5) {
             return false;
         }
         out->a = index;
         out->x = x;
         out->y = y;
         out->deg = deg;
+        out->color = (int)strtoul(hex, nullptr, 16);
         copy_token(label, out->label, sizeof(out->label));
         return true;
     }

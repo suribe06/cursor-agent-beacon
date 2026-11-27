@@ -66,6 +66,7 @@ struct StoredNode {
     int16_t x;
     int16_t y;
     uint8_t deg;
+    uint32_t color;
     char label[17];
 };
 
@@ -156,11 +157,11 @@ static void redraw_graph() {
 
     lv_draw_rect_dsc_t dot_dsc;
     lv_draw_rect_dsc_init(&dot_dsc);
-    dot_dsc.bg_color = lv_color_hex(0x38BDF8);
     dot_dsc.bg_opa = LV_OPA_COVER;
     dot_dsc.radius = LV_RADIUS_CIRCLE;
     for (int i = 0; i < g_node_count; i++) {
         lv_point_t point = graph_xy(g_nodes[i].x, g_nodes[i].y);
+        dot_dsc.bg_color = lv_color_hex(g_nodes[i].color);
         lv_canvas_draw_rect(g_graph_canvas, point.x - 3, point.y - 3, 6, 6, &dot_dsc);
     }
 
@@ -256,6 +257,7 @@ static void accept_graph_line(const BeaconGraphLine &parsed) {
         node.x = (int16_t)parsed.x;
         node.y = (int16_t)parsed.y;
         node.deg = (uint8_t)(parsed.deg < 0 ? 0 : parsed.deg > 255 ? 255 : parsed.deg);
+        node.color = (uint32_t)parsed.color;
         strncpy(node.label, parsed.label, sizeof(node.label) - 1);
         node.label[sizeof(node.label) - 1] = '\0';
         return;

@@ -5,6 +5,7 @@ The panel does not read notes. It draws dots the PC already placed.
 
 from __future__ import annotations
 
+import json
 import math
 import re
 from dataclasses import dataclass
@@ -13,6 +14,7 @@ from pathlib import Path
 MAX_NODES = 80
 MAX_EDGES = 160
 LABEL_LIMIT = 16
+_DEFAULT_COLOR = 0x94A3B8
 _LINK = re.compile(r"\[\[([^\]|#^]+)(?:[#^][^\]|]*)?(?:\|[^\]]*)?\]\]")
 
 
@@ -22,6 +24,7 @@ class GraphNode:
     x: int
     y: int
     deg: int
+    color: int = _DEFAULT_COLOR
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,7 +35,9 @@ class VaultGraph:
     def serial_lines(self) -> list[str]:
         lines = [f"GRAPH|BEGIN|{len(self.nodes)}|{len(self.edges)}"]
         for index, node in enumerate(self.nodes):
-            lines.append(f"GRAPH|N|{index}|{node.x}|{node.y}|{node.deg}|{node.label}")
+            lines.append(
+                f"GRAPH|N|{index}|{node.x}|{node.y}|{node.deg}|{node.color:06X}|{node.label}"
+            )
         for left, right in self.edges:
             lines.append(f"GRAPH|E|{left}|{right}")
         lines.append("GRAPH|END")
@@ -118,23 +123,55 @@ def _layout(count: int, edges: list[tuple[int, int]]) -> list[tuple[int, int]]:
     return placed
 
 
+def _color_groups(vault: Path) -> list[tuple[str, int]]:
+    """Obsidian graph color groups: path:Folder → rgb from .obsidian/graph.json."""
+    path = vault / ".obsidian" / "graph.json"
+    if not path.is_file():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    groups: list[tuple[str, int]] = []
+    for item in data.get("colorGroups") or []:
+        query = str(item.get("query") or "").strip()
+        if not query.startswith("path:"):
+            continue
+        folder = query[5:].strip().strip('"').strip("/")
+        rgb = (item.get("color") or {}).get("rgb")
+        if folder and isinstance(rgb, int):
+            groups.append((folder, rgb & 0xFFFFFF))
+    return groups
+
+
+def _color_for(relative: str, groups: list[tuple[str, int]]) -> int:
+    for folder, rgb in groups:
+        if relative == folder or relative.startswith(folder + "/"):
+            return rgb
+    return _DEFAULT_COLOR
+
+
 def build_vault_graph(vault: Path) -> VaultGraph:
     """Wikilinks become edges. The busiest notes are kept when the vault is large."""
     notes = _notes(vault)
+    groups = _color_groups(vault)
     by_name: dict[str, Path] = {}
     for path in notes:
         by_name.setdefault(path.stem.lower(), path)
     ids: dict[str, int] = {}
     labels: list[str] = []
+    relatives: list[str] = []
 
-    def node_id(key: str, label: str) -> int:
+    def node_id(key: str, label: str, relative: str) -> int:
         if key not in ids:
             ids[key] = len(labels)
             labels.append(label)
+            relatives.append(relative)
         return ids[key]
 
     for path in notes:
-        node_id(str(path), path.stem)
+        relative = path.relative_to(vault).as_posix()
+        node_id(str(path), path.stem, relative)
     raw_edges: set[tuple[int, int]] = set()
     for path in notes:
         try:
@@ -145,11 +182,10 @@ def build_vault_graph(vault: Path) -> VaultGraph:
         for match in _LINK.finditer(text):
             name = Path(match.group(1).strip()).name.removesuffix(".md").lower()
             target = by_name.get(name)
-            right = (
-                ids[str(target)]
-                if target is not None
-                else node_id("?" + name, Path(match.group(1).strip()).name)
-            )
+            if target is not None:
+                right = ids[str(target)]
+            else:
+                right = node_id("?" + name, Path(match.group(1).strip()).name, "")
             if left != right:
                 raw_edges.add((min(left, right), max(left, right)))
     degree = [0] * len(labels)
@@ -174,6 +210,7 @@ def build_vault_graph(vault: Path) -> VaultGraph:
             x=placed[new][0],
             y=placed[new][1],
             deg=degree_kept[new],
+            color=_color_for(relatives[old], groups),
         )
         for new, old in enumerate(keep)
     )

@@ -34,8 +34,9 @@ struct BeaconGraphLine {
     int x;
     int y;
     int deg;
+    int color;
     char label[17];
 };
 
-/// GRAPH|BEGIN|n|e  GRAPH|N|i|x|y|deg|label  GRAPH|E|a|b  GRAPH|END
+/// GRAPH|BEGIN|n|e  GRAPH|N|i|x|y|deg|RRGGBB|label  GRAPH|E|a|b  GRAPH|END
 bool beacon_parse_graph_line(const char *line, BeaconGraphLine *out);
