@@ -1,5 +1,6 @@
 #include "protocol.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -89,4 +90,61 @@ bool beacon_parse_theme_line(const char *line, char *theme_out, size_t theme_len
 
     copy_token(line + strlen("THEME|"), theme_out, theme_len);
     return theme_out[0] != '\0';
+}
+
+bool beacon_parse_page_line(const char *line, char *page_out, size_t page_len) {
+    if (!line || !page_out || page_len == 0 || !starts_with(line, "PAGE|")) {
+        return false;
+    }
+    copy_token(line + strlen("PAGE|"), page_out, page_len);
+    return page_out[0] != '\0';
+}
+
+bool beacon_parse_graph_line(const char *line, BeaconGraphLine *out) {
+    if (!line || !out || !starts_with(line, "GRAPH|")) {
+        return false;
+    }
+    memset(out, 0, sizeof(*out));
+    const char *rest = line + strlen("GRAPH|");
+    if (strcmp(rest, "END") == 0) {
+        out->op = BEACON_GRAPH_END;
+        return true;
+    }
+    if (starts_with(rest, "BEGIN|")) {
+        out->op = BEACON_GRAPH_BEGIN;
+        sscanf(rest + strlen("BEGIN|"), "%d|%d", &out->a, &out->b);
+        return true;
+    }
+    if (starts_with(rest, "E|")) {
+        out->op = BEACON_GRAPH_EDGE;
+        return sscanf(rest + 2, "%d|%d", &out->a, &out->b) == 2;
+    }
+    if (starts_with(rest, "N|")) {
+        out->op = BEACON_GRAPH_NODE;
+        const char *body = rest + 2;
+        int index = 0;
+        int x = 0;
+        int y = 0;
+        int deg = 0;
+        char hex[8] = "94A3B8";
+        const char *label = body;
+        for (int field = 0; field < 5; field++) {
+            const char *sep = strchr(label, '|');
+            if (!sep) {
+                return false;
+            }
+            label = sep + 1;
+        }
+        if (sscanf(body, "%d|%d|%d|%d|%6[^|]|", &index, &x, &y, &deg, hex) != 5) {
+            return false;
+        }
+        out->a = index;
+        out->x = x;
+        out->y = y;
+        out->deg = deg;
+        out->color = (int)strtoul(hex, nullptr, 16);
+        copy_token(label, out->label, sizeof(out->label));
+        return true;
+    }
+    return false;
 }

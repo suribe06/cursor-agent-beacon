@@ -27,6 +27,7 @@ Beacon firmware is **display-only** today (GIF + caption). Knob/touch input is n
 ## What you get
 
 - On-device **pixel-robot GIF** per agent state + caption (state + message)
+- Optional **vault page**: set `CURSOR_AGENT_BEACON_OBSIDIAN_VAULT` to a vault folder. The bridge sends `GRAPH|…` when notes change (80 notes, 160 links). Dot color comes from the `path:` groups in `.obsidian/graph.json`. Tap the panel, or send `PAGE|graph`, to switch. Note text stays on the PC. This firmware is not confirmed on a flashed board yet.
 - PC path: Cursor hooks → HTTP → **systemd bridge** → USB serial → panel
 - No open terminal required once the bridge service is installed
 

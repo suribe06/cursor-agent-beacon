@@ -11,10 +11,12 @@ from typing import Any
 from cursor_agent_beacon.bridge.config import BridgeConfig
 from cursor_agent_beacon.bridge.serial_writer import SerialWriter, build_serial_writer
 from cursor_agent_beacon.models import AgentStatus
+from cursor_agent_beacon.obsidian_graph import build_vault_graph, fingerprint
 from cursor_agent_beacon.session_registry import SessionRegistry
 from cursor_agent_beacon.theme import ThemePack, load_theme
 
 _RECONCILE_SEC = 5.0
+_GRAPH_SEC = 30.0
 
 
 class BridgeService:
@@ -52,6 +54,14 @@ class BridgeService:
             daemon=True,
         )
         self._reconcile_thread.start()
+        self._graph_stamp: tuple | None = None
+        if config.obsidian_vault is not None:
+            graph_thread = threading.Thread(
+                target=self._graph_loop,
+                name="cursor-agent-beacon-graph",
+                daemon=True,
+            )
+            graph_thread.start()
 
     @property
     def config(self) -> BridgeConfig:
@@ -125,6 +135,25 @@ class BridgeService:
             except Exception:
                 # ponytail: never crash the bridge on housekeeping
                 continue
+
+    def _graph_loop(self) -> None:
+        """Push the vault drawing when notes change. STATUS lines stay separate."""
+        vault = self._config.obsidian_vault
+        if vault is None:
+            return
+        while not self._stop_reconcile.is_set():
+            try:
+                if vault.is_dir():
+                    stamp = fingerprint(vault)
+                    if stamp != self._graph_stamp:
+                        graph = build_vault_graph(vault)
+                        for line in graph.serial_lines():
+                            self._serial.write_line(line)
+                        self._graph_stamp = stamp
+            except Exception:
+                continue
+            if self._stop_reconcile.wait(_GRAPH_SEC):
+                return
 
     def health(self) -> dict[str, Any]:
         latest = self._latest

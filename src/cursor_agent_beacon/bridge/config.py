@@ -23,6 +23,7 @@ class BridgeConfig:
     serial_baud: int = 115200
     theme_id: str = "standard"
     themes_dir: Path = Path("themes")
+    obsidian_vault: Path | None = None
 
     @property
     def status_url(self) -> str:
@@ -44,11 +45,16 @@ class BridgeConfig:
         except ValueError:
             baud = 115200
 
+        theme_id = os.environ.get("CURSOR_AGENT_BEACON_THEME", "standard")
+        vault_raw = os.environ.get("CURSOR_AGENT_BEACON_OBSIDIAN_VAULT", "").strip()
+        vault = Path(vault_raw).expanduser() if vault_raw else None
+
         return cls(
             host=os.environ.get("CURSOR_AGENT_BEACON_BRIDGE_HOST", "127.0.0.1"),
             port=port,
             serial_port=serial_port,
             serial_baud=baud,
-            theme_id=os.environ.get("CURSOR_AGENT_BEACON_THEME", "standard"),
+            theme_id=theme_id,
             themes_dir=default_themes_dir(),
+            obsidian_vault=vault,
         )
