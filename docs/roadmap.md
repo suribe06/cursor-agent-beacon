@@ -105,7 +105,7 @@ Open directions — not committed for a near release. Order is preference, not s
 
 ### Hardware (VIEWE)
 
-- **Vault page** — second screen on the MD80ET (touch already on the board; firmware ignores taps). PC reads an Obsidian vault, lays out at most 150 notes / 400 links, and sends one graph message when the vault changes (`STATUS|` stays for the agent). Firmware draws dots and lines on a single PSRAM canvas and labels only the busiest nodes. A tap switches between the character and this page. Note bodies stay on the PC.
+- **Verify the vault page on the panel** — PC side sends `GRAPH|…` when `CURSOR_AGENT_BEACON_OBSIDIAN_VAULT` is set. Firmware draws it and a tap (or `PAGE|graph`) should switch pages. Touch on the MD80ET is not confirmed in a flash yet.
 - Knob / button → `EVENT|...` serial lines (ack, pin session, mute).
 - FFat / SD theme swap without reflash.
 - Arc or radial context meter (round-native Meter Band variant).

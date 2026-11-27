@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Obsidian vault page for the VIEWE: set `CURSOR_AGENT_BEACON_OBSIDIAN_VAULT` and the bridge sends a graph (80 notes, 160 links). A tap on the panel, or `PAGE|graph`, switches between the character and the graph. Note text stays on the PC.
 - Photo → pixel-art desk character: `scripts/pixelate_reference.py`, `scripts/pack_character_theme.py`, skill `character-from-photo` (custom theme; default robot stays)
 - 3D-printable VIEWE 2.1″ desk stand (`hardware/case/viewe-2.1/`): build123d source, 3MF/STL print files, fit check, OpenSCAD viewer; not test-printed yet
 
