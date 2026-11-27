@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 import sys
+from pathlib import Path
 from typing import Any, TextIO
 
+from cursor_agent_beacon.activity import append_activity
 from cursor_agent_beacon.config import BeaconConfig
 from cursor_agent_beacon.mapper import map_hook_event
 from cursor_agent_beacon.models import HookEvent
@@ -21,12 +23,17 @@ def parse_hook_input(raw_input: str) -> HookEvent:
 def handle_hook_event(
     event: HookEvent,
     sink: StatusSink | None = None,
+    *,
+    events_root: Path | None = None,
+    redact: bool = False,
 ) -> dict[str, Any]:
     """Map the event, publish status, and return the Cursor hook response."""
     status = map_hook_event(event)
     if status is not None:
         active_sink = sink or build_sinks()
         active_sink.publish(status)
+    if events_root is not None:
+        append_activity(event, status, root=events_root, redact=redact)
     return build_hook_response(event)
 
 
@@ -45,8 +52,17 @@ def run_hook_handler(
     try:
         raw_input = stdin_io.read()
         event = parse_hook_input(raw_input)
-        active_sink = sink or build_sinks(config)
-        response = handle_hook_event(event, sink=active_sink)
+        # A caller-supplied sink is a test double. Do not open the real data dir.
+        cfg = config
+        if cfg is None and sink is None:
+            cfg = BeaconConfig.from_env()
+        active_sink = sink or build_sinks(cfg)
+        response = handle_hook_event(
+            event,
+            sink=active_sink,
+            events_root=None if cfg is None else cfg.status_file.parent,
+            redact=False if cfg is None else cfg.redact_content,
+        )
         stdout_io.write(dump_hook_response(response))
         stdout_io.write("\n")
         stdout_io.flush()
