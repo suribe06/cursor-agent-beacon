@@ -23,6 +23,8 @@
 #include "protocol.h"
 #include "theme_gifs.h"
 
+#include <esp_heap_caps.h>
+
 using namespace esp_panel::drivers;
 using namespace esp_panel::board;
 
@@ -53,6 +55,26 @@ static lv_obj_t *g_message_label = nullptr;
 static lv_obj_t *g_model_label = nullptr;
 static lv_obj_t *g_ctx_bar = nullptr;
 static lv_obj_t *g_ctx_pct_label = nullptr;
+static lv_obj_t *g_graph_canvas = nullptr;
+static lv_obj_t *g_tap = nullptr;
+static bool g_show_graph = false;
+
+static const int kGraphMaxN = 80;
+static const int kGraphMaxE = 160;
+
+struct StoredNode {
+    int16_t x;
+    int16_t y;
+    uint8_t deg;
+    uint32_t color;
+    char label[17];
+};
+
+static StoredNode g_nodes[kGraphMaxN];
+static uint8_t g_edge_a[kGraphMaxE];
+static uint8_t g_edge_b[kGraphMaxE];
+static int g_node_count = 0;
+static int g_edge_count = 0;
 
 struct StateStyle {
     const char *label;
@@ -87,6 +109,173 @@ static StateStyle style_for_state(const char *state) {
     return {state && state[0] ? state : "Beacon", lv_color_hex(0xE2E8F0)};
 }
 
+static void set_agent_widgets(bool visible) {
+    lv_obj_t *widgets[] = {
+        g_gif, g_state_label, g_message_label, g_model_label, g_ctx_bar, g_ctx_pct_label,
+    };
+    for (lv_obj_t *widget : widgets) {
+        if (!widget) {
+            continue;
+        }
+        if (visible) {
+            lv_obj_clear_flag(widget, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_add_flag(widget, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+}
+
+static lv_point_t graph_xy(int x, int y) {
+    lv_point_t point;
+    point.x = (lv_coord_t)(40 + (x * 400) / 1000);
+    point.y = (lv_coord_t)(40 + (y * 400) / 1000);
+    return point;
+}
+
+static void redraw_graph() {
+    if (!g_graph_canvas) {
+        return;
+    }
+    lv_canvas_fill_bg(g_graph_canvas, lv_color_hex(0x071020), LV_OPA_COVER);
+
+    lv_draw_line_dsc_t line_dsc;
+    lv_draw_line_dsc_init(&line_dsc);
+    line_dsc.color = lv_color_hex(0x334155);
+    line_dsc.width = 2;
+    for (int i = 0; i < g_edge_count; i++) {
+        uint8_t a = g_edge_a[i];
+        uint8_t b = g_edge_b[i];
+        if (a >= g_node_count || b >= g_node_count) {
+            continue;
+        }
+        lv_point_t points[2] = {
+            graph_xy(g_nodes[a].x, g_nodes[a].y),
+            graph_xy(g_nodes[b].x, g_nodes[b].y),
+        };
+        lv_canvas_draw_line(g_graph_canvas, points, 2, &line_dsc);
+    }
+
+    lv_draw_rect_dsc_t dot_dsc;
+    lv_draw_rect_dsc_init(&dot_dsc);
+    dot_dsc.bg_opa = LV_OPA_COVER;
+    dot_dsc.radius = LV_RADIUS_CIRCLE;
+    for (int i = 0; i < g_node_count; i++) {
+        lv_point_t point = graph_xy(g_nodes[i].x, g_nodes[i].y);
+        dot_dsc.bg_color = lv_color_hex(g_nodes[i].color);
+        lv_canvas_draw_rect(g_graph_canvas, point.x - 3, point.y - 3, 6, 6, &dot_dsc);
+    }
+
+    lv_draw_label_dsc_t label_dsc;
+    lv_draw_label_dsc_init(&label_dsc);
+    label_dsc.color = lv_color_hex(0xE2E8F0);
+    label_dsc.font = &lv_font_montserrat_12;
+    int labeled = 0;
+    bool used[kGraphMaxN] = {};
+    for (int rank = 0; rank < g_node_count && labeled < 6; rank++) {
+        int best = -1;
+        for (int i = 0; i < g_node_count; i++) {
+            if (used[i] || g_nodes[i].label[0] == '\0') {
+                continue;
+            }
+            if (best < 0 || g_nodes[i].deg > g_nodes[best].deg) {
+                best = i;
+            }
+        }
+        if (best < 0) {
+            break;
+        }
+        used[best] = true;
+        lv_point_t point = graph_xy(g_nodes[best].x, g_nodes[best].y);
+        lv_canvas_draw_text(
+            g_graph_canvas, point.x + 6, point.y - 8, 120, &label_dsc, g_nodes[best].label);
+        labeled++;
+    }
+}
+
+static void show_agent_from_status() {
+    if (g_gif) {
+        lv_obj_clear_flag(g_gif, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (g_state_label) {
+        lv_obj_clear_flag(g_state_label, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (g_message_label) {
+        if (g_status.message[0]) {
+            lv_obj_clear_flag(g_message_label, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_add_flag(g_message_label, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+    if (g_model_label) {
+        if (g_status.model[0]) {
+            lv_obj_clear_flag(g_model_label, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_add_flag(g_model_label, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+    if (g_ctx_bar && g_ctx_pct_label) {
+        if (g_context_pct >= 0) {
+            lv_obj_clear_flag(g_ctx_bar, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(g_ctx_pct_label, LV_OBJ_FLAG_HIDDEN);
+        } else {
+            lv_obj_add_flag(g_ctx_bar, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_add_flag(g_ctx_pct_label, LV_OBJ_FLAG_HIDDEN);
+        }
+    }
+}
+
+static void apply_page() {
+    if (g_show_graph && g_graph_canvas) {
+        set_agent_widgets(false);
+        redraw_graph();
+        lv_obj_clear_flag(g_graph_canvas, LV_OBJ_FLAG_HIDDEN);
+    } else if (g_graph_canvas) {
+        lv_obj_add_flag(g_graph_canvas, LV_OBJ_FLAG_HIDDEN);
+        show_agent_from_status();
+    }
+    if (g_tap) {
+        lv_obj_move_foreground(g_tap);
+    }
+}
+
+static void on_screen_tap(lv_event_t *event) {
+    if (lv_event_get_code(event) != LV_EVENT_CLICKED) {
+        return;
+    }
+    g_show_graph = !g_show_graph;
+    apply_page();
+}
+
+static void accept_graph_line(const BeaconGraphLine &parsed) {
+    if (parsed.op == BEACON_GRAPH_BEGIN) {
+        g_node_count = 0;
+        g_edge_count = 0;
+        return;
+    }
+    if (parsed.op == BEACON_GRAPH_NODE && g_node_count < kGraphMaxN) {
+        StoredNode &node = g_nodes[g_node_count++];
+        node.x = (int16_t)parsed.x;
+        node.y = (int16_t)parsed.y;
+        node.deg = (uint8_t)(parsed.deg < 0 ? 0 : parsed.deg > 255 ? 255 : parsed.deg);
+        node.color = (uint32_t)parsed.color;
+        strncpy(node.label, parsed.label, sizeof(node.label) - 1);
+        node.label[sizeof(node.label) - 1] = '\0';
+        return;
+    }
+    if (parsed.op == BEACON_GRAPH_EDGE && g_edge_count < kGraphMaxE) {
+        g_edge_a[g_edge_count] = (uint8_t)parsed.a;
+        g_edge_b[g_edge_count] = (uint8_t)parsed.b;
+        g_edge_count++;
+        return;
+    }
+    if (parsed.op == BEACON_GRAPH_END && lvgl_port_lock(-1)) {
+        if (g_show_graph) {
+            apply_page();
+        }
+        lvgl_port_unlock();
+    }
+}
+
 static lv_color_t context_bar_color(int pct) {
     if (pct >= 90) {
         return lv_color_hex(0xF87171);
@@ -104,7 +293,7 @@ static bool looks_like_protocol_noise(const char *text) {
     if (strstr(text, "STATUS|") != nullptr) {
         return true;
     }
-    if (strstr(text, "THEME|") != nullptr) {
+    if (strstr(text, "THEME|") != nullptr || strstr(text, "GRAPH|") != nullptr) {
         return true;
     }
     return false;
@@ -172,6 +361,7 @@ static void apply_status_ui(const BeaconStatus &status) {
         lv_obj_add_flag(g_ctx_pct_label, LV_OBJ_FLAG_HIDDEN);
     }
 
+    apply_page();
     lvgl_port_unlock();
 }
 
@@ -182,15 +372,15 @@ static void on_status_received(const BeaconStatus &status) {
 }
 
 static const char *find_protocol_start(const char *line) {
-    const char *status = strstr(line, "STATUS|");
-    const char *theme = strstr(line, "THEME|");
-    if (status && theme) {
-        return status < theme ? status : theme;
+    const char *best = nullptr;
+    const char *marks[] = {"STATUS|", "THEME|", "GRAPH|", "PAGE|"};
+    for (const char *mark : marks) {
+        const char *found = strstr(line, mark);
+        if (found && (!best || found < best)) {
+            best = found;
+        }
     }
-    if (status) {
-        return status;
-    }
-    return theme;
+    return best;
 }
 
 static void handle_line(const char *line) {
@@ -210,6 +400,21 @@ static void handle_line(const char *line) {
     char theme[32] = {};
     if (beacon_parse_theme_line(framed, theme, sizeof(theme))) {
         return;
+    }
+
+    char page[16] = {};
+    if (beacon_parse_page_line(framed, page, sizeof(page))) {
+        if (lvgl_port_lock(-1)) {
+            g_show_graph = strcmp(page, "graph") == 0;
+            apply_page();
+            lvgl_port_unlock();
+        }
+        return;
+    }
+
+    BeaconGraphLine graph = {};
+    if (beacon_parse_graph_line(framed, &graph)) {
+        accept_graph_line(graph);
     }
 }
 
@@ -289,6 +494,25 @@ static void create_status_ui() {
     lv_obj_set_style_text_color(g_ctx_pct_label, lv_color_hex(0x38BDF8), 0);
     lv_obj_align(g_ctx_pct_label, LV_ALIGN_BOTTOM_MID, kPctOffsetX, kBarOffsetY - 2);
     lv_obj_add_flag(g_ctx_pct_label, LV_OBJ_FLAG_HIDDEN);
+
+    size_t canvas_bytes = 480 * 480 * sizeof(lv_color_t);
+    lv_color_t *buffer = static_cast<lv_color_t *>(
+        heap_caps_malloc(canvas_bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
+    if (buffer) {
+        g_graph_canvas = lv_canvas_create(g_screen);
+        lv_canvas_set_buffer(g_graph_canvas, buffer, 480, 480, LV_IMG_CF_TRUE_COLOR);
+        lv_obj_align(g_graph_canvas, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_add_flag(g_graph_canvas, LV_OBJ_FLAG_HIDDEN);
+    }
+
+    g_tap = lv_obj_create(g_screen);
+    lv_obj_set_size(g_tap, 480, 480);
+    lv_obj_align(g_tap, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_bg_opa(g_tap, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(g_tap, 0, 0);
+    lv_obj_add_flag(g_tap, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_clear_flag(g_tap, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_event_cb(g_tap, on_screen_tap, LV_EVENT_CLICKED, nullptr);
 }
 
 void setup() {
