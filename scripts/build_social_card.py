@@ -61,7 +61,7 @@ def main() -> None:
     frames = [f.convert("RGBA") for f in ImageSequence.Iterator(robot)]
     mid = frames[min(1, len(frames) - 1)]
     base = Image.new("RGBA", mid.size, (7, 16, 32, 255))
-    mid = Image.alpha_composite(base, mid).resize((280, 280), Image.Resampling.NEAREST)
+    mid = Image.alpha_composite(base, mid).resize((280, 280), Image.Resampling.LANCZOS)
     card.paste(mid.convert("RGB"), (cx - 140, cy - 140))
 
     logo = Image.open(ROOT / "docs/images/logo.png").convert("RGBA").resize((96, 96))

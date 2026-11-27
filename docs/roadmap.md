@@ -12,7 +12,7 @@ Living checklist against the current tree. Shipped items match code in `main` / 
 
 ## Phase 1.5 — Standard display theme ✅
 
-- [x] Pixel robot sprite generator (`scripts/build_character_sprites.py`)
+- [x] Eye sprite generator (`scripts/build_character_sprites.py`)
 - [x] Export 480×480 GIFs (`scripts/export_standard_gifs.py`)
 - [x] `themes/standard/manifest.json` + bundled assets
 - [x] Custom theme layout (`themes/custom/`)

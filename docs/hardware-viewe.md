@@ -26,7 +26,7 @@ Beacon firmware is **display-only** today (GIF + caption). Knob/touch input is n
 
 ## What you get
 
-- On-device **pixel-robot GIF** per agent state + caption (state + message)
+- On-device **eye GIF** per agent state + caption (state + message)
 - PC path: Cursor hooks → HTTP → **systemd bridge** → USB serial → panel
 - No open terminal required once the bridge service is installed
 

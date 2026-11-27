@@ -1,7 +1,7 @@
 {
   "id": "standard",
-  "name": "Beacon Bot",
-  "description": "Default pixel robot GIFs bundled with the repository",
+  "name": "Beacon Eyes",
+  "description": "Default expressive-eye GIFs bundled with the repository",
   "license": "MIT",
   "author": "cursor-agent-beacon",
   "display": {
@@ -12,47 +12,46 @@
     "target": "viewe-480"
   },
   "display_mode": "gif",
-  "pixel_faces": "pixel-faces.json",
   "states": {
     "idle": {
       "animation": "assets/sleeping.gif",
       "loop": true,
-      "caption": "Sleeping"
+      "caption": "Idle \u2014 eyes drift shut"
     },
     "waiting": {
       "animation": "assets/waiting.gif",
       "loop": true,
-      "caption": "Waiting"
+      "caption": "Happy eyes, glance, blink"
     },
     "thinking": {
       "animation": "assets/thinking.gif",
       "loop": true,
-      "caption": "Thinking"
+      "caption": "Eyes look up and around"
     },
     "running_shell": {
       "animation": "assets/running_shell.gif",
       "loop": true,
-      "caption": "Running Shell"
+      "caption": "Narrow eyes scanning"
     },
     "running_mcp": {
       "animation": "assets/running_mcp.gif",
       "loop": true,
-      "caption": "Running Mcp"
+      "caption": "Steady eyes, green spark"
     },
     "success": {
       "animation": "assets/success.gif",
       "loop": true,
-      "caption": "Success"
+      "caption": "Smile that pulses"
     },
     "error": {
       "animation": "assets/error.gif",
       "loop": true,
-      "caption": "Error"
+      "caption": "Shock, then a sweat drop"
     },
     "stop": {
       "animation": "assets/stop.gif",
       "loop": false,
-      "caption": "Stop"
+      "caption": "Laughing eyes"
     }
   }
 }

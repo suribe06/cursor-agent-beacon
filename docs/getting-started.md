@@ -166,7 +166,7 @@ Structured hook logs also appear in the **Hooks** output channel (stderr JSON li
 xdg-open preview/display-simulator.html
 ```
 
-Toggle **Show exported GIF** to view bundled files from `themes/standard/assets/`.
+The simulator plays the bundled GIFs from `themes/standard/assets/`.
 
 Regenerate GIFs after editing sprites:
 
