@@ -117,6 +117,10 @@ Open directions — not committed for a near release. Order is preference, not s
 - Richer multi-window focus when several Cursor windows are open.
 - Optional notification on error / long-running shell.
 
+### Activity map
+
+- **Live session map** — stations for the current Cursor chat (you, model, files, shell, network, agents). Plan: [Activity map](activity-map-plan.md). Milestone 1 (event log) is underway on `feat/activity-map`. The page itself is not started.
+
 ### Platform
 
 - macOS menu-bar companion (parity with GNOME panel).

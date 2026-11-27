@@ -35,6 +35,8 @@ htmlcov/
 .vscode/
 *.swp
 *.swo
+.agents/
+.codex/
 
 # Local status / runtime
 .cursor-agent-beacon/

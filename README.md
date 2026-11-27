@@ -150,6 +150,7 @@ See [`docs/roadmap.md`](docs/roadmap.md).
 - [Hardware displays](docs/hardware.md)
 - [Hardware — VIEWE setup](docs/hardware-viewe.md)
 - [Roadmap](docs/roadmap.md)
+- [Activity map plan](docs/activity-map-plan.md)
 - [Changelog](CHANGELOG.md)
 
 ## Contributing
